@@ -1,0 +1,29 @@
+# Core FastAPI
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-multipart
+
+# Environment and utils
+python-dotenv
+aiohttp
+numpy
+redis
+slowapi
+
+# AI and LangChain
+openai
+google-generativeai
+langchain
+langchain-community
+langchain-openai
+langchain-google-genai
+
+# Vector store and embeddings
+faiss-cpu
+sentence-transformers
+
+# Document processing
+arxiv
+pypdf

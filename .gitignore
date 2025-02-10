@@ -1,0 +1,65 @@
+# Backend - Python
+backend/.env
+backend/.venv
+backend/env/
+backend/venv/
+backend/ENV/
+backend/.python-version
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/*.so
+backend/.Python
+backend/build/
+backend/develop-eggs/
+backend/dist/
+backend/downloads/
+backend/eggs/
+backend/.eggs/
+backend/lib/
+backend/lib64/
+backend/parts/
+backend/sdist/
+backend/var/
+backend/wheels/
+backend/share/python-wheels/
+backend/*.egg-info/
+backend/.installed.cfg
+backend/*.egg
+backend/.pytest_cache/
+
+# Frontend - Next.js
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/*.pem
+frontend/.env*.local
+frontend/.vercel
+frontend/.env
+frontend/coverage
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE and Editor files
+.idea/
+.vscode/
+.cursorrules/
+**/*.swp
+**/*.swo
+.DS_Store
+**/*.sublime-workspace
+**/*.sublime-project
+
+# Temp files
+**/*.tmp
+**/*.temp
