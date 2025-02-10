@@ -64,6 +64,46 @@ class PaperService:
         
         return papers
 
+    async def get_papers_by_ids(self, paper_ids: List[str]) -> List[Paper]:
+        """Fetch papers by their IDs."""
+        try:
+            # Format paper IDs properly for arXiv API
+            formatted_ids = []
+            for paper_id in paper_ids:
+                # Remove version suffix if present (e.g., v1, v2)
+                base_id = paper_id.split('v')[0]
+                formatted_ids.append(base_id)
+
+            client = arxiv.Client()
+            # Use arxiv.Search with properly formatted IDs
+            search = arxiv.Search(
+                query=" OR ".join([f"id:{id}" for id in formatted_ids]),
+                max_results=len(paper_ids)
+            )
+            
+            papers = []
+            for result in client.results(search):
+                paper_id = result.entry_id.split("/")[-1].split("v")[0]  # Get base ID
+                papers.append(Paper(
+                    id=paper_id,
+                    title=result.title,
+                    authors=[author.name for author in result.authors],
+                    summary=result.summary,
+                    published=result.published,
+                    url=result.pdf_url
+                ))
+            
+            if not papers:
+                raise ValueError("No papers found with the provided IDs")
+                
+            return papers
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch papers: {str(e)}"
+            )
+
     async def chat_with_paper(self, paper_id: str, message: str) -> ChatResponse:
         # Fetch paper
         client = arxiv.Client()

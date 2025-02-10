@@ -43,3 +43,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Markdown styling */
+.prose-invert {
+  --tw-prose-body: rgb(var(--foreground));
+  --tw-prose-headings: rgb(var(--primary));
+  --tw-prose-links: rgb(var(--primary));
+  --tw-prose-bold: rgb(var(--foreground));
+  --tw-prose-quotes: rgb(var(--muted-foreground));
+  --tw-prose-quote-borders: rgb(var(--primary));
+  --tw-prose-counters: rgb(var(--muted-foreground));
+  --tw-prose-bullets: rgb(var(--muted-foreground));
+  --tw-prose-hr: rgb(var(--border));
+  --tw-prose-th-borders: rgb(var(--border));
+  --tw-prose-td-borders: rgb(var(--border));
+}
+
+.prose-invert a {
+  text-decoration-line: underline;
+  text-underline-offset: 4px;
+}
+
+.prose-invert blockquote {
+  font-style: italic;
+  border-left-width: 4px;
+  border-left-color: rgb(var(--primary));
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+}

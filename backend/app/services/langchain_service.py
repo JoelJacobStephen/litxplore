@@ -1,7 +1,9 @@
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import GoogleGenerativeAI
+from langchain.prompts import PromptTemplate
+from langchain.schema.runnable import RunnablePassthrough
 import google.generativeai as genai
 from datetime import datetime
 from typing import List, Dict, Any
@@ -12,19 +14,38 @@ from ..models.paper import Paper
 
 settings = get_settings()
 
-# Initialize Gemini
-model = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    google_api_key=settings.GEMINI_API_KEY,
-    temperature=0.7
-)
-
 class LangChainService:
     def __init__(self):
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=settings.CHUNK_SIZE,
             chunk_overlap=settings.CHUNK_OVERLAP
         )
+        
+        self.llm = GoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            google_api_key=settings.GEMINI_API_KEY,
+            temperature=0.7
+        )
+        
+        self.review_prompt = PromptTemplate(
+            input_variables=["papers", "topic"],
+            template="""Please write a comprehensive literature review on the topic: {topic}
+            
+            Based on the following papers:
+            
+            {papers}
+            
+            Focus on:
+            1. Key findings and contributions
+            2. Common themes and patterns
+            3. Research gaps and future directions
+            4. Critical analysis and synthesis
+            
+            Format the review in a clear, academic style with proper paragraphs.
+            """
+        )
+        
+        self.chain = self.review_prompt | self.llm
         
     async def fetch_papers(self, topic: str, max_papers: int) -> List[Paper]:
         """Fetch relevant papers from ArXiv."""
@@ -113,122 +134,21 @@ Format the response in a clear, academic style."""
             return "Error analyzing paper content."
     
     async def generate_review(self, papers: List[Paper], topic: str) -> str:
-        """Generate a comprehensive literature review using Gemini."""
-        if not papers:
-            return "# No Results\nNo papers found to generate review."
-            
-        # Create detailed paper summaries with their index for citation
-        paper_summaries = []
-        for i, paper in enumerate(papers, 1):
-            summary = f"""Paper {i}:
-Title: {paper.title}
-Authors: {', '.join(paper.authors)}
-Published: {paper.published}
-Summary: {paper.summary}
-Key Points:
-- Main contributions and findings
-- Methodology and approach
-- Results and implications
-- Limitations and future work
-"""
-            paper_summaries.append(summary)
-        
-        # Combine all paper summaries
-        all_summaries = "\n\n".join(paper_summaries)
-        
-        # Generate the literature review with citations
-        review_prompt = f"""Generate a comprehensive and detailed academic literature review based on the following papers. 
-The review should focus on the topic: {topic}
-
-{all_summaries}
-
-Requirements for the literature review:
-
-1. Structure and Formatting:
-   - Use proper Markdown formatting throughout
-   - Create a clear hierarchical structure with headings and subheadings
-   - Use bullet points for listing key points
-   - Use blockquotes for important findings or quotes
-   - Use bold and italic text for emphasis
-
-2. Content Requirements:
-   - Provide an extensive introduction to the field and topic
-   - Analyze and synthesize findings across all papers
-   - Compare and contrast different approaches
-   - Identify research trends and patterns
-   - Discuss methodological approaches in detail
-   - Highlight significant findings and their implications
-   - Address limitations and challenges in the field
-   - Suggest future research directions
-   - Draw comprehensive conclusions
-
-3. Citation and References:
-   - Use numbered citations [1], [2], etc. that correspond to the paper numbers
-   - Cite multiple papers when discussing common themes
-   - Ensure every major claim is supported by citations
-   - Include proper citation when discussing specific findings
-
-4. Section Structure:
-
-# Introduction
-- Background of the field
-- Importance of the topic
-- Current state of research
-- Objectives of this review
-
-# Background and Context
-- Historical development
-- Theoretical foundations
-- Key concepts and definitions
-
-# Current Research Landscape
-## Major Themes and Findings
-- Theme 1 with detailed analysis
-- Theme 2 with detailed analysis
-- Cross-paper analysis and synthesis
-
-## Methodological Approaches
-- Analysis of different methods
-- Comparison of approaches
-- Strengths and limitations
-
-## Key Findings and Implications
-- Synthesis of major findings
-- Practical implications
-- Theoretical implications
-
-# Research Gaps and Future Directions
-- Current limitations
-- Emerging trends
-- Promising research directions
-- Recommendations for future work
-
-# Conclusion
-- Summary of key findings
-- State of the field
-- Future outlook
-
-Generate a detailed, well-structured review that thoroughly analyzes all papers and provides deep insights into the topic."""
-
         try:
-            response = await asyncio.to_thread(
-                lambda: model.generate_content(
-                    review_prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        temperature=0.7,
-                        top_p=0.9,
-                        top_k=40,
-                        max_output_tokens=8192,  # Increased for longer reviews
-                    ),
-                ).text
-            )
+            # Format papers into a string
+            papers_text = "\n\n".join([
+                f"Title: {p.title}\nAuthors: {', '.join(p.authors)}\nSummary: {p.summary}"
+                for p in papers
+            ])
             
-            # Add a separator between citations
-            citations_section = "\n\n# References\n"
-            for i, paper in enumerate(papers, 1):
-                citations_section += f"{i}. {', '.join(paper.authors)}. \"{paper.title}\". {paper.published.strftime('%Y')}.\n"
+            # Generate review using RunnableSequence
+            result = await self.chain.ainvoke({
+                "papers": papers_text,
+                "topic": topic
+            })
             
-            return response + citations_section
+            return result.text if hasattr(result, 'text') else str(result)
+            
         except Exception as e:
             print(f"Error generating review: {str(e)}")
-            return "Error generating literature review."
+            raise Exception("Failed to generate literature review")

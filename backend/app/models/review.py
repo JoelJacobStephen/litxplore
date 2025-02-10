@@ -4,6 +4,7 @@ from .paper import Paper
 
 
 class ReviewRequest(BaseModel):
+    paper_ids: List[str]
     topic: str = Field(..., min_length=3, max_length=500, description="Research topic for literature review")
     max_papers: int = Field(default=10, ge=1, le=20, description="Maximum number of papers to analyze")
     
@@ -35,4 +36,4 @@ class ReviewResponse(BaseModel):
                     }
                 ]
             }
-        } 
+        }

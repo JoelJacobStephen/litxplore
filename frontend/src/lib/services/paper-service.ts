@@ -57,40 +57,50 @@ export async function chatWithPaper(
 }
 
 export interface ReviewRequest {
+  paper_ids: string[];
   topic: string;
-  max_papers: number;
 }
 
 export interface ReviewResponse {
   review: string;
   citations: Paper[];
+  topic: string;
 }
 
-export class PaperService {
-  static async generateReview(request: ReviewRequest): Promise<ReviewResponse> {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/review/generate-review`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(request),
-        }
-      );
+export async function generateReview(
+  request: ReviewRequest
+): Promise<ReviewResponse> {
+  try {
+    // Format paper IDs (remove version numbers if present)
+    const formattedRequest = {
+      ...request,
+      paper_ids: request.paper_ids.map((id) => id.split("v")[0]),
+    };
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to generate review");
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/review/generate-review`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formattedRequest),
       }
+    );
 
-      return await response.json();
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to generate review: ${error.message}`);
-      }
-      throw error;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || "Failed to generate review");
     }
+
+    const data = await response.json();
+    return {
+      review: data.review,
+      citations: data.citations,
+      topic: request.topic, // Include the topic in the response
+    };
+  } catch (error) {
+    console.error("Generate review error:", error);
+    throw error;
   }
 }
