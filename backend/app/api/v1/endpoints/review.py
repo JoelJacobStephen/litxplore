@@ -18,10 +18,23 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
                 status_code=400,
                 detail="No paper IDs provided"
             )
-
-        # Fetch papers by IDs
-        papers = await paper_service.get_papers_by_ids(review_request.paper_ids)
         
+        # Separate uploaded files from arXiv papers
+        uploaded_ids = [pid for pid in review_request.paper_ids if pid.startswith('upload_')]
+        arxiv_ids = [pid for pid in review_request.paper_ids if not pid.startswith('upload_')]
+        
+        papers = []
+        
+        # Fetch arxiv papers
+        if arxiv_ids:
+            arxiv_papers = await paper_service.get_papers_by_ids(arxiv_ids)
+            papers.extend(arxiv_papers)
+            
+        # Get uploaded papers
+        if uploaded_ids:
+            uploaded_papers = await paper_service.get_uploaded_papers(uploaded_ids)
+            papers.extend(uploaded_papers)
+            
         if not papers:
             raise HTTPException(
                 status_code=404,
@@ -36,7 +49,8 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
         
         return ReviewResponse(
             review=review_text,
-            citations=papers
+            citations=papers,
+            topic=review_request.topic
         )
         
     except HTTPException as he:

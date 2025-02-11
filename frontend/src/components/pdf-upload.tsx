@@ -1,0 +1,65 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Upload } from "lucide-react";
+import { toast } from "sonner";
+import { Paper } from "@/lib/types/paper";
+
+interface PDFUploadProps {
+  onPaperAdd: (paper: Paper) => void;
+}
+
+export function PDFUpload({ onPaperAdd }: PDFUploadProps) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (file.type !== "application/pdf") {
+      toast.error("Please upload a PDF file");
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch(
+        "http://localhost:8000/api/v1/papers/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to upload PDF");
+      }
+
+      const paper: Paper = await response.json();
+      onPaperAdd(paper);
+      toast.success("PDF uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload PDF");
+      console.error("Upload error:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="file"
+        accept=".pdf"
+        onChange={handleFileChange}
+        disabled={isUploading}
+        className="max-w-xs"
+      />
+      {isUploading && <Upload className="animate-spin" />}
+    </div>
+  );
+}

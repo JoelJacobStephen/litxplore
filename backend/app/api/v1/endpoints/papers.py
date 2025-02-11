@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, File, UploadFile
 from typing import List, Optional
 import arxiv
 from ....models.paper import Paper, ChatRequest, ChatResponse
@@ -69,4 +69,22 @@ async def chat_with_paper(paper_id: str, request: ChatRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to process chat: {str(e)}"
+        )
+
+# Add new endpoint for PDF upload
+@router.post("/upload", response_model=Paper)
+async def upload_pdf(file: UploadFile = File(...)):
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be a PDF"
+        )
+        
+    try:
+        paper = await paper_service.process_uploaded_pdf(file)
+        return paper
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process PDF: {str(e)}"
         )

@@ -1,4 +1,5 @@
 import { Paper } from "../types/paper";
+import { Paper, ReviewRequest, ReviewResponse } from "@/lib/types/paper";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -67,21 +68,11 @@ export interface ReviewResponse {
   topic: string;
 }
 
-export async function generateReview(
+export const generateReview = async (
   request: ReviewRequest
-): Promise<ReviewResponse> {
+): Promise<ReviewResponse> => {
   try {
-    // Ensure paper_ids are strings and remove version numbers if present
-    const formattedRequest = {
-      ...request,
-      paper_ids: request.paper_ids.map((id) => {
-        // Handle both string and object IDs
-        const paperId = typeof id === "object" ? id.toString() : id;
-        // Remove version suffix if present (e.g., v1, v2)
-        return paperId.includes("v") ? paperId.split("v")[0] : paperId;
-      }),
-    };
-
+    // Update the URL to include /api/v1 prefix
     const response = await fetch(
       `${API_BASE_URL}/api/v1/review/generate-review`,
       {
@@ -89,7 +80,7 @@ export async function generateReview(
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formattedRequest),
+        body: JSON.stringify(request),
       }
     );
 
@@ -98,14 +89,9 @@ export async function generateReview(
       throw new Error(error.detail || "Failed to generate review");
     }
 
-    const data = await response.json();
-    return {
-      review: data.review,
-      citations: data.citations,
-      topic: formattedRequest.topic,
-    };
+    return response.json();
   } catch (error) {
-    console.error("Generate review error:", error);
+    console.error("Error generating review:", error);
     throw error;
   }
-}
+};

@@ -1,7 +1,7 @@
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
-from langchain_google_genai import GoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI  # Change to ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain.schema.runnable import RunnablePassthrough
 import google.generativeai as genai
@@ -21,8 +21,9 @@ class LangChainService:
             chunk_overlap=settings.CHUNK_OVERLAP
         )
         
-        self.llm = GoogleGenerativeAI(
-            model="gemini-2.0-flash",
+        # Update LLM initialization to use ChatGoogleGenerativeAI
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",  # Use gemini-pro instead of gemini-2.0-flash
             google_api_key=settings.GEMINI_API_KEY,
             temperature=0.7
         )
@@ -135,20 +136,58 @@ Format the response in a clear, academic style."""
     
     async def generate_review(self, papers: List[Paper], topic: str) -> str:
         try:
-            # Format papers into a string
-            papers_text = "\n\n".join([
-                f"Title: {p.title}\nAuthors: {', '.join(p.authors)}\nSummary: {p.summary}"
-                for p in papers
-            ])
+            # Create papers context with numbered references
+            papers_context = "\n\n".join(
+                f"Reference {i+1}:\nTitle: {p.title}\nAuthors: {', '.join(p.authors)}\nSummary: {p.summary}"
+                for i, p in enumerate(papers)
+            )
+
+            prompt = f"""As an academic researcher, generate a comprehensive literature review on {topic} based on the following papers. 
             
-            # Generate review using RunnableSequence
-            result = await self.chain.ainvoke({
-                "papers": papers_text,
-                "topic": topic
-            })
-            
-            return result.text if hasattr(result, 'text') else str(result)
-            
+Context Papers:
+{papers_context}
+
+Requirements for the literature review:
+1. Write in a formal academic style using clear, precise language
+2. Critically analyze and synthesize the research findings
+3. Use citation numbers in square brackets (e.g., [1], [2]) when referencing papers
+4. Structure the review with these sections:
+   - Introduction (brief context and importance of the topic)
+   - Main body  (organized by themes/concepts, not by individual papers) (Don't mention Main body in the generated review text)
+   - Research gaps and future directions
+   - Conclusion
+5. Use markdown formatting for section headers (e.g., ## Introduction)
+6. Format the response in markdown, but do not include a table of contents
+7. Highlight key findings, methodologies, and connections between papers
+8. Identify patterns, contradictions, and gaps in the current research
+9. Length should be comprehensive (around 1000-1500 words)
+
+Important:
+- Integrate citations naturally into sentences
+- Compare and contrast findings from different papers
+- Identify methodological strengths and limitations
+- Maintain an objective, analytical tone
+- Emphasize the significance of findings in the broader context of {topic}
+
+Generate the literature review now:"""
+
+            # Use invoke instead of generate_content and access content property
+            response = await asyncio.to_thread(
+                lambda: self.llm.invoke(prompt).content
+            )
+            return response
+
         except Exception as e:
-            print(f"Error generating review: {str(e)}")
-            raise Exception("Failed to generate literature review")
+            print(f"Error in generate_review: {str(e)}")
+            raise
+
+    async def _generate_with_retry(self, prompt: str, max_retries: int = 3) -> str:
+        for attempt in range(max_retries):
+            try:
+                response = self.llm.invoke(prompt)
+                return response.content  # Access content property here
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise e
+                await asyncio.sleep(1)  # Add delay between retries
+                continue

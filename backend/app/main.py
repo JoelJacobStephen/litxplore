@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -24,6 +26,12 @@ app.add_middleware(
     allow_headers=settings.CORS_ALLOW_HEADERS,
     expose_headers=["*"]
 )
+
+# Create uploads directory if it doesn't exist
+os.makedirs("uploads", exist_ok=True)
+
+# Mount the uploads directory
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Setup rate limiting
 limiter = Limiter(key_func=get_remote_address)

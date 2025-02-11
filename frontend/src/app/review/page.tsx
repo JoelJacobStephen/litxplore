@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Paper } from "@/lib/types/paper";
 import { searchPapers, generateReview } from "@/lib/services/paper-service";
 import { useReviewStore } from "@/lib/stores/review-store";
+import { PDFUpload } from "@/components/pdf-upload";
 
 export default function ReviewPage() {
   const searchParams = useSearchParams();
@@ -133,12 +134,20 @@ export default function ReviewPage() {
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">2. Select Papers</h2>
 
-          {/* Search Additional Papers */}
-          <SearchInput
-            onPaperSelect={handlePaperSelect}
-            selectedPapers={selectedPapers}
-            onAddPaper={handleAddPaper}
-          />
+          <div className="flex flex-col gap-4">
+            {/* Search Additional Papers */}
+            <SearchInput
+              onPaperSelect={handlePaperSelect}
+              selectedPapers={selectedPapers}
+              onAddPaper={handleAddPaper}
+            />
+
+            {/* Add PDF Upload */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Upload PDF</h3>
+              <PDFUpload onPaperAdd={handleAddPaper} />
+            </div>
+          </div>
 
           {/* Selected Papers Count */}
           <div className="text-sm text-muted-foreground">
