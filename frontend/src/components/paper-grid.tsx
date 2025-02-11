@@ -18,21 +18,36 @@ import { useRouter } from "next/navigation";
 
 interface PaperGridProps {
   papers: ArxivPaper[];
+  onPaperSelect?: (paperId: string, selected: boolean) => void;
+  selectedPapers?: Set<string>;
 }
 
-export function PaperGrid({ papers }: PaperGridProps) {
+export function PaperGrid({
+  papers,
+  onPaperSelect,
+  selectedPapers = new Set(),
+}: PaperGridProps) {
   const router = useRouter();
-  const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
+  const [localSelectedPapers, setLocalSelectedPapers] = useState<Set<string>>(
+    new Set()
+  );
 
   const togglePaper = (paperId: string) => {
-    const newSelected = new Set(selectedPapers);
+    const newSelected = new Set(localSelectedPapers);
     if (newSelected.has(paperId)) {
       newSelected.delete(paperId);
     } else {
       newSelected.add(paperId);
     }
-    setSelectedPapers(newSelected);
+    setLocalSelectedPapers(newSelected);
+    if (onPaperSelect) {
+      onPaperSelect(paperId, newSelected.has(paperId));
+    }
   };
+
+  const effectiveSelectedPapers = onPaperSelect
+    ? selectedPapers
+    : localSelectedPapers;
 
   return (
     <div className="space-y-6">
@@ -55,14 +70,20 @@ export function PaperGrid({ papers }: PaperGridProps) {
               </p>
             </CardContent>
             <CardFooter className="flex justify-between items-center gap-2">
-              <Button
-                variant={selectedPapers.has(paper.id) ? "default" : "ghost"}
-                size="sm"
-                onClick={() => togglePaper(paper.id)}
-              >
-                <CircleCheckBig className="h-4 w-4 mr-2" />
-                {selectedPapers.has(paper.id) ? "Selected" : "Select"}
-              </Button>
+              {onPaperSelect && (
+                <Button
+                  variant={
+                    effectiveSelectedPapers.has(paper.id) ? "default" : "ghost"
+                  }
+                  size="sm"
+                  onClick={() => togglePaper(paper.id)}
+                >
+                  <CircleCheckBig className="h-4 w-4 mr-2" />
+                  {effectiveSelectedPapers.has(paper.id)
+                    ? "Selected"
+                    : "Select"}
+                </Button>
+              )}
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" asChild>
                   {paper.link && (
@@ -89,14 +110,16 @@ export function PaperGrid({ papers }: PaperGridProps) {
         ))}
       </div>
 
-      {selectedPapers.size > 0 && (
+      {effectiveSelectedPapers.size > 0 && (
         <div className="fixed bottom-6 right-6">
           <Button asChild>
-            {Array.from(selectedPapers).length > 0 && (
+            {Array.from(effectiveSelectedPapers).length > 0 && (
               <Link
-                href={`/review?papers=${Array.from(selectedPapers).join(",")}`}
+                href={`/review?papers=${Array.from(
+                  effectiveSelectedPapers
+                ).join(",")}`}
               >
-                Generate Review ({selectedPapers.size} papers)
+                Generate Review ({effectiveSelectedPapers.size} papers)
               </Link>
             )}
           </Button>

@@ -23,6 +23,7 @@ export default function ReviewPage() {
   const setGeneratedReview = useReviewStore(
     (state) => state.setGeneratedReview
   );
+  const [displayedPapers, setDisplayedPapers] = useState<Paper[]>([]);
 
   // Initialize selected papers from URL params
   useEffect(() => {
@@ -38,6 +39,13 @@ export default function ReviewPage() {
     queryFn: () => searchPapers(topic),
     enabled: !!topic,
   });
+
+  // Merge search results with displayed papers
+  useEffect(() => {
+    if (suggestedPapers) {
+      setDisplayedPapers(suggestedPapers);
+    }
+  }, [suggestedPapers]);
 
   const handleTopicSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,13 +63,34 @@ export default function ReviewPage() {
     setSelectedPapers(newSelected);
   };
 
+  const handleAddPaper = (paper: Paper) => {
+    setDisplayedPapers((prev) => {
+      // Only add if not already in the list
+      if (!prev.find((p) => p.id === paper.id)) {
+        // Add the paper to displayed papers
+        const newPapers = [...prev, paper];
+        // Ensure the paper is selected
+        setSelectedPapers((prevSelected) => {
+          const newSelected = new Set(prevSelected);
+          newSelected.add(paper.id);
+          return newSelected;
+        });
+        return newPapers;
+      }
+      return prev;
+    });
+  };
+
   const handleGenerateReview = async () => {
     if (selectedPapers.size === 0 || !topic) return;
 
     setIsGenerating(true);
     try {
+      // Convert Set to Array and ensure IDs are strings
+      const paperIds = Array.from(selectedPapers).map((id) => String(id));
+
       const request: ReviewRequest = {
-        paper_ids: Array.from(selectedPapers),
+        paper_ids: paperIds,
         topic: topic,
       };
 
@@ -106,7 +135,9 @@ export default function ReviewPage() {
 
           {/* Search Additional Papers */}
           <SearchInput
-            onPaperSelect={(paper) => handlePaperSelect(paper.id, true)}
+            onPaperSelect={handlePaperSelect}
+            selectedPapers={selectedPapers}
+            onAddPaper={handleAddPaper}
           />
 
           {/* Selected Papers Count */}
@@ -119,7 +150,7 @@ export default function ReviewPage() {
             <div>Loading suggested papers...</div>
           ) : (
             <PaperGrid
-              papers={suggestedPapers || []}
+              papers={displayedPapers}
               selectedPapers={selectedPapers}
               onPaperSelect={handlePaperSelect}
             />

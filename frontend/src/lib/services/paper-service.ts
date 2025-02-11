@@ -71,10 +71,15 @@ export async function generateReview(
   request: ReviewRequest
 ): Promise<ReviewResponse> {
   try {
-    // Format paper IDs (remove version numbers if present)
+    // Ensure paper_ids are strings and remove version numbers if present
     const formattedRequest = {
       ...request,
-      paper_ids: request.paper_ids.map((id) => id.split("v")[0]),
+      paper_ids: request.paper_ids.map((id) => {
+        // Handle both string and object IDs
+        const paperId = typeof id === "object" ? id.toString() : id;
+        // Remove version suffix if present (e.g., v1, v2)
+        return paperId.includes("v") ? paperId.split("v")[0] : paperId;
+      }),
     };
 
     const response = await fetch(
@@ -97,7 +102,7 @@ export async function generateReview(
     return {
       review: data.review,
       citations: data.citations,
-      topic: request.topic, // Include the topic in the response
+      topic: formattedRequest.topic,
     };
   } catch (error) {
     console.error("Generate review error:", error);

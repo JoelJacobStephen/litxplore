@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Send, Loader2 } from "lucide-react";
 import { Paper, ChatMessage } from "@/lib/types/paper";
 import { chatWithPaper } from "@/lib/services/paper-service";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ChatInterfaceProps {
   paper: Paper;
@@ -84,9 +86,51 @@ export function ChatInterface({
                   : "bg-muted"
               }`}
             >
-              <p>{message.content}</p>
+              {message.role === "user" ? (
+                <p>{message.content}</p>
+              ) : (
+                <div className="prose prose-invert max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => (
+                        <p className="mb-2 last:mb-0">{children}</p>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="list-disc pl-4 mb-2">{children}</ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="list-decimal pl-4 mb-2">{children}</ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="mb-1">{children}</li>
+                      ),
+                      code: ({ node, inline, children, ...props }) =>
+                        inline ? (
+                          <code
+                            className="bg-secondary px-1 py-0.5 rounded"
+                            {...props}
+                          >
+                            {children}
+                          </code>
+                        ) : (
+                          <pre className="bg-secondary p-2 rounded overflow-x-auto">
+                            <code {...props}>{children}</code>
+                          </pre>
+                        ),
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-2 border-primary pl-4 italic mb-2">
+                          {children}
+                        </blockquote>
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              )}
               {message.sources && (
-                <p className="text-xs mt-2">
+                <p className="text-xs mt-2 text-muted-foreground">
                   Sources: Pages {message.sources.map((s) => s.page).join(", ")}
                 </p>
               )}
