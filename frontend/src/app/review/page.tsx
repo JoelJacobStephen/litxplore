@@ -13,6 +13,7 @@ import { Paper } from "@/lib/types/paper";
 import { searchPapers, generateReview } from "@/lib/services/paper-service";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
+import { Loader2 } from "lucide-react";
 
 export default function ReviewPage() {
   const searchParams = useSearchParams();
@@ -25,6 +26,7 @@ export default function ReviewPage() {
     (state) => state.setGeneratedReview
   );
   const [displayedPapers, setDisplayedPapers] = useState<Paper[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Initialize selected papers from URL params
   useEffect(() => {
@@ -48,10 +50,20 @@ export default function ReviewPage() {
     }
   }, [suggestedPapers]);
 
-  const handleTopicSubmit = (e: React.FormEvent) => {
+  const handleTopicSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    setTopic(formData.get("topic") as string);
+    const newTopic = formData.get("topic") as string;
+    setTopic(newTopic);
+    setIsSearching(true);
+    try {
+      const papers = await searchPapers(newTopic);
+      setDisplayedPapers(papers);
+    } catch (error) {
+      console.error("Search error:", error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handlePaperSelect = (paperId: string, selected: boolean) => {
@@ -125,7 +137,16 @@ export default function ReviewPage() {
             defaultValue={topic}
             required
           />
-          <Button type="submit">Find Papers</Button>
+          <Button type="submit" disabled={isSearching}>
+            {isSearching ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              "Find Papers"
+            )}
+          </Button>
         </div>
       </form>
 
@@ -155,15 +176,12 @@ export default function ReviewPage() {
           </div>
 
           {/* Papers Grid */}
-          {isLoadingSuggested ? (
-            <div>Loading suggested papers...</div>
-          ) : (
-            <PaperGrid
-              papers={displayedPapers}
-              selectedPapers={selectedPapers}
-              onPaperSelect={handlePaperSelect}
-            />
-          )}
+          <PaperGrid
+            papers={displayedPapers}
+            selectedPapers={selectedPapers}
+            onPaperSelect={handlePaperSelect}
+            isLoading={isLoadingSuggested}
+          />
 
           {/* Generate Review Button */}
           {selectedPapers.size > 0 && (
@@ -172,9 +190,14 @@ export default function ReviewPage() {
               disabled={isGenerating}
               className="fixed bottom-6 right-6"
             >
-              {isGenerating
-                ? "Generating..."
-                : `Generate Review (${selectedPapers.size} papers)`}
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating Review...
+                </>
+              ) : (
+                `Generate Review (${selectedPapers.size} papers)`
+              )}
             </Button>
           )}
         </div>

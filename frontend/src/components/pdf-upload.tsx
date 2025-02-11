@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Paper } from "@/lib/types/paper";
 
@@ -59,7 +59,12 @@ export function PDFUpload({ onPaperAdd }: PDFUploadProps) {
         disabled={isUploading}
         className="max-w-xs"
       />
-      {isUploading && <Upload className="animate-spin" />}
+      {isUploading && (
+        <div className="flex items-center text-muted-foreground">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Uploading...
+        </div>
+      )}
     </div>
   );
 }

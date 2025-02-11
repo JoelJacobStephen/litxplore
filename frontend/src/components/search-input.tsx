@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
 import { searchPapers } from "@/lib/services/paper-service";
 import {
@@ -34,6 +34,7 @@ export function SearchInput({
 }: SearchInputProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const debouncedSearch = useDebounce(search, 300); // Reduced debounce time
 
   const { data: searchResults, isLoading } = useQuery({
@@ -58,6 +59,16 @@ export function SearchInput({
     onPaperSelect(paper.id, true);
     onAddPaper(paper);
     setOpen(false);
+  };
+
+  const handleSearch = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const results = await searchPapers(query);
+      // Process results...
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -116,6 +127,11 @@ export function SearchInput({
             )}
           </CommandList>
         </Command>
+        {isSearching && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
