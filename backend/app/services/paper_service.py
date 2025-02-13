@@ -197,7 +197,7 @@ class PaperService:
 
             # Parse the result
             lines = result.split("\n")
-            title = "Untitled Paper"
+            title = "Research Paper"
             authors = []
             summary = ""
 
@@ -217,7 +217,7 @@ class PaperService:
 
             # Use default values if extraction failed
             if not title:
-                title = file.filename or "Untitled Paper"
+                title = file.filename or "Research Paper"
             if not authors:
                 authors = ["Unknown Author"]
             if not summary:
