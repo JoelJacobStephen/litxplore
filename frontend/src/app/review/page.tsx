@@ -121,8 +121,7 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Topic Input Form */}
+    <div className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)] flex flex-col">
       <form onSubmit={handleTopicSubmit} className="space-y-4">
         <h2 className="text-2xl font-bold">1. Enter Research Topic</h2>
         <div className="flex gap-4">
@@ -145,9 +144,8 @@ export default function ReviewPage() {
         </div>
       </form>
 
-      {/* Paper Selection */}
       {topic && (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 flex flex-col">
           <h2 className="text-2xl font-bold">2. Select Papers</h2>
 
           <div className="flex flex-col gap-4">
@@ -170,30 +168,30 @@ export default function ReviewPage() {
             {selectedPapers.size} papers selected
           </div>
 
-          {/* Papers Grid */}
-          <PaperGrid
-            papers={displayedPapers}
-            selectedPapers={selectedPapers}
-            onPaperSelect={handlePaperSelect}
-            isLoading={isLoadingSuggested}
-          />
+          {/* Papers Grid with flex-1 to take remaining space */}
+          <div className="flex-1 overflow-auto">
+            <PaperGrid
+              papers={displayedPapers}
+              selectedPapers={selectedPapers}
+              onPaperSelect={handlePaperSelect}
+              isLoading={isLoadingSuggested}
+            />
+          </div>
 
-          {/* Generate Review Button */}
+          {/* Generate Review Button - keep at bottom */}
           {selectedPapers.size > 0 && (
-            <Button
-              onClick={handleGenerateReview}
-              disabled={isGenerating}
-              className="fixed bottom-6 right-6"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Review...
-                </>
-              ) : (
-                `Generate Review (${selectedPapers.size} papers)`
-              )}
-            </Button>
+            <div className="sticky bottom-6 flex justify-end">
+              <Button onClick={handleGenerateReview} disabled={isGenerating}>
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Review...
+                  </>
+                ) : (
+                  `Generate Review (${selectedPapers.size} papers)`
+                )}
+              </Button>
+            </div>
           )}
         </div>
       )}

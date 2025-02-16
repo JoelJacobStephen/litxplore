@@ -58,7 +58,7 @@ export function ChatInterface({
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
       {/* Header - Fixed */}
-      <div className="border-b p-4 flex-shrink-0">
+      <div className="border-b p-3 flex-shrink-0">
         <h2 className="text-lg font-semibold">Chat with Paper</h2>
         <p className="text-sm text-muted-foreground line-clamp-1">
           {paper.title}
@@ -66,7 +66,7 @@ export function ChatInterface({
       </div>
 
       {/* Messages - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
         {messages.map((message) => (
           <Card
             key={message.id}
@@ -128,15 +128,16 @@ export function ChatInterface({
       {/* Input Form - Fixed */}
       <form
         onSubmit={handleSubmit}
-        className="border-t p-4 flex gap-2 items-center flex-shrink-0"
+        className="border-t p-3 flex gap-2 items-center flex-shrink-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       >
         <Input
           value={input}
           onChange={handleInputChange}
-          placeholder="Ask a question about the paper..."
+          onKeyDown={handleKeyPress}
+          placeholder="Ask a question..."
           className="flex-1"
         />
-        <Button type="submit" size="icon">
+        <Button type="submit" size="icon" disabled={isLoading}>
           <Send className="h-4 w-4" />
         </Button>
       </form>

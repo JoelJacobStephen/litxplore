@@ -15,13 +15,15 @@ import { CircleCheckBig, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { ChatInterface } from "./chat-interface";
 import { useRouter } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton"; // Add this import
+import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 
 interface PaperGridProps {
   papers: ArxivPaper[];
   onPaperSelect?: (paperId: string, selected: boolean) => void;
   selectedPapers?: Set<string>;
-  isLoading?: boolean; // Add loading state interface
+  isLoading?: boolean;
 }
 
 export function PaperGrid({
@@ -34,6 +36,32 @@ export function PaperGrid({
   const [localSelectedPapers, setLocalSelectedPapers] = useState<Set<string>>(
     new Set()
   );
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: {
+      opacity: 0,
+      y: 20,
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut",
+      },
+    },
+  };
 
   const togglePaper = (paperId: string) => {
     const newSelected = new Set(localSelectedPapers);
@@ -54,84 +82,130 @@ export function PaperGrid({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+      >
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="relative">
-            <CardContent className="p-4 space-y-3">
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-20 w-full" />
-            </CardContent>
-          </Card>
+          <motion.div key={i} variants={cardVariants}>
+            <Card className="relative hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-4 space-y-3">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {papers?.map((paper) => (
-          <Card
-            key={paper.id}
-            className="flex flex-col bg-gradient-to-br from-zinc-900 to-slate-900"
-          >
-            <CardHeader>
-              <CardTitle className="line-clamp-2">{paper.title}</CardTitle>
-              <CardDescription>
-                {paper.authors.slice(0, 3).join(", ")}
-                {paper.authors.length > 3 && " et al."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <p className="text-sm text-muted-foreground line-clamp-4">
-                {paper.summary}
-              </p>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center gap-2">
-              {onPaperSelect && (
-                <Button
-                  variant={
-                    effectiveSelectedPapers.has(paper.id) ? "default" : "ghost"
-                  }
-                  size="sm"
-                  onClick={() => togglePaper(paper.id)}
-                >
-                  <CircleCheckBig className="h-4 w-4 mr-2" />
-                  {effectiveSelectedPapers.has(paper.id)
-                    ? "Selected"
-                    : "Select"}
-                </Button>
-              )}
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" asChild>
-                  {paper.link && (
-                    <Link
-                      href={paper.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View PDF
-                    </Link>
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+      >
+        <AnimatePresence>
+          {papers?.map((paper) => (
+            <motion.div
+              key={paper.id}
+              variants={cardVariants}
+              whileHover={{
+                scale: 1.02,
+                transition: { duration: 0.2 },
+              }}
+              className="h-full"
+            >
+              <Card className="flex flex-col h-full bg-gradient-to-br from-zinc-900 to-slate-900 border border-zinc-800 hover:border-zinc-700 transition-colors duration-300">
+                <CardHeader>
+                  <CardTitle className="line-clamp-2 text-xl font-serif">
+                    {paper.title}
+                  </CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    {paper.authors.slice(0, 3).join(", ")}
+                    {paper.authors.length > 3 && " et al."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <p className="text-sm text-zinc-300 line-clamp-4 leading-relaxed">
+                    {paper.summary}
+                  </p>
+                </CardContent>
+                <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-zinc-800">
+                  {onPaperSelect && (
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                      <Button
+                        variant={
+                          effectiveSelectedPapers.has(paper.id)
+                            ? "default"
+                            : "ghost"
+                        }
+                        size="sm"
+                        onClick={() => togglePaper(paper.id)}
+                        className="hover:bg-zinc-800 transition-colors"
+                      >
+                        <CircleCheckBig className="h-4 w-4 mr-2" />
+                        {effectiveSelectedPapers.has(paper.id)
+                          ? "Selected"
+                          : "Select"}
+                      </Button>
+                    </motion.div>
                   )}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => router.push(`/papers/${paper.id}/chat`)}
-                >
-                  Chat with Paper
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+                  <div className="flex gap-2">
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="hover:bg-zinc-800 transition-colors"
+                      >
+                        {paper.link && (
+                          <Link
+                            href={paper.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            View PDF
+                          </Link>
+                        )}
+                      </Button>
+                    </motion.div>
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => router.push(`/papers/${paper.id}/chat`)}
+                        className="bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                      >
+                        Chat with Paper
+                      </Button>
+                    </motion.div>
+                  </div>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
 
       {effectiveSelectedPapers.size > 0 && (
-        <div className="fixed bottom-6 right-6">
-          <Button asChild>
+        <motion.div
+          className="fixed bottom-6 right-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+        >
+          <Button
+            asChild
+            className="bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg"
+          >
             {Array.from(effectiveSelectedPapers).length > 0 && (
               <Link
                 href={`/review?papers=${Array.from(
@@ -142,7 +216,7 @@ export function PaperGrid({
               </Link>
             )}
           </Button>
-        </div>
+        </motion.div>
       )}
     </div>
   );

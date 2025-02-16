@@ -6,8 +6,9 @@ import { Paper } from "@/lib/types/paper";
 import { PDFViewer } from "@/components/pdf-viewer";
 import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import Link from "next/link";
+import { useMobile } from "@/hooks/use-mobile";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -15,6 +16,13 @@ export default function ChatPage() {
   const params = useParams();
   const [paper, setPaper] = useState<Paper | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPdf, setShowPdf] = useState(true);
+  const isMobile = useMobile();
+
+  useEffect(() => {
+    // Always show PDF on desktop, hide by default on mobile
+    setShowPdf(!isMobile);
+  }, [isMobile]);
 
   useEffect(() => {
     // Fetch paper details
@@ -50,24 +58,48 @@ export default function ChatPage() {
   if (!paper) return <div>Loading...</div>;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <div className="border-b p-4 flex-shrink-0">
+    <div className="h-[100dvh] flex flex-col bg-background">
+      <div className="border-b p-2 flex items-center justify-between flex-shrink-0">
         <Button variant="ghost" asChild>
           <Link href="/search">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Search
           </Link>
         </Button>
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowPdf(!showPdf)}
+            className="md:hidden"
+          >
+            {showPdf ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex md:flex-row flex-col overflow-hidden min-h-0">
         {/* PDF Viewer */}
-        <div className="flex-1 border-r">
-          <PDFViewer url={paper.url} />
-        </div>
+        {(showPdf || !isMobile) && (
+          <div
+            className={`${
+              isMobile ? "h-[50%]" : "flex-1"
+            } md:border-r overflow-hidden`}
+          >
+            <PDFViewer url={paper.url} />
+          </div>
+        )}
 
         {/* Chat Interface */}
-        <div className="w-[400px] flex-shrink-0">
+        <div
+          className={`${
+            isMobile && showPdf ? "h-[50%]" : "flex-1"
+          } md:w-[400px] md:flex-shrink-0 overflow-hidden`}
+        >
           <ChatInterface paper={paper} isEmbedded />
         </div>
       </div>

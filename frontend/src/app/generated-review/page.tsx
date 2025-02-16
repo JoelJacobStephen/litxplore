@@ -87,7 +87,7 @@ export default function GeneratedReviewPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 min-h-[calc(100vh-4rem)] flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">
           Literature Review: {generatedReview.topic}
@@ -112,7 +112,7 @@ export default function GeneratedReviewPage() {
         </DropdownMenu>
       </div>
 
-      <Tabs defaultValue="review" className="w-full">
+      <Tabs defaultValue="review" className="w-full flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="review">Review</TabsTrigger>
           <TabsTrigger value="citations">
@@ -120,8 +120,8 @@ export default function GeneratedReviewPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="review">
-          <Card className="p-6">
+        <TabsContent value="review" className="flex-1">
+          <Card className="p-6 h-full overflow-auto">
             <div className="prose prose-invert max-w-none">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -178,8 +178,8 @@ export default function GeneratedReviewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="citations">
-          <Card className="p-6">
+        <TabsContent value="citations" className="flex-1">
+          <Card className="p-6 h-full overflow-auto">
             <div className="grid gap-4">
               {generatedReview.citations.map((paper, index) => (
                 <div

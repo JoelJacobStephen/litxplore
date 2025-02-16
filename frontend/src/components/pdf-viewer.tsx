@@ -6,6 +6,13 @@ interface PDFViewerProps {
 
 export function PDFViewer({ url }: PDFViewerProps) {
   return (
-    <iframe src={url} className="w-full h-full" style={{ minHeight: "100%" }} />
+    <iframe
+      src={url}
+      className="w-full h-full"
+      style={{
+        height: "100%",
+        display: "block",
+      }}
+    />
   );
 }
