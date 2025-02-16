@@ -21,3 +21,9 @@ export interface ArxivPaper {
   published: string;
   link: string;
 }
+
+export interface ReviewContent {
+  content: string;
+  citations: Paper[];
+  topic: string;
+}

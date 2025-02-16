@@ -113,7 +113,7 @@ export default function ReviewPage() {
       setGeneratedReview({
         content: response.review,
         citations: response.citations,
-        topic: response.topic,
+        topic: topic, // Make sure topic is explicitly set here
       });
 
       // Navigate to review page without params

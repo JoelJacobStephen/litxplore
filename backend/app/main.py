@@ -6,7 +6,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from .api.v1.endpoints import review, papers  # Add papers import
+from .api.v1.endpoints import review, papers, documents  # Add documents import
 from .core.config import get_settings
 
 settings = get_settings()
@@ -51,6 +51,13 @@ app.include_router(
     papers.router,
     prefix=f"{settings.API_V1_STR}/papers",
     tags=["papers"]
+)
+
+# Add documents router
+app.include_router(
+    documents.router, 
+    prefix=f"{settings.API_V1_STR}/documents",
+    tags=["documents"]
 )
 
 @app.on_event("startup")

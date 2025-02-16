@@ -1,6 +1,9 @@
 from pydantic import BaseModel
-from typing import List
 from datetime import datetime
+from typing import List, Optional
+
+class Source(BaseModel):
+    page: int
 
 class Paper(BaseModel):
     id: str
@@ -8,14 +11,16 @@ class Paper(BaseModel):
     authors: List[str]
     summary: str
     published: datetime
-    url: str
+    url: Optional[str] = None
 
 class ChatRequest(BaseModel):
     message: str
 
-class Source(BaseModel):
-    page: int
-
 class ChatResponse(BaseModel):
     response: str
     sources: List[Source]
+
+class ReviewContent(BaseModel):
+    content: str
+    citations: List[Paper]
+    topic: str

@@ -1,0 +1,74 @@
+from fastapi import APIRouter, HTTPException, Response, status
+from typing import List
+from ....models.paper import Paper, ReviewContent
+from ....services.document_service import DocumentService
+from pydantic import BaseModel, Field, validator
+from datetime import datetime
+
+class DocumentGenerateRequest(BaseModel):
+    content: str = Field(..., min_length=1, description="The content of the review")
+    citations: List[Paper] = Field(..., min_items=1, description="List of cited papers")
+    topic: str = Field(..., min_length=1, description="The review topic")
+    format: str = Field(..., pattern="^(pdf|latex)$", description="Output format (pdf or latex)")
+
+    @validator('topic')
+    def topic_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Topic cannot be empty')
+        return v.strip()
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "content": "Literature review content...",
+                "citations": [
+                    {
+                        "id": "paper_id",
+                        "title": "Paper Title",
+                        "authors": ["Author 1", "Author 2"],
+                        "summary": "Paper summary",
+                        "published": datetime.now().isoformat(),
+                        "url": "http://example.com/paper.pdf"
+                    }
+                ],
+                "topic": "Research Topic",
+                "format": "pdf"
+            }
+        }
+
+router = APIRouter()
+document_service = DocumentService()
+
+@router.post("/generate", response_class=Response, status_code=status.HTTP_200_OK)
+async def generate_document(request: DocumentGenerateRequest):
+    """Generate a document in PDF or LaTeX format"""
+    try:
+        content = await document_service.generate_document(
+            content=request.content,
+            citations=request.citations,
+            topic=request.topic,
+            format=request.format
+        )
+        
+        media_type = "application/pdf" if request.format == "pdf" else "application/x-latex"
+        filename = f"literature-review.{request.format}"
+        
+        return Response(
+            content=content,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": media_type
+            }
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Document generation failed: {str(e)}"
+        )

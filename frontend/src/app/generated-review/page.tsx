@@ -9,7 +9,15 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { generateDocument } from "@/lib/services/document-service";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Download, FileDown } from "lucide-react";
+import { toast } from "sonner";
 
 export default function GeneratedReviewPage() {
   const router = useRouter();
@@ -22,9 +30,56 @@ export default function GeneratedReviewPage() {
     }
   }, [generatedReview, router]);
 
-  const handleDownloadPDF = () => {
-    // TODO: Implement PDF download
-    console.log("Download PDF");
+  const handleDownload = async (format: "pdf" | "latex") => {
+    try {
+      if (!generatedReview) {
+        toast.error("No review content available");
+        return;
+      }
+
+      console.log("Review data:", {
+        topic: generatedReview.topic,
+        contentLength: generatedReview.content.length,
+        citationsCount: generatedReview.citations.length,
+      });
+
+      if (!generatedReview.topic) {
+        toast.error("Review topic is required");
+        return;
+      }
+
+      toast.info(`Preparing ${format.toUpperCase()} document...`);
+
+      const blob = await generateDocument(
+        {
+          content: generatedReview.content,
+          citations: generatedReview.citations,
+          topic: generatedReview.topic, // Ensure topic is included
+        },
+        format
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `literature-review.${format}`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 0);
+
+      toast.success(`${format.toUpperCase()} downloaded successfully`);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download review"
+      );
+    }
   };
 
   if (!generatedReview) {
@@ -37,10 +92,24 @@ export default function GeneratedReviewPage() {
         <h1 className="text-3xl font-bold">
           Literature Review: {generatedReview.topic}
         </h1>
-        <Button onClick={handleDownloadPDF} variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Download PDF
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => handleDownload("pdf")}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Download PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDownload("latex")}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Download LaTeX
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Tabs defaultValue="review" className="w-full">
