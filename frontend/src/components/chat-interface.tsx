@@ -1,12 +1,15 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Loader2, XCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Send } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { cn } from "@/lib/utils";
 import { ChatMessageBubble } from "./chat-message-bubble";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -53,74 +56,90 @@ export function ChatInterface({
   };
 
   return (
-    <Card
-      className={cn(
-        "flex flex-col",
-        isEmbedded
-          ? "h-full rounded-xl border-2"
-          : "fixed inset-y-4 right-4 w-[400px] shadow-2xl"
-      )}
-    >
-      <CardHeader className="border-b px-4 py-3">
-        <CardTitle className="flex justify-between items-center text-lg font-medium">
-          <div className="truncate flex-1 pr-2">{paper.title}</div>
-          {!isEmbedded && onClose && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={onClose}
+    <div className="flex h-full flex-col overflow-hidden bg-background">
+      {/* Header - Fixed */}
+      <div className="border-b p-4 flex-shrink-0">
+        <h2 className="text-lg font-semibold">Chat with Paper</h2>
+        <p className="text-sm text-muted-foreground line-clamp-1">
+          {paper.title}
+        </p>
+      </div>
+
+      {/* Messages - Scrollable */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message) => (
+          <Card
+            key={message.id}
+            className={cn(
+              "p-4 max-w-[90%]",
+              message.role === "user"
+                ? "ml-auto bg-primary text-primary-foreground" // User message
+                : "bg-card text-card-foreground border" // Assistant message
+            )}
+          >
+            <div
+              className={cn(
+                "prose prose-sm max-w-none",
+                message.role === "user"
+                  ? "prose-invert" // Light text for user messages
+                  : "prose-stone dark:prose-invert" // Dark text for assistant messages
+              )}
             >
-              <XCircle className="h-5 w-5" />
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-
-      <ScrollArea className="flex-1 p-4">
-        <AnimatePresence initial={false}>
-          <div className="space-y-4">
-            {messages.map((message, i) => (
-              <ChatMessageBubble
-                key={i}
-                message={message}
-                isLoading={isLoading && i === messages.length - 1}
-              />
-            ))}
-          </div>
-        </AnimatePresence>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ children }) => (
+                    <p className="mb-2 last:mb-0">{children}</p>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="list-disc pl-4 mb-2">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal pl-4 mb-2">{children}</ol>
+                  ),
+                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                  code: ({ node, inline, className, children, ...props }) => (
+                    <code
+                      className={cn(
+                        "rounded text-sm",
+                        inline
+                          ? "bg-muted/50 px-1 py-0.5"
+                          : "bg-muted/20 block p-2",
+                        message.role === "user"
+                          ? "text-primary-foreground"
+                          : "text-foreground",
+                        className
+                      )}
+                      {...props}
+                    >
+                      {children}
+                    </code>
+                  ),
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          </Card>
+        ))}
         <div ref={messagesEndRef} />
-      </ScrollArea>
+      </div>
 
+      {/* Input Form - Fixed */}
       <form
         onSubmit={handleSubmit}
-        className="border-t bg-background p-4 flex gap-2 items-end"
+        className="border-t p-4 flex gap-2 items-center flex-shrink-0"
       >
-        <motion.div className="flex-1 relative" layout>
-          <textarea
-            ref={inputRef}
-            className="w-full resize-none rounded-lg border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary min-h-[2.5rem] max-h-[10rem]"
-            value={input}
-            onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask about this paper..."
-            rows={1}
-            disabled={isLoading}
-          />
-        </motion.div>
-        <Button
-          type="submit"
-          size="icon"
-          disabled={isLoading || !input.trim()}
-          className="h-10 w-10 rounded-lg shrink-0"
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+        <Input
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Ask a question about the paper..."
+          className="flex-1"
+        />
+        <Button type="submit" size="icon">
+          <Send className="h-4 w-4" />
         </Button>
       </form>
-    </Card>
+    </div>
   );
 }

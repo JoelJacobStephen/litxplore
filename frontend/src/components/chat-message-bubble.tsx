@@ -26,39 +26,74 @@ export function ChatMessageBubble({
           "max-w-[80%] rounded-lg p-4",
           isUser
             ? "bg-primary text-primary-foreground rounded-br-none"
-            : "bg-muted rounded-bl-none",
+            : "bg-muted text-foreground rounded-bl-none",
           isLoading && "animate-pulse"
         )}
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
+          className={cn(isUser && "text-secondary")}
           components={{
             p: ({ children }) => (
-              <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>
+              <p
+                className={cn(
+                  "mb-2 last:mb-0 leading-relaxed",
+                  isUser && "text-secondary"
+                )}
+              >
+                {children}
+              </p>
             ),
             a: ({ href, children }) => (
               <a
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:underline"
+                className={cn(
+                  "hover:underline",
+                  isUser ? "text-blue-200" : "text-blue-400"
+                )}
               >
                 {children}
               </a>
             ),
             code: ({ children }) => (
-              <code className="bg-muted-foreground/20 rounded px-1 py-0.5">
+              <code
+                className={cn(
+                  "rounded px-1 py-0.5",
+                  isUser ? "bg-primary-foreground/20" : "bg-muted-foreground/20"
+                )}
+              >
                 {children}
               </code>
             ),
             ul: ({ children }) => (
-              <ul className="list-disc pl-4 mb-2">{children}</ul>
+              <ul
+                className={cn(
+                  "list-disc pl-4 mb-2",
+                  isUser && "text-secondary"
+                )}
+              >
+                {children}
+              </ul>
             ),
             ol: ({ children }) => (
-              <ol className="list-decimal pl-4 mb-2">{children}</ol>
+              <ol
+                className={cn(
+                  "list-decimal pl-4 mb-2",
+                  isUser && "text-secondary"
+                )}
+              >
+                {children}
+              </ol>
             ),
             blockquote: ({ children }) => (
-              <blockquote className="border-l-2 border-primary pl-2 italic">
+              <blockquote
+                className={cn(
+                  "border-l-2 pl-2 italic",
+                  isUser ? "border-secondary text-secondary" : "border-primary"
+                )}
+              >
                 {children}
               </blockquote>
             ),

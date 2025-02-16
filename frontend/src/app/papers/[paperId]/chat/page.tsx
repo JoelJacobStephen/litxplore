@@ -50,8 +50,8 @@ export default function ChatPage() {
   if (!paper) return <div>Loading...</div>;
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="border-b p-4">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <div className="border-b p-4 flex-shrink-0">
         <Button variant="ghost" asChild>
           <Link href="/search">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -60,14 +60,14 @@ export default function ChatPage() {
         </Button>
       </div>
 
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* PDF Viewer */}
         <div className="flex-1 border-r">
           <PDFViewer url={paper.url} />
         </div>
 
         {/* Chat Interface */}
-        <div className="w-[400px]">
+        <div className="w-[400px] flex-shrink-0">
           <ChatInterface paper={paper} isEmbedded />
         </div>
       </div>
