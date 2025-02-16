@@ -91,16 +91,19 @@ export interface ReviewRequest {
 }
 
 export interface ReviewResponse {
-  review: string;
+  review: string; // Changed from 'content' to 'review'
   citations: Paper[];
   topic: string;
 }
 
-export const generateReview = async (
-  request: ReviewRequest
-): Promise<ReviewResponse> => {
+export async function generateReview({
+  papers,
+  topic,
+}: {
+  papers: string[];
+  topic: string;
+}): Promise<ReviewResponse> {
   try {
-    // Update the URL to include /api/v1 prefix
     const response = await fetch(
       `${API_BASE_URL}/api/v1/review/generate-review`,
       {
@@ -108,18 +111,21 @@ export const generateReview = async (
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({
+          paper_ids: papers, // Changed from 'papers' to 'paper_ids'
+          topic,
+        }),
       }
     );
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || "Failed to generate review");
+      throw new Error(JSON.stringify(error));
     }
 
-    return response.json();
+    return await response.json();
   } catch (error) {
     console.error("Error generating review:", error);
     throw error;
   }
-};
+}

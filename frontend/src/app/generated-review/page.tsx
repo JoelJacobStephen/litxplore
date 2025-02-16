@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { PaperGrid } from "@/components/paper-grid";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useReviewStore } from "@/lib/stores/review-store";
@@ -18,17 +17,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
+
+const Loading = dynamic(() => import("./loading"), { ssr: false });
 
 export default function GeneratedReviewPage() {
   const router = useRouter();
   const generatedReview = useReviewStore((state) => state.generatedReview);
+  const [isLoading, setIsLoading] = useState(!generatedReview);
 
-  // Redirect if no review data is present
   useEffect(() => {
-    if (!generatedReview) {
+    if (!generatedReview && !isLoading) {
       router.push("/review");
     }
-  }, [generatedReview, router]);
+  }, [generatedReview, router, isLoading]);
+
+  useEffect(() => {
+    if (generatedReview) {
+      setIsLoading(false);
+    }
+  }, [generatedReview]);
 
   const handleDownload = async (format: "pdf" | "latex") => {
     try {
@@ -36,12 +44,6 @@ export default function GeneratedReviewPage() {
         toast.error("No review content available");
         return;
       }
-
-      console.log("Review data:", {
-        topic: generatedReview.topic,
-        contentLength: generatedReview.content.length,
-        citationsCount: generatedReview.citations.length,
-      });
 
       if (!generatedReview.topic) {
         toast.error("Review topic is required");
@@ -52,14 +54,13 @@ export default function GeneratedReviewPage() {
 
       const blob = await generateDocument(
         {
-          content: generatedReview.content,
+          content: generatedReview.review, // Changed from content to review
           citations: generatedReview.citations,
-          topic: generatedReview.topic, // Ensure topic is included
+          topic: generatedReview.topic,
         },
         format
       );
 
-      // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -67,7 +68,6 @@ export default function GeneratedReviewPage() {
       document.body.appendChild(a);
       a.click();
 
-      // Cleanup
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
@@ -82,8 +82,8 @@ export default function GeneratedReviewPage() {
     }
   };
 
-  if (!generatedReview) {
-    return null;
+  if (isLoading) {
+    return <Loading />;
   }
 
   return (
@@ -122,18 +122,18 @@ export default function GeneratedReviewPage() {
 
         <TabsContent value="review">
           <Card className="p-6">
-            <div className="prose prose-invert max-w-none prose-headings:text-primary prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-blockquote:border-l-primary prose-blockquote:border-l-4 prose-blockquote:pl-4 prose-blockquote:italic">
+            <div className="prose prose-invert max-w-none">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                   h1: ({ children }) => (
-                    <h1 className="text-3xl font-bold mb-4">{children}</h1>
+                    <h1 className="text-3xl font-bold mb-6">{children}</h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="text-2xl font-semibold mb-3">{children}</h2>
+                    <h2 className="text-2xl font-semibold mb-4">{children}</h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="text-xl font-semibold mb-2">{children}</h3>
+                    <h3 className="text-xl font-semibold mb-3">{children}</h3>
                   ),
                   p: ({ children }) => (
                     <p className="mb-4 leading-7">{children}</p>
@@ -144,10 +144,35 @@ export default function GeneratedReviewPage() {
                   ol: ({ children }) => (
                     <ol className="list-decimal pl-6 mb-4">{children}</ol>
                   ),
-                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                  li: ({ children }) => <li className="mb-2">{children}</li>,
+                  code: ({ inline, children }) =>
+                    inline ? (
+                      <code className="rounded px-1.5 py-0.5 text-sm font-mono bg-muted">
+                        {children}
+                      </code>
+                    ) : (
+                      <pre className="rounded-lg p-4 mb-4 overflow-x-auto bg-muted">
+                        <code className="bg-transparent">{children}</code>
+                      </pre>
+                    ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-primary pl-4 italic my-6">
+                      {children}
+                    </blockquote>
+                  ),
+                  a: ({ href, children }) => (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 underline underline-offset-4 hover:text-blue-400/80 transition-colors"
+                    >
+                      {children}
+                    </a>
+                  ),
                 }}
               >
-                {generatedReview.content}
+                {generatedReview.review}
               </ReactMarkdown>
             </div>
           </Card>

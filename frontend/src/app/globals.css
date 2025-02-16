@@ -44,30 +44,81 @@
   }
 }
 
-/* Markdown styling */
-.prose-invert {
-  --tw-prose-body: rgb(var(--foreground));
-  --tw-prose-headings: rgb(var(--primary));
-  --tw-prose-links: rgb(var(--primary));
-  --tw-prose-bold: rgb(var(--foreground));
-  --tw-prose-quotes: rgb(var(--muted-foreground));
-  --tw-prose-quote-borders: rgb(var(--primary));
-  --tw-prose-counters: rgb(var(--muted-foreground));
-  --tw-prose-bullets: rgb(var(--muted-foreground));
-  --tw-prose-hr: rgb(var(--border));
-  --tw-prose-th-borders: rgb(var(--border));
-  --tw-prose-td-borders: rgb(var(--border));
-}
+@layer components {
+  .prose {
+    @apply text-foreground max-w-none;
+  }
 
-.prose-invert a {
-  text-decoration-line: underline;
-  text-underline-offset: 4px;
-}
+  .prose h1 {
+    @apply text-3xl font-bold mb-6 text-foreground;
+  }
 
-.prose-invert blockquote {
-  font-style: italic;
-  border-left-width: 4px;
-  border-left-color: rgb(var(--primary));
-  padding-left: 1rem;
-  margin: 1.5rem 0;
+  .prose h2 {
+    @apply text-2xl font-semibold mb-4 text-foreground;
+  }
+
+  .prose h3 {
+    @apply text-xl font-semibold mb-3 text-foreground;
+  }
+
+  .prose p {
+    @apply mb-4 leading-7 text-foreground;
+  }
+
+  .prose ul {
+    @apply list-disc pl-6 mb-4 text-foreground;
+  }
+
+  .prose ol {
+    @apply list-decimal pl-6 mb-4 text-foreground;
+  }
+
+  .prose li {
+    @apply mb-2 text-foreground;
+  }
+
+  .prose code {
+    @apply rounded px-1.5 py-0.5 text-sm font-mono bg-muted text-foreground;
+  }
+
+  .prose pre {
+    @apply rounded-lg p-4 mb-4 overflow-x-auto bg-muted;
+  }
+
+  .prose pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-primary pl-4 italic my-6 text-muted-foreground;
+  }
+
+  .prose a {
+    @apply text-blue-400 underline underline-offset-4 hover:text-blue-400/80 transition-colors;
+  }
+
+  .prose strong {
+    @apply text-foreground font-bold;
+  }
+
+  /* Dark mode specific styles */
+  .prose.prose-invert {
+    @apply text-foreground;
+  }
+
+  .prose.prose-invert a {
+    @apply text-blue-400;
+  }
+
+  .prose.prose-invert blockquote {
+    @apply border-primary text-muted-foreground;
+  }
+
+  .prose.prose-invert code {
+    @apply bg-muted text-foreground;
+  }
+
+  .prose.prose-invert pre {
+    @apply bg-muted;
+  }
 }

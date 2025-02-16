@@ -14,6 +14,7 @@ import { searchPapers, generateReview } from "@/lib/services/paper-service";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ReviewPage() {
   const searchParams = useSearchParams();
@@ -95,33 +96,27 @@ export default function ReviewPage() {
   };
 
   const handleGenerateReview = async () => {
-    if (selectedPapers.size === 0 || !topic) return;
+    if (!selectedPapers.size) {
+      toast.error("Please select at least one paper");
+      return;
+    }
 
-    setIsGenerating(true);
+    // Navigate immediately to generated-review page
+    router.push("/generated-review");
+
     try {
-      // Convert Set to Array and ensure IDs are strings
-      const paperIds = Array.from(selectedPapers).map((id) => String(id));
-
-      const request: ReviewRequest = {
-        paper_ids: paperIds,
-        topic: topic,
-      };
-
-      const response = await generateReview(request);
-
-      // Store in global state
-      setGeneratedReview({
-        content: response.review,
-        citations: response.citations,
-        topic: topic, // Make sure topic is explicitly set here
+      const response = await generateReview({
+        papers: Array.from(selectedPapers),
+        topic: topic || "Literature Review",
       });
 
-      // Navigate to review page without params
-      router.push("/generated-review");
+      useReviewStore.setState({
+        generatedReview: response,
+      });
     } catch (error) {
       console.error("Failed to generate review:", error);
-    } finally {
-      setIsGenerating(false);
+      toast.error("Failed to generate review. Please try again.");
+      router.push("/review"); // Return to review page on error
     }
   };
 
