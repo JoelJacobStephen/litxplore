@@ -8,9 +8,10 @@ export interface Paper {
 }
 
 export interface ChatMessage {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   sources?: Array<{ page: number }>;
+  id?: string;
 }
 
 export interface ArxivPaper {

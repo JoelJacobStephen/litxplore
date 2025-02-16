@@ -1,5 +1,5 @@
 import arxiv
-from typing import List, Dict, Any  # Add Dict and Any to imports
+from typing import List, Dict, Any, AsyncGenerator  # Add Dict, Any, and AsyncGenerator to imports
 import tempfile
 import os
 import requests
@@ -9,12 +9,15 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain.chains import ConversationalRetrievalChain
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.prompts import PromptTemplate  # Add this import
 from ..models.paper import Paper, ChatResponse, Source
 from ..core.config import get_settings
 from fastapi import HTTPException
 import hashlib
 from fastapi import UploadFile
 from datetime import datetime
+import json
+import asyncio
 
 settings = get_settings()
 
@@ -156,6 +159,84 @@ class PaperService:
         finally:
             import os
             os.unlink(temp_pdf_path)
+
+    async def chat_with_paper_stream(self, paper_id: str, message: str) -> AsyncGenerator[Dict[str, Any], None]:
+        """Chat with paper with streaming support and improved prompting."""
+        try:
+            # Fetch paper and prepare documents
+            client = arxiv.Client()
+            search = arxiv.Search(id_list=[paper_id])
+            paper = next(client.results(search))
+            
+            # Download PDF
+            response = requests.get(paper.pdf_url)
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
+                temp_pdf.write(response.content)
+                temp_pdf_path = temp_pdf.name
+                
+            try:
+                # Load and process PDF
+                loader = PyPDFLoader(temp_pdf_path)
+                documents = loader.load()
+                
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1000,
+                    chunk_overlap=200,
+                    separators=["\n\n", "\n", " ", ""]
+                )
+                texts = text_splitter.split_documents(documents)
+                
+                # Create vector store
+                vectorstore = FAISS.from_documents(texts, self.embeddings)
+                
+                # Create system prompt template
+                chat_prompt = PromptTemplate.from_template(
+                    """You are a knowledgeable research paper expert. Answer the following question based on the paper content:
+                    
+                    Context: {context}
+                    Question: {question}
+                    
+                    Provide a clear, detailed response with specific references to the paper where relevant."""
+                )
+
+                # Create QA chain with prompt
+                qa_chain = ConversationalRetrievalChain.from_llm(
+                    llm=self.llm,
+                    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
+                    return_source_documents=True,
+                    combine_docs_chain_kwargs={"prompt": chat_prompt}
+                )
+
+                # Get streamed response
+                result = await qa_chain.ainvoke({
+                    "question": message,
+                    "chat_history": []
+                })
+
+                # Stream the response
+                response = result["answer"]
+                chunk_size = 100
+
+                for i in range(0, len(response), chunk_size):
+                    chunk = response[i:i + chunk_size]
+                    yield {
+                        "content": chunk,
+                        "sources": [
+                            {"page": doc.metadata.get("page", 0)}
+                            for doc in result["source_documents"]
+                        ] if i == 0 else []  # Only send sources with first chunk
+                    }
+                    await asyncio.sleep(0.05)
+
+            finally:
+                if os.path.exists(temp_pdf_path):
+                    os.unlink(temp_pdf_path)
+
+        except Exception as e:
+            yield {
+                "content": f"Error: {str(e)}",
+                "sources": []
+            }
 
     async def process_uploaded_pdf(self, file: UploadFile) -> Paper:
         """Process an uploaded PDF file and convert it to a Paper object."""

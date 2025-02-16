@@ -57,6 +57,34 @@ export async function chatWithPaper(
   return response.json();
 }
 
+export const streamChat = async (
+  paperId: string,
+  message: string
+): Promise<Response> => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/papers/${paperId}/chat`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || "Failed to get chat response");
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Chat error:", error);
+    throw error;
+  }
+};
+
 export interface ReviewRequest {
   paper_ids: string[];
   topic: string;

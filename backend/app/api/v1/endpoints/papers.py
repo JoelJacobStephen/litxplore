@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, File, UploadFile
-from typing import List, Optional
+from fastapi.responses import StreamingResponse
+from typing import List, Optional, AsyncGenerator
 import arxiv
+import json
 from ....models.paper import Paper, ChatRequest, ChatResponse
 from ....services.paper_service import PaperService
 from ....core.config import get_settings
@@ -60,11 +62,22 @@ async def get_paper(paper_id: str):
             detail=f"Failed to fetch paper: {str(e)}"
         )
 
-@router.post("/{paper_id}/chat", response_model=ChatResponse)
+@router.post("/{paper_id}/chat")
 async def chat_with_paper(paper_id: str, request: ChatRequest):
+    """Chat endpoint with streaming support"""
     try:
-        response = await paper_service.chat_with_paper(paper_id, request.message)
-        return response
+        async def generate() -> AsyncGenerator[str, None]:
+            async for chunk in paper_service.chat_with_paper_stream(
+                paper_id, 
+                request.message
+            ):
+                yield f"data: {json.dumps(chunk)}\n\n"
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream"
+        )
+        
     except Exception as e:
         raise HTTPException(
             status_code=500,
