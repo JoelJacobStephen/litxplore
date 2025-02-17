@@ -13,17 +13,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { CircleCheckBig, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { ChatInterface } from "./chat-interface";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { useInView } from "react-intersection-observer";
 
 interface PaperGridProps {
   papers: ArxivPaper[];
   onPaperSelect?: (paperId: string, selected: boolean) => void;
   selectedPapers?: Set<string>;
   isLoading?: boolean;
+  enableSelection?: boolean;
+  enableChat?: boolean;
 }
 
 export function PaperGrid({
@@ -31,6 +31,8 @@ export function PaperGrid({
   onPaperSelect,
   selectedPapers = new Set(),
   isLoading,
+  enableSelection = false,
+  enableChat = false,
 }: PaperGridProps) {
   const router = useRouter();
   const [localSelectedPapers, setLocalSelectedPapers] = useState<Set<string>>(
@@ -138,7 +140,7 @@ export function PaperGrid({
                   </p>
                 </CardContent>
                 <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-zinc-800">
-                  {onPaperSelect && (
+                  {enableSelection && (
                     <motion.div whileTap={{ scale: 0.95 }}>
                       <Button
                         variant={
@@ -148,7 +150,7 @@ export function PaperGrid({
                         }
                         size="sm"
                         onClick={() => togglePaper(paper.id)}
-                        className="hover:bg-zinc-800 transition-colors"
+                        className=" transition-colors"
                       >
                         <CircleCheckBig className="h-4 w-4 mr-2" />
                         {effectiveSelectedPapers.has(paper.id)
@@ -177,16 +179,20 @@ export function PaperGrid({
                         )}
                       </Button>
                     </motion.div>
-                    <motion.div whileTap={{ scale: 0.95 }}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => router.push(`/papers/${paper.id}/chat`)}
-                        className="bg-zinc-800 hover:bg-zinc-700 transition-colors"
-                      >
-                        Chat with Paper
-                      </Button>
-                    </motion.div>
+                    {enableChat && (
+                      <motion.div whileTap={{ scale: 0.95 }}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            router.push(`/papers/${paper.id}/chat`)
+                          }
+                          className="bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                        >
+                          Chat with Paper
+                        </Button>
+                      </motion.div>
+                    )}
                   </div>
                 </CardFooter>
               </Card>
@@ -194,30 +200,6 @@ export function PaperGrid({
           ))}
         </AnimatePresence>
       </motion.div>
-
-      {effectiveSelectedPapers.size > 0 && (
-        <motion.div
-          className="fixed bottom-6 right-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-        >
-          <Button
-            asChild
-            className="bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg"
-          >
-            {Array.from(effectiveSelectedPapers).length > 0 && (
-              <Link
-                href={`/review?papers=${Array.from(
-                  effectiveSelectedPapers
-                ).join(",")}`}
-              >
-                Generate Review ({effectiveSelectedPapers.size} papers)
-              </Link>
-            )}
-          </Button>
-        </motion.div>
-      )}
     </div>
   );
 }

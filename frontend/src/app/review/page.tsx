@@ -146,7 +146,7 @@ export default function ReviewPage() {
 
       {topic && (
         <div className="space-y-4 flex-1 flex flex-col">
-          <h2 className="text-2xl font-bold">2. Select Papers</h2>
+          <h2 className="text-2xl mt-5 font-bold">2. Select Papers</h2>
 
           <div className="flex flex-col gap-4">
             {/* Search Additional Papers */}
@@ -175,6 +175,8 @@ export default function ReviewPage() {
               selectedPapers={selectedPapers}
               onPaperSelect={handlePaperSelect}
               isLoading={isLoadingSuggested}
+              enableSelection={true}
+              enableChat={false}
             />
           </div>
 
