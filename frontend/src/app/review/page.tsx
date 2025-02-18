@@ -14,6 +14,7 @@ import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 export default function ReviewPage() {
   const searchParams = useSearchParams();
@@ -123,109 +124,111 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)] flex flex-col">
-      <form onSubmit={handleTopicSubmit} className="space-y-4">
-        <h2 className="text-2xl font-bold">1. Enter Research Topic</h2>
-        <div className="flex gap-4">
-          <Input
-            name="topic"
-            placeholder="Enter your research topic..."
-            defaultValue={topic}
-            required
-          />
-          <Button type="submit" disabled={isSearching}>
-            {isSearching ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Searching...
-              </>
-            ) : (
-              "Find Papers"
-            )}
-          </Button>
-        </div>
-      </form>
-
-      {topic && (
-        <div className="space-y-4 flex-1 flex flex-col">
-          <h2 className="text-2xl mt-5 font-bold">2. Select Papers</h2>
-
-          <div className="flex flex-col gap-4">
-            {/* Search Additional Papers */}
-            <SearchInput
-              onPaperSelect={handlePaperSelect}
-              selectedPapers={selectedPapers}
-              onAddPaper={handleAddPaper}
+    <ProtectedRoute>
+      <div className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)] flex flex-col">
+        <form onSubmit={handleTopicSubmit} className="space-y-4">
+          <h2 className="text-2xl font-bold">1. Enter Research Topic</h2>
+          <div className="flex gap-4">
+            <Input
+              name="topic"
+              placeholder="Enter your research topic..."
+              defaultValue={topic}
+              required
             />
-
-            {/* Add PDF Upload */}
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Upload PDF</h3>
-              <PDFUpload onPaperAdd={handleAddPaper} />
-            </div>
+            <Button type="submit" disabled={isSearching}>
+              {isSearching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                "Find Papers"
+              )}
+            </Button>
           </div>
+        </form>
 
-          {/* Selected Papers Count */}
-          <div className="text-sm text-muted-foreground">
-            {selectedPapers.size} papers selected
-          </div>
+        {topic && (
+          <div className="space-y-4 flex-1 flex flex-col">
+            <h2 className="text-2xl mt-5 font-bold">2. Select Papers</h2>
 
-          {/* Papers Grid with flex-1 to take remaining space */}
-          <div className="flex-1 overflow-auto">
-            <PaperGrid
-              papers={displayedPapers}
-              selectedPapers={selectedPapers}
-              onPaperSelect={handlePaperSelect}
-              isLoading={isLoadingSuggested}
-              enableSelection={true}
-              enableChat={false}
-            />
-          </div>
+            <div className="flex flex-col gap-4">
+              {/* Search Additional Papers */}
+              <SearchInput
+                onPaperSelect={handlePaperSelect}
+                selectedPapers={selectedPapers}
+                onAddPaper={handleAddPaper}
+              />
 
-          {/* Generate Review Button - keep at bottom */}
-          {selectedPapers.size > 0 && (
-            <div className="sticky bottom-6 flex justify-end">
-              <Button onClick={handleGenerateReview} disabled={isGenerating}>
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating Review...
-                  </>
-                ) : (
-                  `Generate Review (${selectedPapers.size} papers)`
-                )}
-              </Button>
+              {/* Add PDF Upload */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Upload PDF</h3>
+                <PDFUpload onPaperAdd={handleAddPaper} />
+              </div>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Review Result */}
-      {review && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">3. Literature Review</h2>
-          <Card className="p-6">
-            <div className="prose prose-invert max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: review.review }} />
+            {/* Selected Papers Count */}
+            <div className="text-sm text-muted-foreground">
+              {selectedPapers.size} papers selected
             </div>
-            {review.citations && review.citations.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-xl font-bold mb-4">References</h3>
-                <ul className="space-y-2">
-                  {review.citations.map((paper, index) => (
-                    <li
-                      key={paper.id}
-                      className="text-sm text-muted-foreground"
-                    >
-                      [{index + 1}] {paper.title} - {paper.authors.join(", ")}
-                    </li>
-                  ))}
-                </ul>
+
+            {/* Papers Grid with flex-1 to take remaining space */}
+            <div className="flex-1 overflow-auto">
+              <PaperGrid
+                papers={displayedPapers}
+                selectedPapers={selectedPapers}
+                onPaperSelect={handlePaperSelect}
+                isLoading={isLoadingSuggested}
+                enableSelection={true}
+                enableChat={false}
+              />
+            </div>
+
+            {/* Generate Review Button - keep at bottom */}
+            {selectedPapers.size > 0 && (
+              <div className="sticky bottom-6 flex justify-end">
+                <Button onClick={handleGenerateReview} disabled={isGenerating}>
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating Review...
+                    </>
+                  ) : (
+                    `Generate Review (${selectedPapers.size} papers)`
+                  )}
+                </Button>
               </div>
             )}
-          </Card>
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+
+        {/* Review Result */}
+        {review && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">3. Literature Review</h2>
+            <Card className="p-6">
+              <div className="prose prose-invert max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: review.review }} />
+              </div>
+              {review.citations && review.citations.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-xl font-bold mb-4">References</h3>
+                  <ul className="space-y-2">
+                    {review.citations.map((paper, index) => (
+                      <li
+                        key={paper.id}
+                        className="text-sm text-muted-foreground"
+                      >
+                        [{index + 1}] {paper.title} - {paper.authors.join(", ")}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+      </div>
+    </ProtectedRoute>
   );
 }
