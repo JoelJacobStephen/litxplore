@@ -118,80 +118,52 @@ export function SearchInput({
             className="border-b border-zinc-700 bg-transparent text-zinc-100 placeholder:text-zinc-400"
           />
           <CommandList className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-600 scrollbar-track-zinc-800">
-            <AnimatePresence mode="wait">
-              {search.length <= 2 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <CommandEmpty className="py-6 text-zinc-300 text-center">
-                    Enter at least 3 characters to search...
-                  </CommandEmpty>
-                </motion.div>
-              ) : isLoading ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <CommandEmpty className="py-6 text-zinc-400">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-                  </CommandEmpty>
-                </motion.div>
-              ) : !searchResults?.length ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <CommandEmpty className="py-6 text-zinc-400">
-                    No papers found.
-                  </CommandEmpty>
-                </motion.div>
-              ) : (
-                <motion.div
-                  variants={searchResultsVariants}
-                  initial="hidden"
-                  animate="show"
-                >
-                  <CommandGroup>
-                    {searchResults.map((paper) => (
-                      <motion.div key={paper.id} variants={searchItemVariants}>
-                        <CommandItem
-                          onSelect={() => handlePaperSelect(paper)}
-                          className="flex flex-col items-start gap-1 p-3 hover:bg-zinc-700/50 transition-colors duration-200 cursor-pointer"
+            {isLoading ? (
+              <CommandEmpty className="py-6 text-zinc-400">
+                <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                <span>Searching papers...</span>
+              </CommandEmpty>
+            ) : !searchResults || searchResults.length === 0 ? (
+              <CommandEmpty className="py-6 text-zinc-400">
+                {search.length <= 2
+                  ? "Enter at least 3 characters to search..."
+                  : "No papers found."}
+              </CommandEmpty>
+            ) : (
+              <CommandGroup>
+                {searchResults.map((paper) => (
+                  <CommandItem
+                    key={paper.id}
+                    onSelect={() => handlePaperSelect(paper)}
+                    className="flex flex-col items-start gap-1 p-3 hover:bg-zinc-700/50 transition-colors duration-200 cursor-pointer"
+                  >
+                    <div className="w-full flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="font-medium line-clamp-1 text-zinc-100">
+                          {paper.title}
+                        </div>
+                        <div className="text-sm text-zinc-300">
+                          {paper.authors.slice(0, 3).join(", ")}
+                          {paper.authors.length > 3 && " et al."}
+                        </div>
+                      </div>
+                      {selectedPapers.has(paper.id) ? (
+                        <div className="text-xs text-blue-300 font-medium px-2 py-1 bg-blue-500/20 rounded-full">
+                          Selected
+                        </div>
+                      ) : (
+                        <motion.div
+                          whileHover={{ x: 3 }}
+                          className="text-zinc-300"
                         >
-                          <div className="w-full flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <div className="font-medium line-clamp-1 text-zinc-100">
-                                {paper.title}
-                              </div>
-                              <div className="text-sm text-zinc-300">
-                                {paper.authors.slice(0, 3).join(", ")}
-                                {paper.authors.length > 3 && " et al."}
-                              </div>
-                            </div>
-                            {selectedPapers.has(paper.id) ? (
-                              <div className="text-xs text-blue-300 font-medium px-2 py-1 bg-blue-500/20 rounded-full">
-                                Selected
-                              </div>
-                            ) : (
-                              <motion.div
-                                whileHover={{ x: 3 }}
-                                className="text-zinc-300"
-                              >
-                                <ArrowRight className="h-4 w-4" />
-                              </motion.div>
-                            )}
-                          </div>
-                        </CommandItem>
-                      </motion.div>
-                    ))}
-                  </CommandGroup>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                          <ArrowRight className="h-4 w-4" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

@@ -1,0 +1,102 @@
+## Project Overview
+
+@LitXplore is a Next.js/FastAPI app that generates academic literature reviews using LangChain. The system:
+
+- Accepts user topics via Next.js UI
+- Processes requests via FastAPI backend
+- Uses LangChain for paper retrieval/analysis
+- Generates citations in APA/MLA format
+- Maintains strict type safety
+
+## Frontend Rules (Next.js)
+
+**Component Structure**
+
+- Use app router with strict TypeScript
+- Create /api routes for backend communication
+- Implement loading states with react-spinners
+- Form handling with react-hook-form
+
+**UI Requirements**
+
+- Implement search input with debounce
+- Display results in card grid layout
+- Citation formatting with react-markdown
+- Use shadcn/ui + Tailwind for styling
+- Mobile-first responsive design
+
+## Backend Rules (FastAPI)
+
+**API Standards**
+
+- All routes async/await
+- Rate limiting via slowapi
+- Request validation with Pydantic
+- Error handling middleware
+- Swagger documentation
+
+**LangChain Implementation**
+
+- Use arXiv API document loader
+- Implement map-reduce summarization
+- Maintain citation metadata
+- Cache responses with Redis
+- Use constitutional AI for fact-checking
+
+## Quality Controls
+
+- TypeScript strict mode required
+- Python type hints enforced
+- 90% test coverage minimum
+- Pre-commit hooks with linting
+- All API endpoints documented
+- Ban `any` type declarations
+
+## Workflow Optimization
+
+1. Start with core summarization logic
+2. Build citation engine
+3. Create UI components
+4. Implement auth layer
+5. Add export functionality
+
+## Project Structure
+
+```
+lit-ai/
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── search/
+│   │   │   ├── review/
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── components/
+│   │   │   ├── ui/
+│   │   ├── lib/
+│   │   │   ├── services/
+│   │   │   ├── types/
+│   │   └── hooks/
+│   ├── public/
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── tailwind.config.ts
+│
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       └── endpoints/
+│   │   ├── core/
+│   │   ├── models/
+│   │   ├── services/
+│   │   ├── utils/
+│   │   └── main.py
+│   ├── requirements.txt
+│   └── .env
+│
+├── .gitignore
+├── .env.example
+├── README.md
+└── .cursorrules
+```
