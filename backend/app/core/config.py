@@ -9,13 +9,20 @@ load_dotenv()
 class Settings(BaseSettings):
     # API Settings
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "LitXplore API"
+    PROJECT_NAME: str = "LitXplore"
     
     # CORS Settings
-    CORS_ORIGINS: List[str]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
+    
+    # Database Settings
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: str = "5432"
+    POSTGRES_DB: str = "litxplore_db"
     
     # API Keys
     GEMINI_API_KEY: Optional[str] = None
@@ -24,7 +31,7 @@ class Settings(BaseSettings):
     # Redis Settings
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
-    REDIS_PASSWORD: Optional[str] = None
+    REDIS_PASSWORD: str = "optional-password"
     
     # Rate Limiting
     RATE_LIMIT_PER_DAY: int = 100
@@ -44,3 +51,5 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
+
+settings = get_settings()

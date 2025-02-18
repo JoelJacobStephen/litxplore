@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
@@ -8,8 +8,13 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 from .api.v1.endpoints import review, papers, documents  # Add documents import
 from .core.config import get_settings
+from app.db.database import engine, Base, get_db
+from sqlalchemy.orm import Session
 
 settings = get_settings()
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -59,6 +64,21 @@ app.include_router(
     prefix=f"{settings.API_V1_STR}/documents",
     tags=["documents"]
 )
+
+# Health check endpoint
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+# Database test endpoint
+@app.get("/db-test")
+def test_db(db: Session = Depends(get_db)):
+    try:
+        # Try to execute a simple query
+        db.execute("SELECT 1")
+        return {"status": "Database connection successful"}
+    except Exception as e:
+        return {"status": "Database connection failed", "error": str(e)}
 
 @app.on_event("startup")
 async def startup_event():
