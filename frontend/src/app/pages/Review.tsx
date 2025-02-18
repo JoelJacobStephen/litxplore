@@ -1,14 +1,14 @@
 import { Container } from "@mui/material";
 import { ReviewDisplay } from "../../components/ReviewDisplay";
-// ...existing imports...
+import { useReviewStore } from "@/lib/stores/review-store";
 
 export const Review = () => {
-  // ...existing code...
+  const generatedReview = useReviewStore((state) => state.generatedReview);
 
   return (
     <Container maxWidth="lg">
       {/* ...existing code... */}
-      {review && <ReviewDisplay review={review} />}
+      {generatedReview && <ReviewDisplay review={generatedReview.content} />}
       {/* ...existing code... */}
     </Container>
   );

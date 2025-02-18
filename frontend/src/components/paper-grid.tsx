@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PaperGridProps {
-  papers: ArxivPaper[];
+  papers: (Paper | ArxivPaper)[];
   onPaperSelect?: (paperId: string, selected: boolean) => void;
   selectedPapers?: Set<string>;
   isLoading?: boolean;
@@ -167,9 +167,9 @@ export function PaperGrid({
                         asChild
                         className="hover:bg-zinc-800 transition-colors"
                       >
-                        {paper.link && (
+                        {(paper.link || paper.url) && (
                           <Link
-                            href={paper.link}
+                            href={paper.link || paper.url}
                             target="_blank"
                             rel="noopener noreferrer"
                           >

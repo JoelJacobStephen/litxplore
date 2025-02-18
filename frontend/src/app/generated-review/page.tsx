@@ -54,7 +54,7 @@ export default function GeneratedReviewPage() {
 
       const blob = await generateDocument(
         {
-          content: generatedReview.review, // Changed from content to review
+          content: generatedReview.content, // Use content instead of review
           citations: generatedReview.citations,
           topic: generatedReview.topic,
         },
@@ -82,7 +82,7 @@ export default function GeneratedReviewPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !generatedReview) {
     return <Loading />;
   }
 
@@ -90,7 +90,7 @@ export default function GeneratedReviewPage() {
     <div className="container mx-auto py-8 min-h-[calc(100vh-4rem)] flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">
-          Literature Review: {generatedReview.topic}
+          Literature Review: {generatedReview?.topic || "Untitled"}
         </h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -116,7 +116,7 @@ export default function GeneratedReviewPage() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="review">Review</TabsTrigger>
           <TabsTrigger value="citations">
-            References ({generatedReview.citations.length})
+            References ({generatedReview?.citations?.length || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -145,16 +145,35 @@ export default function GeneratedReviewPage() {
                     <ol className="list-decimal pl-6 mb-4">{children}</ol>
                   ),
                   li: ({ children }) => <li className="mb-2">{children}</li>,
-                  code: ({ inline, children }) =>
-                    inline ? (
-                      <code className="rounded px-1.5 py-0.5 text-sm font-mono bg-muted">
+                  code: ({
+                    node,
+                    inline,
+                    className,
+                    children,
+                    ...props
+                  }: {
+                    node?: any;
+                    inline?: boolean;
+                    className?: string;
+                    children: React.ReactNode;
+                  }) => {
+                    // Add proper typing for code component
+                    const match = /language-(\w+)/.exec(className || "");
+                    return inline ? (
+                      <code
+                        className="rounded px-1.5 py-0.5 text-sm font-mono bg-muted"
+                        {...props}
+                      >
                         {children}
                       </code>
                     ) : (
                       <pre className="rounded-lg p-4 mb-4 overflow-x-auto bg-muted">
-                        <code className="bg-transparent">{children}</code>
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
                       </pre>
-                    ),
+                    );
+                  },
                   blockquote: ({ children }) => (
                     <blockquote className="border-l-4 border-primary pl-4 italic my-6">
                       {children}
@@ -172,7 +191,7 @@ export default function GeneratedReviewPage() {
                   ),
                 }}
               >
-                {generatedReview.review}
+                {generatedReview?.content || ""}
               </ReactMarkdown>
             </div>
           </Card>
@@ -181,7 +200,7 @@ export default function GeneratedReviewPage() {
         <TabsContent value="citations" className="flex-1">
           <Card className="p-6 h-full overflow-auto">
             <div className="grid gap-4">
-              {generatedReview.citations.map((paper, index) => (
+              {generatedReview?.citations?.map((paper, index) => (
                 <div
                   key={paper.id}
                   className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"

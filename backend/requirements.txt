@@ -16,6 +16,7 @@ slowapi
 openai
 google-generativeai
 langchain
+langserve
 langchain-community
 langchain-openai
 langchain-google-genai

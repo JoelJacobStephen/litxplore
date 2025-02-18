@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return new StreamingTextResponse(stream, { headers: data.headers });
+    return new StreamingTextResponse(stream); // Remove the headers option as it's not supported
   } catch (error) {
     console.error("Chat error:", error);
     throw error;

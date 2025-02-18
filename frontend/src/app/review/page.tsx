@@ -9,7 +9,7 @@ import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Paper } from "@/lib/types/paper";
+import { Paper, ReviewResponse } from "@/lib/types/paper";
 import { searchPapers, generateReview } from "@/lib/services/paper-service";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";

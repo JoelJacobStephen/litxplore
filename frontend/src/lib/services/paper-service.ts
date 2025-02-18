@@ -129,3 +129,13 @@ export async function generateReview({
     throw error;
   }
 }
+
+export async function getReview(id: string): Promise<ReviewResponse> {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/review/${id}`
+  );
+  if (!response.ok) {
+    throw new Error("Failed to fetch review");
+  }
+  return response.json();
+}

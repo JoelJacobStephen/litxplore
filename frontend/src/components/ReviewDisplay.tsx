@@ -8,7 +8,7 @@ import { Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ReviewDisplayProps {
-  review: string;
+  review: string; // Make sure this matches the type from ReviewStore
 }
 
 export const ReviewDisplay = ({ review }: ReviewDisplayProps) => {
