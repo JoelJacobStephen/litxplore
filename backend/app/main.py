@@ -69,3 +69,16 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup services on shutdown."""
     pass
+
+# Add host and port settings
+HOST = "0.0.0.0"  # Allow connections from any IP
+PORT = int(os.getenv("PORT", 8000))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        host=HOST,
+        port=PORT,
+        reload=True
+    )

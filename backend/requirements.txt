@@ -1,12 +1,12 @@
 # Core FastAPI
 fastapi
-uvicorn
+uvicorn>=0.24.0
 pydantic
 pydantic-settings
 python-multipart
 
 # Environment and utils
-python-dotenv
+python-dotenv>=1.0.0
 aiohttp
 numpy
 redis
