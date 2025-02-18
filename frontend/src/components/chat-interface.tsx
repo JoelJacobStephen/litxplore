@@ -10,35 +10,31 @@ import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
-import { ChatMessageBubble } from "./chat-message-bubble";
-import { motion, AnimatePresence } from "framer-motion";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatInterfaceProps {
   paper: Paper;
-  onClose?: () => void;
   isEmbedded?: boolean;
+  onClose?: () => void; // Add this line
 }
 
 export function ChatInterface({
   paper,
-  onClose,
   isEmbedded = false,
+  onClose, // Add this to destructuring
 }: ChatInterfaceProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
-      api: "/api/chat",
-      body: {
-        paperId: paper.id,
-      },
-      onFinish: () => {
-        scrollToBottom();
-        inputRef.current?.focus();
-      },
-    });
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    api: "/api/chat",
+    body: {
+      paperId: paper.id,
+    },
+    onFinish: () => {
+      scrollToBottom();
+      inputRef.current?.focus();
+    },
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,21 +44,25 @@ export function ChatInterface({
     scrollToBottom();
   }, [messages]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e as any);
-    }
-  };
-
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background">
+    <div
+      className={`flex h-full flex-col overflow-hidden bg-background ${
+        isEmbedded ? "" : "border rounded-lg"
+      }`}
+    >
       {/* Header - Fixed */}
-      <div className="border-b p-4 flex-shrink-0">
-        <h2 className="text-lg font-semibold">Chat with Paper</h2>
-        <p className="text-sm text-muted-foreground line-clamp-1">
-          {paper.title}
-        </p>
+      <div className="border-b p-4 flex-shrink-0 flex justify-between items-center">
+        <div>
+          <h2 className="text-lg font-semibold">Chat with Paper</h2>
+          <p className="text-sm text-muted-foreground line-clamp-1">
+            {paper.title}
+          </p>
+        </div>
+        {onClose && (
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ✕
+          </Button>
+        )}
       </div>
 
       {/* Messages - Scrollable */}
@@ -98,7 +98,17 @@ export function ChatInterface({
                     <ol className="list-decimal pl-4 mb-2">{children}</ol>
                   ),
                   li: ({ children }) => <li className="mb-1">{children}</li>,
-                  code: ({ node, inline, className, children, ...props }) => (
+                  code: ({
+                    inline,
+                    className,
+                    children,
+                    ...props
+                  }: {
+                    inline?: boolean;
+                    className?: string;
+                    children: React.ReactNode;
+                    [key: string]: any;
+                  }) => (
                     <code
                       className={cn(
                         "rounded text-sm",

@@ -4,8 +4,28 @@ export interface Paper {
   authors: string[];
   summary: string;
   published: string;
-  url: string;
-  link?: string; // Add link property that maps to url
+  link?: string;
+  url?: string;
+}
+
+export interface ReviewResponse {
+  review: string;
+  citations: Paper[];
+  topic: string;
+}
+
+export interface ChatRequest {
+  message: string;
+}
+
+export interface ChatResponse {
+  response: string;
+  sources: Array<{ page: number }>;
+}
+
+export interface ReviewRequest {
+  paper_ids: string[];
+  topic: string;
 }
 
 export interface ChatMessage {
@@ -20,13 +40,7 @@ export interface ArxivPaper extends Paper {
 }
 
 export interface ReviewContent {
-  content: string;
-  citations: Paper[];
-  topic: string;
-}
-
-export interface ReviewResponse {
-  content: string; // Changed from 'review' to 'content'
+  review: string; // Changed from content to review
   citations: Paper[];
   topic: string;
 }

@@ -1,5 +1,9 @@
-import { Paper } from "../types/paper";
-import { Paper, ReviewRequest, ReviewResponse } from "@/lib/types/paper";
+import {
+  Paper,
+  ReviewResponse,
+  ChatResponse,
+  ReviewRequest,
+} from "@/lib/types/paper";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -27,11 +31,6 @@ export async function searchPapers(query: string): Promise<Paper[]> {
 
 export interface ChatRequest {
   message: string;
-}
-
-export interface ChatResponse {
-  response: string;
-  sources: Array<{ page: number }>;
 }
 
 export async function chatWithPaper(
@@ -85,17 +84,6 @@ export const streamChat = async (
   }
 };
 
-export interface ReviewRequest {
-  paper_ids: string[];
-  topic: string;
-}
-
-export interface ReviewResponse {
-  review: string; // Changed from 'content' to 'review'
-  citations: Paper[];
-  topic: string;
-}
-
 export async function generateReview({
   papers,
   topic,
@@ -112,9 +100,9 @@ export async function generateReview({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          paper_ids: papers, // Changed from 'papers' to 'paper_ids'
+          paper_ids: papers,
           topic,
-        }),
+        } as ReviewRequest),
       }
     );
 

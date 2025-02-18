@@ -40,7 +40,7 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
           <Card className="p-6">
             <div className="prose prose-invert max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {review.content}
+                {review.review}
               </ReactMarkdown>
             </div>
           </Card>

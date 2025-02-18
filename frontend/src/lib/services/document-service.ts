@@ -18,7 +18,7 @@ export async function generateDocument(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        content: review.content,
+        content: review.review, // Changed from review.content to review.review
         citations: review.citations,
         topic: review.topic,
         format: format,

@@ -9,6 +9,7 @@ export const mockPapers: Paper[] = [
       "This paper presents a comprehensive survey of recent advances in deep learning approaches for computer vision tasks...",
     published: "2024-03-15T00:00:00Z",
     link: "https://arxiv.org/pdf/2403.12345",
+    url: "https://arxiv.org/abs/2403.12345",
   },
   {
     id: "arxiv:2403.12346",
@@ -18,6 +19,7 @@ export const mockPapers: Paper[] = [
       "We review the current state of quantum computing and discuss potential future developments...",
     published: "2024-03-14T00:00:00Z",
     link: "https://arxiv.org/pdf/2403.12346",
+    url: "https://arxiv.org/abs/2403.12346",
   },
   {
     id: "arxiv:2403.12347",
@@ -27,5 +29,6 @@ export const mockPapers: Paper[] = [
       "This study explores the application of machine learning techniques in climate change prediction and modeling...",
     published: "2024-03-13T00:00:00Z",
     link: "https://arxiv.org/pdf/2403.12347",
+    url: "https://arxiv.org/abs/2403.12347",
   },
 ];

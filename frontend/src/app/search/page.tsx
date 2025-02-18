@@ -114,7 +114,12 @@ export default function SearchPage() {
         papers && (
           <PaperGrid
             papers={papers}
-            onPaperSelect={(paper) => setSelectedPaper(paper)}
+            onPaperSelect={(paperId, selected) => {
+              const paper = papers.find((p) => p.id === paperId);
+              if (paper && selected) {
+                setSelectedPaper(paper);
+              }
+            }}
             enableChat={true}
           />
         )

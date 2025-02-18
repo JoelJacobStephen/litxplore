@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { PaperGrid } from "@/components/paper-grid";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Paper, ReviewResponse } from "@/lib/types/paper";
+import { Paper } from "@/lib/types/paper";
 import { searchPapers, generateReview } from "@/lib/services/paper-service";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
@@ -21,11 +20,8 @@ export default function ReviewPage() {
   const router = useRouter();
   const [topic, setTopic] = useState("");
   const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
+  const review = useReviewStore((state) => state.generatedReview);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [review, setReview] = useState<ReviewResponse | null>(null);
-  const setGeneratedReview = useReviewStore(
-    (state) => state.setGeneratedReview
-  );
   const [displayedPapers, setDisplayedPapers] = useState<Paper[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -101,7 +97,7 @@ export default function ReviewPage() {
       return;
     }
 
-    // Navigate immediately to generated-review page
+    setIsGenerating(true);
     router.push("/generated-review");
 
     try {
@@ -111,12 +107,18 @@ export default function ReviewPage() {
       });
 
       useReviewStore.setState({
-        generatedReview: response,
+        generatedReview: {
+          review: response.review, // Changed from content to review
+          citations: response.citations || [],
+          topic: topic || "Literature Review",
+        },
       });
     } catch (error) {
       console.error("Failed to generate review:", error);
       toast.error("Failed to generate review. Please try again.");
       router.push("/review"); // Return to review page on error
+    } finally {
+      setIsGenerating(false);
     }
   };
 

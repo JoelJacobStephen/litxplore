@@ -3,12 +3,12 @@ import { Paper } from "../types/paper";
 
 interface ReviewState {
   generatedReview: {
-    content: string;
+    review: string;
     citations: Paper[];
     topic: string;
   } | null;
   setGeneratedReview: (review: {
-    content: string;
+    review: string;
     citations: Paper[];
     topic: string;
   }) => void;

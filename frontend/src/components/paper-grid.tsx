@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArxivPaper } from "@/lib/types/paper";
+import { ArxivPaper, Paper } from "@/lib/types/paper";
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface PaperGridProps {
   papers: (Paper | ArxivPaper)[];
-  onPaperSelect?: (paperId: string, selected: boolean) => void;
+  onPaperSelect?: (paperID: string, selected: boolean) => void;
   selectedPapers?: Set<string>;
   isLoading?: boolean;
   enableSelection?: boolean;

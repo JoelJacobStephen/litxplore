@@ -23,7 +23,7 @@ import {
 import { useDebounce } from "@/hooks/use-debounce"; // We'll create this hook
 
 interface SearchInputProps {
-  onPaperSelect: (paper: Paper, selected: boolean) => void;
+  onPaperSelect: (paperId: string, selected: boolean) => void;
   selectedPapers: Set<string>;
   onAddPaper: (paper: Paper) => void; // New prop for adding papers to grid
 }
@@ -35,7 +35,6 @@ export function SearchInput({
 }: SearchInputProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   const { data: searchResults, isLoading } = useQuery({
@@ -55,19 +54,10 @@ export function SearchInput({
 
   // Handle paper selection
   const handlePaperSelect = (paper: Paper) => {
-    onPaperSelect(paper, true);
+    const paperId = paper.id;
+    onPaperSelect(paperId, true);
     onAddPaper(paper);
     setOpen(false);
-  };
-
-  const handleSearch = async (query: string) => {
-    setIsSearching(true);
-    try {
-      const results = await searchPapers(query);
-      // Process results...
-    } finally {
-      setIsSearching(false);
-    }
   };
 
   const searchButtonVariants = {

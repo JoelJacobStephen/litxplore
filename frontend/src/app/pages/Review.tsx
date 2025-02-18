@@ -8,7 +8,7 @@ export const Review = () => {
   return (
     <Container maxWidth="lg">
       {/* ...existing code... */}
-      {generatedReview && <ReviewDisplay review={generatedReview.content} />}
+      {generatedReview && <ReviewDisplay review={generatedReview.review} />}
       {/* ...existing code... */}
     </Container>
   );

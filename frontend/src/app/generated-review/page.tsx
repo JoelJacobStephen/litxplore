@@ -54,7 +54,7 @@ export default function GeneratedReviewPage() {
 
       const blob = await generateDocument(
         {
-          content: generatedReview.content, // Use content instead of review
+          review: generatedReview.review, // Update to use review
           citations: generatedReview.citations,
           topic: generatedReview.topic,
         },
@@ -146,19 +146,15 @@ export default function GeneratedReviewPage() {
                   ),
                   li: ({ children }) => <li className="mb-2">{children}</li>,
                   code: ({
-                    node,
                     inline,
                     className,
                     children,
                     ...props
                   }: {
-                    node?: any;
                     inline?: boolean;
                     className?: string;
                     children: React.ReactNode;
                   }) => {
-                    // Add proper typing for code component
-                    const match = /language-(\w+)/.exec(className || "");
                     return inline ? (
                       <code
                         className="rounded px-1.5 py-0.5 text-sm font-mono bg-muted"
@@ -191,7 +187,7 @@ export default function GeneratedReviewPage() {
                   ),
                 }}
               >
-                {generatedReview?.content || ""}
+                {generatedReview?.review || ""}
               </ReactMarkdown>
             </div>
           </Card>
