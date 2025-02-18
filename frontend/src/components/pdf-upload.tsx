@@ -8,6 +8,8 @@ interface PDFUploadProps {
   onPaperAdd: (paper: Paper) => void;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export function PDFUpload({ onPaperAdd }: PDFUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
 
@@ -26,13 +28,10 @@ export function PDFUpload({ onPaperAdd }: PDFUploadProps) {
     formData.append("file", file);
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/v1/papers/upload",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/v1/papers/upload`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error("Failed to upload PDF");

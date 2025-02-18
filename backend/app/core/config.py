@@ -1,7 +1,10 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional, List
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 class Settings(BaseSettings):
     # API Settings
@@ -9,16 +12,14 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "LitXplore API"
     
     # CORS Settings
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: List[str]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
     
-    # Gemini API
-    GEMINI_API_KEY: str
-    
-    # OpenAI API
-    OPENAI_API_KEY: str
+    # API Keys
+    GEMINI_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = None
 
     # Redis Settings
     REDIS_HOST: str = "localhost"
@@ -37,6 +38,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        env_file_encoding = "utf-8"
 
 
 @lru_cache()
