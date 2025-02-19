@@ -21,17 +21,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useDebounce } from "@/hooks/use-debounce"; // We'll create this hook
+import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
+import { toast } from "sonner";
 
 interface SearchInputProps {
   onPaperSelect: (paperId: string, selected: boolean) => void;
   selectedPapers: Set<string>;
   onAddPaper: (paper: Paper) => void; // New prop for adding papers to grid
+  currentPaperCount: number; // Add this new prop
 }
 
 export function SearchInput({
   onPaperSelect,
   selectedPapers,
   onAddPaper,
+  currentPaperCount,
 }: SearchInputProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -54,6 +58,16 @@ export function SearchInput({
 
   // Handle paper selection
   const handlePaperSelect = (paper: Paper) => {
+    if (
+      !selectedPapers.has(paper.id) &&
+      currentPaperCount >= MAX_PAPERS_FOR_REVIEW
+    ) {
+      toast.error(
+        `You can only select up to ${MAX_PAPERS_FOR_REVIEW} papers for review`
+      );
+      return;
+    }
+
     const paperId = paper.id;
     onPaperSelect(paperId, true);
     onAddPaper(paper);

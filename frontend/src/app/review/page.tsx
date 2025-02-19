@@ -15,6 +15,7 @@ import { PDFUpload } from "@/components/pdf-upload";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
 
 export default function ReviewPage() {
   const searchParams = useSearchParams();
@@ -65,6 +66,13 @@ export default function ReviewPage() {
   };
 
   const handlePaperSelect = (paperId: string, selected: boolean) => {
+    if (selected && selectedPapers.size >= MAX_PAPERS_FOR_REVIEW) {
+      toast.error(
+        `You can only select up to ${MAX_PAPERS_FOR_REVIEW} papers for review`
+      );
+      return;
+    }
+
     const newSelected = new Set(selectedPapers);
     if (selected) {
       newSelected.add(paperId);
@@ -75,12 +83,16 @@ export default function ReviewPage() {
   };
 
   const handleAddPaper = (paper: Paper) => {
+    if (selectedPapers.size >= MAX_PAPERS_FOR_REVIEW) {
+      toast.error(
+        `You can only select up to ${MAX_PAPERS_FOR_REVIEW} papers for review`
+      );
+      return;
+    }
+
     setDisplayedPapers((prev) => {
-      // Only add if not already in the list
       if (!prev.find((p) => p.id === paper.id)) {
-        // Add the paper to displayed papers
         const newPapers = [...prev, paper];
-        // Ensure the paper is selected
         setSelectedPapers((prevSelected) => {
           const newSelected = new Set(prevSelected);
           newSelected.add(paper.id);
@@ -158,18 +170,22 @@ export default function ReviewPage() {
                 onPaperSelect={handlePaperSelect}
                 selectedPapers={selectedPapers}
                 onAddPaper={handleAddPaper}
+                currentPaperCount={selectedPapers.size}
               />
 
               {/* Add PDF Upload */}
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">Upload PDF</h3>
-                <PDFUpload onPaperAdd={handleAddPaper} />
+                <PDFUpload
+                  onPaperAdd={handleAddPaper}
+                  currentPaperCount={selectedPapers.size}
+                />
               </div>
             </div>
 
             {/* Selected Papers Count */}
             <div className="text-sm text-muted-foreground">
-              {selectedPapers.size} papers selected
+              {selectedPapers.size} of {MAX_PAPERS_FOR_REVIEW} papers selected
             </div>
 
             {/* Papers Grid with flex-1 to take remaining space */}
