@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 200
     SIMILARITY_THRESHOLD: float = 0.75
     MAX_PAPERS: int = 10
+
+    # Clerk Settings
+    CLERK_ISSUER: str = "https://warm-ram-79.clerk.accounts.dev"
     
     class Config:
         env_file = ".env"
