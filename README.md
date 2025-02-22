@@ -55,7 +55,7 @@ LitXplorer is a research exploration platform that simplifies discovering and sy
 
 - Node.js 16+
 - npm or yarn
-- Clerk account and credentials
+- Clerk account
 
 ### Backend
 
