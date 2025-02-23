@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     # Clerk Settings
     CLERK_ISSUER: str = "https://warm-ram-79.clerk.accounts.dev"
+    CLERK_FRONTEND_API: str = "warm-ram-79"
+    CLERK_SECRET_KEY: str = ""
+    CLERK_PUBLISHABLE_KEY: str = ""
     
     class Config:
         env_file = ".env"

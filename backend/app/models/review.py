@@ -1,8 +1,27 @@
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
+from app.db.base_class import Base
 from .paper import Paper
 
+# SQLAlchemy Model
+class Review(Base):
+    __tablename__ = "literature_reviews"
 
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String(255), nullable=False)
+    topic = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    citations = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="reviews")
+
+# Pydantic Models
 class ReviewRequest(BaseModel):
     paper_ids: List[str]
     topic: str = Field(..., min_length=3, max_length=500, description="Research topic for literature review")

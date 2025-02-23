@@ -8,15 +8,22 @@ from alembic import context
 # Append the parent directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import models
-from app.db.schema import Base
+# Import Base and models
+from app.db.base_class import Base
+from app.models.user import User
+from app.models.review import Review
 from app.core.config import settings
 
 # this is the Alembic Config object
 config = context.config
 
-# Setup SQLAlchemy URL
-config.set_main_option("sqlalchemy.url", f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}")
+# Modify the database URL configuration with error handling
+try:
+    database_url = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+    config.set_main_option("sqlalchemy.url", database_url)
+except Exception as e:
+    print(f"Error configuring database URL: {e}")
+    raise
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
