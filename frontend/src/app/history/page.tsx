@@ -18,7 +18,18 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ReviewDisplay } from "@/components/ReviewDisplay";
 import { Paper } from "@/lib/types/paper";
 import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Review {
   id: number;
@@ -39,6 +50,7 @@ export default function HistoryPage() {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [parsedCitations, setParsedCitations] = useState<Paper[]>([]);
+  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -89,6 +101,29 @@ export default function HistoryPage() {
     setIsDialogOpen(true);
   };
 
+  const handleDeleteClick = (e: React.MouseEvent, reviewId: number) => {
+    e.stopPropagation(); // Prevent card click event
+    setDeletingReviewId(reviewId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingReviewId) return;
+
+    try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("No authentication token available");
+      }
+
+      await ReviewService.deleteReview(token, deletingReviewId);
+      setReviews(reviews.filter((review) => review.id !== deletingReviewId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete review");
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
   if (!isLoaded || loading) {
     return (
       <div className="container mx-auto p-6 space-y-4">
@@ -128,9 +163,17 @@ export default function HistoryPage() {
           {reviews.map((review) => (
             <Card
               key={review.id}
-              className="flex flex-col cursor-pointer hover:border-primary transition-colors"
+              className="flex flex-col cursor-pointer group hover:border-primary transition-colors relative"
               onClick={() => handleReviewClick(review)}
             >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                onClick={(e) => handleDeleteClick(e, review.id)}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
               <CardHeader>
                 <CardTitle className="line-clamp-2">{review.title}</CardTitle>
                 <CardDescription>
@@ -175,6 +218,30 @@ export default function HistoryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={deletingReviewId !== null}
+        onOpenChange={() => setDeletingReviewId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              review.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
