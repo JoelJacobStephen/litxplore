@@ -67,4 +67,27 @@ export class ReviewService {
 
     return response.json();
   }
+
+  static async getReviewById(token: string, reviewId: number): Promise<Review> {
+    if (!token) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(`${this.BASE_URL}/api/v1/review/${reviewId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || "Failed to fetch review");
+    }
+
+    return response.json();
+  }
 }

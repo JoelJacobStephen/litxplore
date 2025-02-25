@@ -1,12 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
-import { PaperGrid } from "@/components/paper-grid";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { getReview } from "@/lib/services/paper-service";
+import { ReviewDisplay } from "@/components/ReviewDisplay";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ReviewPage({ params }: { params: { id: string } }) {
   const { data: review, isLoading } = useQuery({
@@ -15,43 +12,30 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
   });
 
   if (isLoading) {
-    return <div>Loading review...</div>;
+    return (
+      <div className="container mx-auto py-8">
+        <Skeleton className="h-12 w-2/3 mb-6" />
+        <Skeleton className="h-[600px] w-full" />
+      </div>
+    );
   }
 
   if (!review) {
-    return <div>Review not found</div>;
+    return (
+      <div className="container mx-auto py-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          Review not found
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">
-        Literature Review: {review.topic}
-      </h1>
-
-      <Tabs defaultValue="review" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="review">Review</TabsTrigger>
-          <TabsTrigger value="citations">
-            Citations ({review.citations.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="review">
-          <Card className="p-6">
-            <div className="prose prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {review.review}
-              </ReactMarkdown>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="citations">
-          <Card className="p-6">
-            <PaperGrid papers={review.citations} />
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <ReviewDisplay
+      review={review.review}
+      topic={review.topic}
+      citations={review.citations}
+      showDownload={true}
+    />
   );
 }

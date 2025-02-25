@@ -14,6 +14,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ReviewDisplay } from "@/components/ReviewDisplay";
+import { Paper } from "@/lib/types/paper";
+import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface Review {
   id: number;
@@ -31,6 +36,9 @@ export default function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const router = useRouter();
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [parsedCitations, setParsedCitations] = useState<Paper[]>([]);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -59,7 +67,27 @@ export default function HistoryPage() {
     if (isSignedIn) {
       fetchReviews();
     }
-  }, [isLoaded, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, router, getToken]);
+
+  useEffect(() => {
+    if (selectedReview?.citations) {
+      try {
+        // Parse the citations string to an array of Paper objects
+        const citations = JSON.parse(selectedReview.citations) as Paper[];
+        setParsedCitations(citations);
+      } catch (err) {
+        console.error("Failed to parse citations:", err);
+        setParsedCitations([]);
+      }
+    } else {
+      setParsedCitations([]);
+    }
+  }, [selectedReview]);
+
+  const handleReviewClick = (review: Review) => {
+    setSelectedReview(review);
+    setIsDialogOpen(true);
+  };
 
   if (!isLoaded || loading) {
     return (
@@ -98,7 +126,11 @@ export default function HistoryPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {reviews.map((review) => (
-            <Card key={review.id} className="flex flex-col">
+            <Card
+              key={review.id}
+              className="flex flex-col cursor-pointer hover:border-primary transition-colors"
+              onClick={() => handleReviewClick(review)}
+            >
               <CardHeader>
                 <CardTitle className="line-clamp-2">{review.title}</CardTitle>
                 <CardDescription>
@@ -113,7 +145,9 @@ export default function HistoryPage() {
                     <h4 className="font-semibold mb-2">Topic</h4>
                     <p className="text-sm text-gray-600 mb-4">{review.topic}</p>
                     <h4 className="font-semibold mb-2">Review</h4>
-                    <p className="text-sm text-gray-600">{review.content}</p>
+                    <p className="text-sm text-gray-600 line-clamp-6">
+                      {review.content}
+                    </p>
                   </div>
                 </ScrollArea>
               </CardContent>
@@ -121,6 +155,26 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-6xl w-full h-[90vh] overflow-auto p-8">
+          <DialogTitle>{selectedReview?.title}</DialogTitle>
+          <DialogDescription>
+            Created{" "}
+            {selectedReview &&
+              formatDistanceToNow(new Date(selectedReview.created_at), {
+                addSuffix: true,
+              })}
+          </DialogDescription>
+          {selectedReview && (
+            <ReviewDisplay
+              review={selectedReview.content}
+              topic={selectedReview.topic}
+              citations={parsedCitations}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
