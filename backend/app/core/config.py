@@ -8,45 +8,47 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # API Settings
-    API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "LitXplore"
+    API_V1_STR: str
+    PROJECT_NAME: str
     
     # CORS Settings
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
-    CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: List[str] = ["*"]
-    CORS_ALLOW_HEADERS: List[str] = ["*"]
+    CORS_ORIGINS: List[str]
+    CORS_ALLOW_CREDENTIALS: bool
+    CORS_ALLOW_METHODS: List[str]
+    CORS_ALLOW_HEADERS: List[str]
     
     # Database Settings
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_HOST: str = "localhost"
-    POSTGRES_PORT: str = "5432"
-    POSTGRES_DB: str = "litxplore_db"
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_HOST: str
+    POSTGRES_PORT: str
+    POSTGRES_DB: str
     
     # API Keys
-    GEMINI_API_KEY: Optional[str] = None
-    OPENAI_API_KEY: Optional[str] = None
+    GEMINI_API_KEY: str
+    OPENAI_API_KEY: str
 
     # Redis Settings
-    REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
-    REDIS_PASSWORD: str = "optional-password"
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_PASSWORD: str
     
     # Rate Limiting
-    RATE_LIMIT_PER_DAY: int = 100
+    RATE_LIMIT_PER_DAY: int
     
     # LangChain Settings
-    CHUNK_SIZE: int = 1000
-    CHUNK_OVERLAP: int = 200
-    SIMILARITY_THRESHOLD: float = 0.75
-    MAX_PAPERS: int = 10
+    CHUNK_SIZE: int
+    CHUNK_OVERLAP: int
+    SIMILARITY_THRESHOLD: float
+    MAX_PAPERS: int
 
     # Clerk Settings
-    CLERK_ISSUER: str = "https://warm-ram-79.clerk.accounts.dev"
-    CLERK_FRONTEND_API: str = "warm-ram-79"
-    CLERK_SECRET_KEY: str = ""
-    CLERK_PUBLISHABLE_KEY: str = ""
+    CLERK_ISSUER: str
+    CLERK_FRONTEND_API: str
+    # CLERK_AUDIENCE: List[str]
+    CLERK_SECRET_KEY: str
+    CLERK_PUBLISHABLE_KEY: str
+    CLERK_JWKS_URL: str
     
     class Config:
         env_file = ".env"

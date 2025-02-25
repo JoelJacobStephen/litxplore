@@ -1,12 +1,17 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jwt import InvalidTokenError, ExpiredSignatureError, PyJWTError  # Update imports
 import jwt
 import requests
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.user import User
-from app.db.session import get_db
+from app.db.database import get_db  # Changed from session to database
+from app.utils.user_utils import get_or_create_user
+import os
+from dotenv import load_dotenv
+# from backend.app.core.auth import get_or_create_user
 
 security = HTTPBearer()
 
@@ -16,8 +21,12 @@ _jwks = None
 def get_jwks():
     global _jwks
     if not _jwks:
-        jwks_url = f"https://{settings.CLERK_FRONTEND_API}.clerk.accounts.dev/.well-known/jwks.json"
-        response = requests.get(jwks_url)
+        response = requests.get(settings.CLERK_JWKS_URL)  # Use settings instead of env var
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch JWKS: {response.status_code}"
+            )
         _jwks = response.json()
     return _jwks
 
@@ -46,13 +55,12 @@ async def get_current_user(
         if not key:
             raise HTTPException(status_code=401, detail="Invalid token: Key not found")
         
-        # Verify and decode the token
+        # Update token verification with correct audience handling
         payload = jwt.decode(
             token,
             key=key,
             algorithms=["RS256"],
-            audience=settings.CLERK_FRONTEND_API,
-            options={"verify_exp": True}
+            issuer=settings.CLERK_ISSUER,
         )
         
         # Extract user info from token
@@ -72,9 +80,9 @@ async def get_current_user(
         
         return user
         
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.JWTError as e:
+    except (InvalidTokenError, PyJWTError) as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
@@ -117,4 +125,4 @@ def get_or_create_user(
             db.commit()
             db.refresh(user)
     
-    return user 
+    return user

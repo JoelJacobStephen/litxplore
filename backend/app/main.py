@@ -6,7 +6,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from .api.v1.endpoints import review, papers, documents, history, users  # Add history and users import
+from app.api.v1.endpoints import review, papers, documents, history, users  # Change from relative to absolute import
 from .core.config import get_settings
 from app.db.database import engine, Base, get_db
 from sqlalchemy.orm import Session
@@ -26,9 +26,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-    allow_methods=settings.CORS_ALLOW_METHODS,
-    allow_headers=settings.CORS_ALLOW_HEADERS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
     expose_headers=["*"]
 )
 
@@ -68,8 +68,8 @@ app.include_router(
 # Add users router
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
 
-# Add history router
-app.include_router(history.router, prefix=f"{settings.API_V1_STR}/users", tags=["history"])
+# Fix the history router path
+app.include_router(history.router, prefix=f"{settings.API_V1_STR}", tags=["history"])
 
 # Health check endpoint
 @app.get("/health")

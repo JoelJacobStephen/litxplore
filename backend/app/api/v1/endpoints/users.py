@@ -1,11 +1,84 @@
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from app.core.auth import get_or_create_user
-from app.db.session import get_db
+import jwt
+import requests
+from app.db.database import get_db
 from app.core.config import settings
+from app.models.user import User
+from app.utils.user_utils import get_or_create_user
+from app.core.auth import get_current_user
 
 router = APIRouter()
+security = HTTPBearer()
+
+# Cache the JWKS
+_jwks = None
+
+def get_jwks():
+    global _jwks
+    if not _jwks:
+        response = requests.get(settings.CLERK_JWKS_URL)  # Use settings instead of env var
+        _jwks = response.json()
+    return _jwks
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    FastAPI dependency that validates the Clerk JWT token and returns the current user.
+    """
+    try:
+        token = credentials.credentials
+        # Get the key ID from the token header
+        unverified_header = jwt.get_unverified_header(token)
+        kid = unverified_header["kid"]
+        
+        # Find the matching public key from JWKS
+        jwks = get_jwks()
+        key = None
+        for jwk in jwks["keys"]:
+            if jwk["kid"] == kid:
+                key = jwt.algorithms.RSAAlgorithm.from_jwk(jwk)
+                break
+        
+        if not key:
+            raise HTTPException(status_code=401, detail="Invalid token: Key not found")
+        
+        # Verify and decode the token
+        payload = jwt.decode(
+            token,
+            key=key,
+            algorithms=["RS256"],
+            audience=settings.CLERK_FRONTEND_API,
+            options={"verify_exp": True}
+        )
+        
+        # Extract user info from token
+        clerk_id = payload["sub"]
+        email = payload.get("email", "")
+        first_name = payload.get("firstName", "")
+        last_name = payload.get("lastName", "")
+        
+        # Get or create user in database
+        user = get_or_create_user(
+            db=db,
+            clerk_id=clerk_id,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        return user
+        
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.JWTError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
 def verify_clerk_webhook_secret(svix_id: str = Header(None), svix_timestamp: str = Header(None), svix_signature: str = Header(None)):
     """
@@ -58,4 +131,4 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         "is_active": current_user.is_active,
         "created_at": current_user.created_at,
         "updated_at": current_user.updated_at
-    } 
+    }

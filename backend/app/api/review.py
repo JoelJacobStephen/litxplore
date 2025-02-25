@@ -2,12 +2,16 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from typing import Dict, Any
+from typing import Dict, Any, List
 import arxiv.arxiv
-from ..models.review import ReviewRequest, ReviewResponse
+from sqlalchemy.orm import Session
+from ..models.review import ReviewRequest, ReviewResponse, Review
 from ..services.langchain_service import LangChainService
 from ..services.redis_service import RedisService
 from ..core.config import get_settings
+from ..core.auth import get_current_user
+from ..models.user import User
+from ..db.database import get_db  # Changed from session to database
 
 settings = get_settings()
 router = APIRouter()
@@ -73,4 +77,5 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Di
         raise HTTPException(
             status_code=500,
             detail=f"An unexpected error occurred: {str(e)}"
-        ) 
+        )
+

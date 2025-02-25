@@ -22,6 +22,9 @@ export function Header() {
               <Link href="/review" className="hover:text-primary">
                 Generate Review
               </Link>
+              <Link href="/history" className="hover:text-primary">
+                History
+              </Link>
               <UserButton afterSignOutUrl="/" />
             </>
           ) : (

@@ -10,14 +10,17 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Paper } from "@/lib/types/paper";
 import { searchPapers, generateReview } from "@/lib/services/paper-service";
+import { ReviewService } from "@/lib/services/review-service";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
+import { useAuth } from "@clerk/nextjs";
 
 export default function ReviewPage() {
+  const { getToken } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [topic, setTopic] = useState("");
@@ -114,18 +117,39 @@ export default function ReviewPage() {
     router.push("/generated-review");
 
     try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
       const response = await generateReview({
         papers: Array.from(selectedPapers),
         topic: topic || "Literature Review",
       });
 
-      useReviewStore.setState({
-        generatedReview: {
-          review: response.review, // Changed from content to review
-          citations: response.citations || [],
+      const generatedReview = {
+        review: response.review,
+        citations: response.citations || [],
+        topic: topic || "Literature Review",
+      };
+
+      useReviewStore.setState({ generatedReview });
+
+      // Save the review with the token
+      try {
+        await ReviewService.saveReview(token, {
+          title: topic || "Literature Review",
           topic: topic || "Literature Review",
-        },
-      });
+          content: response.review,
+          citations: JSON.stringify(response.citations),
+        });
+        toast.success("Review saved successfully!");
+      } catch (saveError) {
+        console.error("Failed to save review:", saveError);
+        toast.error(
+          "Review generated but failed to save. You can try saving it later."
+        );
+      }
     } catch (error) {
       console.error("Failed to generate review:", error);
       toast.error("Failed to generate review. Please try again.");
@@ -215,33 +239,6 @@ export default function ReviewPage() {
                 </Button>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Review Result */}
-        {review && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">3. Literature Review</h2>
-            <Card className="p-6">
-              <div className="prose prose-invert max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: review.review }} />
-              </div>
-              {review.citations && review.citations.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-xl font-bold mb-4">References</h3>
-                  <ul className="space-y-2">
-                    {review.citations.map((paper, index) => (
-                      <li
-                        key={paper.id}
-                        className="text-sm text-muted-foreground"
-                      >
-                        [{index + 1}] {paper.title} - {paper.authors.join(", ")}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
           </div>
         )}
       </div>
