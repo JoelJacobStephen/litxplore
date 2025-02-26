@@ -1,8 +1,8 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jwt import InvalidTokenError, ExpiredSignatureError, PyJWTError  # Update imports
-import jwt
+import PyJWT
+from PyJWT.exceptions import InvalidTokenError, ExpiredSignatureError, PyJWTError
 import requests
 from sqlalchemy.orm import Session
 from app.core.config import settings
@@ -41,7 +41,7 @@ async def get_current_user(
     try:
         token = credentials.credentials
         # Get the key ID from the token header
-        unverified_header = jwt.get_unverified_header(token)
+        unverified_header = PyJWT.get_unverified_header(token)
         kid = unverified_header["kid"]
         
         # Find the matching public key from JWKS
@@ -49,14 +49,14 @@ async def get_current_user(
         key = None
         for jwk in jwks["keys"]:
             if jwk["kid"] == kid:
-                key = jwt.algorithms.RSAAlgorithm.from_jwk(jwk)
+                key = PyJWT.algorithms.RSAAlgorithm.from_jwk(jwk)
                 break
         
         if not key:
             raise HTTPException(status_code=401, detail="Invalid token: Key not found")
         
         # Update token verification with correct audience handling
-        payload = jwt.decode(
+        payload = PyJWT.decode(
             token,
             key=key,
             algorithms=["RS256"],

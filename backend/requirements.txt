@@ -17,6 +17,10 @@ numpy
 redis
 slowapi
 
+# Authentication
+PyJWT>=2.8.0
+requests
+
 # AI and LangChain
 openai
 google-generativeai
