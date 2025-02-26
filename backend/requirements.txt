@@ -18,8 +18,10 @@ redis
 slowapi
 
 # Authentication
-pyjwt>=2.8.0  # Changed from PyJWT to lowercase pyjwt
+pyjwt>=2.8.0
 requests
+python-jose[cryptography]>=3.3.0
+cryptography>=39.0.1
 
 # AI and LangChain
 openai
@@ -39,6 +41,6 @@ arxiv
 pypdf
 
 # Document generation
-reportlab>=4.0.8  # Pure Python PDF generation
+reportlab>=4.0.8
 markdown2>=2.4.10
 jinja2>=3.1.2
