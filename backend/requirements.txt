@@ -18,7 +18,7 @@ redis
 slowapi
 
 # Authentication
-PyJWT>=2.8.0
+pyjwt>=2.8.0  # Changed from PyJWT to lowercase pyjwt
 requests
 
 # AI and LangChain

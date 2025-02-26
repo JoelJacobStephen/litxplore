@@ -1,8 +1,8 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import PyJWT
-from PyJWT.exceptions import InvalidTokenError, ExpiredSignatureError, PyJWTError
+import jwt as PyJWT  # Changed from import PyJWT to import jwt as PyJWT
+from jwt.exceptions import InvalidTokenError, ExpiredSignatureError, PyJWTError  # Updated import path
 import requests
 from sqlalchemy.orm import Session
 from app.core.config import settings
