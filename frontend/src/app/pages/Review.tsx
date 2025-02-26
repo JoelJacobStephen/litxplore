@@ -7,9 +7,13 @@ export const Review = () => {
 
   return (
     <Container maxWidth="lg">
-      {/* ...existing code... */}
-      {generatedReview && <ReviewDisplay review={generatedReview.review} />}
-      {/* ...existing code... */}
+      {generatedReview && (
+        <ReviewDisplay
+          review={generatedReview.review}
+          topic={generatedReview.topic}
+          citations={generatedReview.citations}
+        />
+      )}
     </Container>
   );
 };

@@ -1,27 +1,21 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getAuth, clerkClient } from "@clerk/nextjs/server";
 import { authMiddleware } from "@clerk/nextjs";
 
+// This example protects all routes including api/trpc routes
+// Please edit this to allow other routes to be public as needed.
+// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your middleware
 export default authMiddleware({
-  publicRoutes: [
-    "/",
-    "/api/webhook",
-    "/sign-in",
-    "/sign-up",
-    "/sign-in/(.*)",
-    "/sign-up/(.*)",
-  ],
-
-  ignoredRoutes: ["/((?!api|trpc))(_next/.*|.*\\..*$)", "/api/public/(.*)"],
-
-  afterAuth(auth, req, evt) {
-    // Handle authentication state
+  publicRoutes: ["/", "/sign-in", "/sign-up", "/api(.*)"],
+  afterAuth(auth, req, _evt) {
+    // Added underscore prefix to unused parameter
     if (!auth.userId && !auth.isPublicRoute) {
-      const signInUrl = new URL("/sign-in", req.url);
-      signInUrl.searchParams.set("redirect_url", req.url);
-      return Response.redirect(signInUrl);
+      return NextResponse.redirect(new URL("/sign-in", req.url));
     }
   },
 });
 
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
 };

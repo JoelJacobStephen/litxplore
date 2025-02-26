@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Loader2, ArrowRight } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
 import { searchPapers } from "@/lib/services/paper-service";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Command,
   CommandEmpty,
@@ -78,26 +78,6 @@ export function SearchInput({
     rest: { scale: 1 },
     hover: { scale: 1.02 },
     tap: { scale: 0.98 },
-  };
-
-  const searchResultsVariants = {
-    hidden: { opacity: 0, y: -10 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
-  };
-
-  const searchItemVariants = {
-    hidden: { opacity: 0, x: -10 },
-    show: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.2 },
-    },
   };
 
   return (
