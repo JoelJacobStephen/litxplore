@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     CLERK_SECRET_KEY: str
     CLERK_PUBLISHABLE_KEY: str
     CLERK_JWKS_URL: str
+    JWT_ALGORITHM: str
     
     class Config:
         env_file = ".env"

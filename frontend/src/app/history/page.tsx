@@ -201,14 +201,16 @@ export default function HistoryPage() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-6xl w-full h-[90vh] overflow-auto p-8">
-          <DialogTitle>{selectedReview?.title}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-bold">
+            {selectedReview?.title}
+          </DialogTitle>
+          {/* <DialogDescription>
             Created{" "}
             {selectedReview &&
               formatDistanceToNow(new Date(selectedReview.created_at), {
                 addSuffix: true,
               })}
-          </DialogDescription>
+          </DialogDescription> */}
           {selectedReview && (
             <ReviewDisplay
               review={selectedReview.content}
