@@ -159,7 +159,7 @@ export default function ReviewPage() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)] flex flex-col">
+      <div className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)] flex flex-col relative">
         <div className="flex items-center gap-3 mb-10">
           <BookOpen className="h-8 w-8 text-blue-400" />
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
@@ -227,24 +227,28 @@ export default function ReviewPage() {
                 enableChat={false}
               />
             </div>
-
-            {/* Generate Review Button - keep at bottom */}
-            {selectedPapers.size > 0 && (
-              <div className="sticky bottom-6 flex justify-end">
-                <Button onClick={handleGenerateReview} disabled={isGenerating}>
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Review...
-                    </>
-                  ) : (
-                    `Generate Review (${selectedPapers.size} papers)`
-                  )}
-                </Button>
-              </div>
-            )}
           </div>
         )}
+
+        {/* Floating Generate Review Button - always visible at bottom right */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button
+            onClick={handleGenerateReview}
+            disabled={isGenerating || selectedPapers.size === 0}
+            className="shadow-lg"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating Review...
+              </>
+            ) : selectedPapers.size > 0 ? (
+              `Generate Review (${selectedPapers.size} papers)`
+            ) : (
+              "Generate Review"
+            )}
+          </Button>
+        </div>
       </div>
     </ProtectedRoute>
   );

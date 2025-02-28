@@ -168,26 +168,26 @@ export function PaperGrid({
                       </Button>
                     </motion.div>
                   )}
+                  <motion.div whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="hover:bg-zinc-800 transition-colors"
+                    >
+                      {(paper.link || paper.url) && (
+                        <Link
+                          href={paper.link || paper.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View PDF
+                        </Link>
+                      )}
+                    </Button>
+                  </motion.div>
                   <div className="flex gap-2">
-                    <motion.div whileTap={{ scale: 0.95 }}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        className="hover:bg-zinc-800 transition-colors"
-                      >
-                        {(paper.link || paper.url) && (
-                          <Link
-                            href={paper.link || paper.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            View PDF
-                          </Link>
-                        )}
-                      </Button>
-                    </motion.div>
                     {enableChat && (
                       <motion.div whileTap={{ scale: 0.95 }}>
                         <Button
@@ -196,7 +196,7 @@ export function PaperGrid({
                           onClick={() =>
                             router.push(`/papers/${paper.id}/chat`)
                           }
-                          className="bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                          className="bg-blue-800 hover:bg-zinc-700 transition-colors"
                         >
                           Chat with Paper
                         </Button>

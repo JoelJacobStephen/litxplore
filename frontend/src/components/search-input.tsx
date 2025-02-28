@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, ArrowRight } from "lucide-react";
+import { Search, Loader2, ArrowRight, Plus } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
 import { searchPapers } from "@/lib/services/paper-service";
 import { motion } from "framer-motion";
@@ -23,6 +23,7 @@ import {
 import { useDebounce } from "@/hooks/use-debounce"; // We'll create this hook
 import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface SearchInputProps {
   onPaperSelect: (paperId: string, selected: boolean) => void;
@@ -74,26 +75,33 @@ export function SearchInput({
     setOpen(false);
   };
 
-  const searchButtonVariants = {
+  const buttonVariants = {
     rest: { scale: 1 },
-    hover: { scale: 1.02 },
+    hover: { scale: 1.01 },
     tap: { scale: 0.98 },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 5 },
+    visible: { opacity: 1, y: 0 },
+    hover: { backgroundColor: "rgba(255, 255, 255, 0.06)" },
   };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <motion.div
-          variants={searchButtonVariants}
+          variants={buttonVariants}
           initial="rest"
           whileHover="hover"
           whileTap="tap"
+          className="w-full"
         >
           <Button
             variant="outline"
-            className="w-full justify-start bg-zinc-800/50 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 transition-all duration-200"
+            className="w-full justify-start bg-persian-blue-950/10 border-zinc-700/50 hover:bg-persion-blue-800/30 hover:border-blue-700/40 hover:shadow-[0_0_10px_rgba(59,130,246,0.1)] transition-all duration-200 text-zinc-200 shadow-sm h-11"
           >
-            <Search className="mr-2 h-4 w-4 text-zinc-300" />
+            <Search className="mr-2 h-4 w-4 text-blue-400" />
             <span className="text-zinc-300">
               Search for additional papers...
             </span>
@@ -101,7 +109,7 @@ export function SearchInput({
         </motion.div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[400px] p-0 border border-zinc-700 bg-zinc-800/95 backdrop-blur-sm shadow-xl"
+        className="w-[420px] p-0 border border-zinc-700/80 border-b-blue-700/30 bg-persian-blue-950/20 backdrop-blur-md shadow-xl rounded-xl overflow-hidden"
         align="start"
       >
         <Command shouldFilter={false} className="bg-transparent">
@@ -109,51 +117,84 @@ export function SearchInput({
             placeholder="Search papers..."
             value={search}
             onValueChange={setSearch}
-            className="border-b border-zinc-700 bg-transparent text-zinc-100 placeholder:text-zinc-400"
+            className="border-b border-blue-800/30 bg-transparent text-zinc-100 placeholder:text-zinc-400 h-12 focus-within:ring-blue-500/20 focus-within:border-blue-700/40"
           />
-          <CommandList className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-600 scrollbar-track-zinc-800">
+          <CommandList className="max-h-[320px] overflow-y-auto custom-scrollbar">
             {isLoading ? (
-              <CommandEmpty className="py-6 text-zinc-400">
-                <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-                <span>Searching papers...</span>
+              <CommandEmpty className="py-8 text-zinc-400 flex flex-col items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2 text-blue-400" />
+                <span className="text-sm">Searching papers...</span>
               </CommandEmpty>
             ) : !searchResults || searchResults.length === 0 ? (
-              <CommandEmpty className="py-6 text-zinc-400">
-                {search.length <= 2
-                  ? "Enter at least 3 characters to search..."
-                  : "No papers found."}
+              <CommandEmpty className="py-8 text-zinc-400 flex flex-col items-center justify-center">
+                {search.length <= 2 ? (
+                  <>
+                    <Search className="h-5 w-5 text-blue-400/70 mb-2 opacity-70" />
+                    <span className="text-sm">
+                      Enter at least 3 characters to search...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-8 w-8 rounded-full bg-blue-900/20 flex items-center justify-center mb-2 border border-blue-700/20">
+                      <Search className="h-4 w-4 text-blue-300" />
+                    </div>
+                    <span className="text-sm">No papers found</span>
+                  </>
+                )}
               </CommandEmpty>
             ) : (
-              <CommandGroup>
+              <CommandGroup className="py-2">
                 {searchResults.map((paper) => (
                   <CommandItem
                     key={paper.id}
                     onSelect={() => handlePaperSelect(paper)}
-                    className="flex flex-col items-start gap-1 p-3 hover:bg-zinc-700/50 transition-colors duration-200 cursor-pointer"
+                    className={cn(
+                      "flex flex-col  items-start gap-1 p-3 m-1 transition-colors duration-200 cursor-pointer rounded-lg border border-transparent",
+                      selectedPapers.has(paper.id)
+                        ? "bg-blue-900/30 border-blue-700/30"
+                        : "hover:bg-blue-700 hover:border-blue-800/30"
+                    )}
+                    value={paper.title}
                   >
-                    <div className="w-full flex items-start justify-between gap-2">
+                    <motion.div
+                      className="w-full flex items-start justify-between gap-2 "
+                      variants={itemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      transition={{ duration: 0.2 }}
+                    >
                       <div className="flex-1">
                         <div className="font-medium line-clamp-1 text-zinc-100">
                           {paper.title}
                         </div>
-                        <div className="text-sm text-zinc-300">
+                        <div className="text-xs text-zinc-400 mt-1 line-clamp-1">
                           {paper.authors.slice(0, 3).join(", ")}
                           {paper.authors.length > 3 && " et al."}
                         </div>
+                        {paper.year && (
+                          <div className="text-xs text-zinc-500 mt-0.5">
+                            {paper.year}
+                          </div>
+                        )}
                       </div>
                       {selectedPapers.has(paper.id) ? (
-                        <div className="text-xs text-blue-300 font-medium px-2 py-1 bg-blue-500/20 rounded-full">
-                          Selected
+                        <div className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 font-medium rounded-full flex items-center gap-1 whitespace-nowrap">
+                          <span>Selected</span>
                         </div>
                       ) : (
                         <motion.div
-                          whileHover={{ x: 3 }}
-                          className="text-zinc-300"
+                          whileHover={{
+                            x: 3,
+                            backgroundColor: "rgba(37, 99, 235, 0.2)",
+                          }}
+                          transition={{ duration: 0.2 }}
+                          className="h-6 w-6 rounded-full bg-zinc-700/50 hover:bg-blue-700/30 flex items-center justify-center text-blue-300"
                         >
-                          <ArrowRight className="h-4 w-4" />
+                          <Plus className="h-3.5 w-3.5" />
                         </motion.div>
                       )}
-                    </div>
+                    </motion.div>
                   </CommandItem>
                 ))}
               </CommandGroup>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import Link from "next/link";
 import { useMobile } from "@/hooks/use-mobile";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -55,7 +56,12 @@ export default function ChatPage() {
   }, [params.paperId]);
 
   if (error) return <div>Error: {error}</div>;
-  if (!paper) return <div>Loading...</div>;
+  if (!paper)
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background">
