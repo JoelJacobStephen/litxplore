@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/header";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
+import { GradientBackground } from "@/components/ui/gradient-background";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(inter.className, "min-h-screen bg-background")}>
+      <body className={cn(inter.className, "min-h-screen bg-gray-950")}>
         <ClerkProvider>
           <ThemeProvider
             attribute="class"
@@ -33,19 +34,21 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Header />
-            <QueryProvider>
-              <main className="flex-1">
-                {/* <SignedOut>
-                  <SignInButton />
-                </SignedOut>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn> */}
-                {children}
-              </main>
-              <Toaster />
-            </QueryProvider>
+            <GradientBackground>
+              <Header />
+              <QueryProvider>
+                <main className="flex-1">
+                  {/* <SignedOut>
+                    <SignInButton />
+                  </SignedOut>
+                  <SignedIn>
+                    <UserButton />
+                  </SignedIn> */}
+                  {children}
+                </main>
+                <Toaster />
+              </QueryProvider>
+            </GradientBackground>
           </ThemeProvider>
         </ClerkProvider>
       </body>

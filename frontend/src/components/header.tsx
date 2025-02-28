@@ -32,12 +32,12 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-800/50 bg-gray-900/30 backdrop-blur supports-[backdrop-filter]:bg-gray-950/50">
       <div className="container mx-auto px-4 py-2">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                 LitXplore
               </span>
             </Link>
@@ -51,8 +51,8 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground transition-colors hover:text-primary hover:bg-muted",
-                    pathname === item.href && "text-primary bg-muted"
+                    "flex items-center justify-center h-10 w-10 rounded-md text-gray-300 transition-colors hover:text-blue-400 hover:bg-blue-900/20",
+                    pathname === item.href && "text-blue-400 bg-blue-900/20"
                   )}
                   title={item.label}
                 >
@@ -77,7 +77,9 @@ export function Header() {
                   </Button>
                 </SignInButton>
                 <SignUpButton mode="modal">
-                  <Button size="sm">Get Started</Button>
+                  <Button variant="gradient" size="sm">
+                    Get Started
+                  </Button>
                 </SignUpButton>
               </div>
             )}
@@ -85,7 +87,7 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="flex md:hidden items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:text-primary hover:bg-muted"
+            className="flex md:hidden items-center justify-center h-10 w-10 rounded-md text-gray-300 hover:text-blue-400 hover:bg-blue-900/20"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -99,7 +101,7 @@ export function Header() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t">
+        <div className="md:hidden border-t border-gray-800/50">
           <div className="container mx-auto px-4 py-3 flex flex-col space-y-3">
             {isSignedIn ? (
               <>
@@ -108,8 +110,8 @@ export function Header() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-primary hover:bg-muted",
-                      pathname === item.href && "text-primary bg-muted"
+                      "flex items-center space-x-3 px-3 py-2 rounded-md text-gray-300 hover:text-blue-400 hover:bg-blue-900/20",
+                      pathname === item.href && "text-blue-400 bg-blue-900/20"
                     )}
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -126,7 +128,9 @@ export function Header() {
                   </Button>
                 </SignInButton>
                 <SignUpButton mode="modal">
-                  <Button className="w-full justify-start">Get Started</Button>
+                  <Button variant="gradient" className="w-full justify-start">
+                    Get Started
+                  </Button>
                 </SignUpButton>
               </div>
             )}

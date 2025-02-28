@@ -12,7 +12,7 @@ import { ArrowLeft, Search, Loader2 } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
@@ -64,9 +64,13 @@ export default function SearchPage() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto py-8 space-y-6">
+      <div className="container mx-auto py-8 space-y-6 relative z-10">
         <div className="flex items-center gap-4">
-          <Button variant="default" asChild>
+          <Button
+            variant="default"
+            asChild
+            className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white"
+          >
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
@@ -79,19 +83,30 @@ export default function SearchPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search papers..."
-            className="flex-1"
+            className="flex-1 border-gray-800 bg-gray-900/50 backdrop-blur-sm focus-visible:ring-blue-500"
           />
-          <Button type="submit">
+          <Button
+            type="submit"
+            className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white"
+          >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Search className="h-4 w-4" />
+              <Search className="h-4 w-4 mr-2" />
             )}
             Search
           </Button>
         </form>
 
-        {query && <h1 className="text-2xl font-bold">Results for: {query}</h1>}
+        {query && (
+          <motion.h1
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600"
+          >
+            Results for: {query}
+          </motion.h1>
+        )}
 
         {isLoading ? (
           <motion.div
@@ -102,12 +117,12 @@ export default function SearchPage() {
           >
             {[1, 2, 3].map((i) => (
               <motion.div key={i} variants={cardVariants}>
-                <Card className="relative hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="p-4 space-y-3">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-20 w-full" />
-                  </CardContent>
+                <Card className="relative hover:shadow-lg transition-shadow duration-300 border-gray-800 bg-gray-900/50 backdrop-blur-sm">
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="h-6 w-3/4 bg-gray-800" />
+                    <Skeleton className="h-4 w-1/2 bg-gray-800" />
+                    <Skeleton className="h-20 w-full bg-gray-800" />
+                  </div>
                 </Card>
               </motion.div>
             ))}

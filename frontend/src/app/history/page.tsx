@@ -18,7 +18,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ReviewDisplay } from "@/components/ReviewDisplay";
 import { Paper } from "@/lib/types/paper";
 import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { motion } from "framer-motion";
 
 interface Review {
   id: number;
@@ -51,6 +52,22 @@ export default function HistoryPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [parsedCitations, setParsedCitations] = useState<Paper[]>([]);
   const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -126,21 +143,41 @@ export default function HistoryPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="container mx-auto p-6 space-y-4">
-        <h1 className="text-3xl font-bold">Review History</h1>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 w-full" />
-          ))}
+      <div className="container mx-auto p-6 space-y-4 relative z-10">
+        <div className="flex items-center gap-3 mb-6">
+          <History className="h-8 w-8 text-blue-400" />
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+            Review History
+          </h1>
         </div>
+        <motion.div
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          {[1, 2, 3].map((i) => (
+            <motion.div key={i} variants={itemVariants}>
+              <Card className="h-64">
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 bg-gray-800" />
+                  <Skeleton className="h-4 w-1/3 bg-gray-800" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-24 w-full bg-gray-800" />
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="container mx-auto p-6 relative z-10">
+        <div className="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded backdrop-blur-sm">
           Error: {error}
         </div>
       </div>
@@ -148,75 +185,107 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Review History</h1>
+    <div className="container mx-auto p-6 relative z-10">
+      <div className="flex items-center gap-3 mb-6">
+        <History className="h-8 w-8 text-blue-400" />
+        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+          Review History
+        </h1>
+      </div>
 
       {reviews.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">
+        <div className="text-center py-20 border border-gray-800 rounded-lg bg-gray-900/50 backdrop-blur-sm">
+          <div className="mx-auto rounded-full bg-gradient-to-br from-blue-500 to-blue-700 p-4 inline-block mb-4">
+            <History className="h-8 w-8 text-white" />
+          </div>
+          <p className="text-gray-400 text-lg">
             No reviews found. Generate your first literature review to see it
             here!
           </p>
+          <Button
+            variant="gradient"
+            className="mt-4"
+            onClick={() => router.push("/review")}
+          >
+            Create Your First Review
+          </Button>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
           {reviews.map((review) => (
-            <Card
+            <motion.div
               key={review.id}
-              className="flex flex-col cursor-pointer group hover:border-primary transition-colors relative"
-              onClick={() => handleReviewClick(review)}
+              variants={itemVariants}
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
             >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                onClick={(e) => handleDeleteClick(e, review.id)}
+              <Card
+                className="flex flex-col cursor-pointer group hover:border-blue-600 transition-colors relative h-full"
+                onClick={() => handleReviewClick(review)}
               >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-              <CardHeader>
-                <CardTitle className="line-clamp-2">{review.title}</CardTitle>
-                <CardDescription>
-                  {formatDistanceToNow(new Date(review.created_at), {
-                    addSuffix: true,
-                  })}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <ScrollArea className="h-[200px]">
-                  <div>
-                    <h4 className="font-semibold mb-2">Topic</h4>
-                    <p className="text-sm text-gray-600 mb-4">{review.topic}</p>
-                    <h4 className="font-semibold mb-2">Review</h4>
-                    <p className="text-sm text-gray-600 line-clamp-6">
-                      {review.content}
-                    </p>
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-900/20 hover:text-red-400"
+                  onClick={(e) => handleDeleteClick(e, review.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-red-400" />
+                </Button>
+                <CardHeader className="relative z-10">
+                  <CardTitle className="line-clamp-2 group-hover:text-blue-400 transition-colors">
+                    {review.title}
+                  </CardTitle>
+                  <CardDescription>
+                    {formatDistanceToNow(new Date(review.created_at), {
+                      addSuffix: true,
+                    })}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow relative z-10">
+                  <ScrollArea className="h-[160px]">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-blue-400">Topic</h4>
+                      <p className="text-sm text-gray-400 mb-2">
+                        {review.topic}
+                      </p>
+                      <h4 className="font-semibold text-blue-400">Review</h4>
+                      <p className="text-sm text-gray-300 line-clamp-6 prose-sm prose-invert">
+                        {review.content}
+                      </p>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-6xl w-full h-[90vh] overflow-auto p-8">
-          <DialogTitle className="text-xl font-bold">
-            {selectedReview?.title}
-          </DialogTitle>
-          {/* <DialogDescription>
-            Created{" "}
-            {selectedReview &&
-              formatDistanceToNow(new Date(selectedReview.created_at), {
-                addSuffix: true,
-              })}
-          </DialogDescription> */}
+        <DialogContent className="max-w-6xl w-full h-[90vh] overflow-auto p-8 border-blue-600/30 bg-gray-900/95">
           {selectedReview && (
-            <ReviewDisplay
-              review={selectedReview.content}
-              topic={selectedReview.topic}
-              citations={parsedCitations}
-            />
+            <>
+              <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+                {selectedReview.title}
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Created{" "}
+                {formatDistanceToNow(new Date(selectedReview.created_at), {
+                  addSuffix: true,
+                })}
+              </DialogDescription>
+              <ReviewDisplay
+                review={selectedReview.content}
+                topic={selectedReview.topic}
+                citations={parsedCitations}
+              />
+            </>
           )}
         </DialogContent>
       </Dialog>
@@ -225,7 +294,7 @@ export default function HistoryPage() {
         open={deletingReviewId !== null}
         onOpenChange={() => setDeletingReviewId(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="border-red-600/30 bg-gray-900/95">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -234,10 +303,12 @@ export default function HistoryPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border-gray-700 hover:bg-gray-800">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-700 text-white hover:bg-red-800"
             >
               Delete
             </AlertDialogAction>

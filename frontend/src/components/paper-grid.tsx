@@ -124,8 +124,17 @@ export function PaperGrid({
               }}
               className="h-full"
             >
-              <Card className="flex flex-col h-full bg-gradient-to-br from-zinc-900 to-slate-900 border border-zinc-800 hover:border-zinc-700 transition-colors duration-300">
-                <CardHeader>
+              <Card
+                className={`flex flex-col h-full relative hover:shadow-lg transition-all overflow-hidden group ${
+                  effectiveSelectedPapers.has(paper.id)
+                    ? "border-blue-500"
+                    : "border-gray-800"
+                }`}
+              >
+                {/* Blue gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                <CardHeader className="relative z-10">
                   <CardTitle className="line-clamp-2 text-xl font-serif">
                     {paper.title}
                   </CardTitle>
@@ -134,12 +143,12 @@ export function PaperGrid({
                     {paper.authors.length > 3 && " et al."}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1">
+                <CardContent className="flex-1 relative z-10">
                   <p className="text-sm text-zinc-300 line-clamp-4 leading-relaxed">
                     {paper.summary}
                   </p>
                 </CardContent>
-                <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-zinc-800">
+                <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-zinc-800 relative z-10">
                   {enableSelection && (
                     <motion.div whileTap={{ scale: 0.95 }}>
                       <Button

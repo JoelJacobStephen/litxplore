@@ -12,7 +12,7 @@ import { searchPapers, generateReview } from "@/lib/services/paper-service";
 import { ReviewService } from "@/lib/services/review-service";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
-import { Loader2 } from "lucide-react";
+import { History, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
@@ -163,6 +163,12 @@ export default function ReviewPage() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)] flex flex-col">
+        <div className="flex items-center gap-3 mb-10">
+          <History className="h-8 w-8 text-blue-400" />
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+            Generate Review
+          </h1>
+        </div>
         <form onSubmit={handleTopicSubmit} className="space-y-4">
           <h2 className="text-2xl font-bold">1. Enter Research Topic</h2>
           <div className="flex gap-4">
