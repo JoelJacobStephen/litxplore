@@ -2,8 +2,30 @@
 
 import { SearchInput } from "@/components/search-input";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { Paper } from "@/lib/types/paper";
 
 export function SearchHero() {
+  const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
+
+  const handlePaperSelect = (paperId: string, selected: boolean) => {
+    const newSelected = new Set(selectedPapers);
+    if (selected) {
+      newSelected.add(paperId);
+    } else {
+      newSelected.delete(paperId);
+    }
+    setSelectedPapers(newSelected);
+  };
+
+  const handleAddPaper = (paper: Paper) => {
+    setSelectedPapers((prev) => {
+      const newSelected = new Set(prev);
+      newSelected.add(paper.id);
+      return newSelected;
+    });
+  };
+
   return (
     <div className="relative overflow-hidden">
       {/* Background gradient elements */}
@@ -34,7 +56,12 @@ export function SearchHero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="max-w-2xl mx-auto"
           >
-            <SearchInput />
+            <SearchInput
+              onPaperSelect={handlePaperSelect}
+              selectedPapers={selectedPapers}
+              onAddPaper={handleAddPaper}
+              currentPaperCount={selectedPapers.size}
+            />
           </motion.div>
         </div>
       </div>

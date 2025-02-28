@@ -24,9 +24,6 @@ export default function ReviewPage() {
   const router = useRouter();
   const [topic, setTopic] = useState("");
   const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
-  const setGeneratedReview = useReviewStore(
-    (state) => state.setGeneratedReview
-  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [displayedPapers, setDisplayedPapers] = useState<Paper[]>([]);
   const [isSearching, setIsSearching] = useState(false);

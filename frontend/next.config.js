@@ -3,6 +3,7 @@ const nextConfig = {
     output: 'standalone',
     reactStrictMode: true,
     experimental: {
+        runtime: 'nodejs',
         serverActions: true,
     },
     images: {
