@@ -21,9 +21,9 @@ export default function Home() {
       {/* Main background gradient elements - consistent across the page */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         {/* Base gradient layers */}
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,hsl(210,70%,40%)_0%,transparent_50%)]"></div>
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_70%_60%,hsl(220,80%,50%)_0%,transparent_50%)]"></div>
-        <motion.div
+        {/* <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,hsl(210,70%,40%)_0%,transparent_50%)]"></div> */}
+        {/* <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_70%_60%,hsl(220,80%,50%)_0%,transparent_50%)]"></div> */}
+        {/* <motion.div
           className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_40%,hsl(200,100%,60%)_0%,transparent_40%)]"
           animate={{
             scale: [1, 1.1, 1],
@@ -33,7 +33,7 @@ export default function Home() {
             repeat: Infinity,
             repeatType: "reverse",
           }}
-        />
+        /> */}
       </div>
 
       {/* Hero Section */}
@@ -112,181 +112,182 @@ export default function Home() {
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Feature 1 - Literature Review Generation */}
-          <motion.div
-            className="col-span-1 md:col-span-2 rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-            whileHover={{ y: -5 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <BookOpenCheck className="h-10 w-10 text-blue-400 mb-4" />
-            <h3 className="text-2xl font-semibold mb-3 text-white">
-              Literature Review Generation
-            </h3>
-            <p className="text-gray-300 mb-6">
-              Generate comprehensive literature reviews based on your research
-              topic. Our AI analyzes papers and creates well-structured academic
-              reviews with citations.
-            </p>
-
+          <div className="col-span-1 md:col-span-2 relative">
             <motion.div
-              whileHover={{ x: 5 }}
-              transition={{ type: "spring", stiffness: 400 }}
+              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
             >
-              <Link
-                href="/review"
-                className="flex items-center text-blue-400 font-medium"
-              >
-                Generate Now <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </motion.div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <BookOpenCheck className="h-10 w-10 text-blue-400 mb-4" />
+              <h3 className="text-2xl font-semibold mb-3 text-white">
+                Literature Review Generation
+              </h3>
+              <p className="text-gray-300 mb-6">
+                Generate comprehensive literature reviews based on your research
+                topic. Our AI analyzes papers and creates well-structured
+                academic reviews with citations.
+              </p>
 
-            <div className="absolute bottom-4 right-4 opacity-10">
-              <FileText className="h-24 w-24" />
-            </div>
-          </motion.div>
-
-          {/* Feature 2 - Chat with Papers */}
-          <motion.div
-            className="col-span-1 rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-            whileHover={{ y: -5 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <MessageSquareText className="h-10 w-10 text-blue-400 mb-4" />
-            <h3 className="text-2xl font-semibold mb-3 text-white">
-              Chat with Papers
-            </h3>
-            <p className="text-gray-300 mb-6">
-              Interact with research papers through natural conversation. Ask
-              questions and get insights from any paper.
-            </p>
-
-            <motion.div
-              whileHover={{ x: 5 }}
-              transition={{ type: "spring", stiffness: 400 }}
-            >
-              <Link
-                href="/search"
-                className="flex items-center text-blue-400 font-medium"
-              >
-                Start Chatting <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </motion.div>
-
-            <div className="absolute bottom-4 right-4 opacity-10">
-              <BookMarked className="h-20 w-20" />
-            </div>
-          </motion.div>
-
-          {/* Feature 3 - Paper Search */}
-          <motion.div
-            className="col-span-1 rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-            whileHover={{ y: -5 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <Search className="h-10 w-10 text-blue-400 mb-4" />
-            <h3 className="text-2xl font-semibold mb-3 text-white">
-              Paper Search
-            </h3>
-            <p className="text-gray-300 mb-6">
-              Search through millions of academic papers on arXiv. Filter by
-              topic, author, or date to find relevant research.
-            </p>
-
-            <motion.div
-              whileHover={{ x: 5 }}
-              transition={{ type: "spring", stiffness: 400 }}
-            >
-              <Link
-                href="/search"
-                className="flex items-center text-blue-400 font-medium"
-              >
-                Search Papers <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </motion.div>
-          </motion.div>
-
-          {/* Feature 4 - AI Analysis */}
-          <motion.div
-            className="col-span-1 md:col-span-2 rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-            whileHover={{ y: -5 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="flex flex-col md:flex-row md:items-center gap-8">
-              <div className="md:w-1/2">
-                <Sparkles className="h-10 w-10 text-blue-400 mb-4" />
-                <h3 className="text-2xl font-semibold mb-3 text-white">
-                  Powered by Advanced AI
-                </h3>
-                <p className="text-gray-300 mb-6">
-                  Our platform uses state-of-the-art AI models to analyze
-                  research papers, understand complex academic concepts, and
-                  generate insights that help accelerate your research process.
-                </p>
-
+              <Link href="/review" className="inline-block z-10 relative">
                 <motion.div
+                  className="flex items-center text-blue-400 font-medium"
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 400 }}
                 >
-                  <Link
-                    href="/review"
-                    className="flex items-center text-blue-400 font-medium"
-                  >
-                    See How It Works <ArrowRight className="h-4 w-4 ml-1" />
-                  </Link>
+                  Generate Now <ArrowRight className="h-4 w-4 ml-1" />
                 </motion.div>
+              </Link>
+
+              <div className="absolute bottom-4 right-4 opacity-10 pointer-events-none">
+                <FileText className="h-24 w-24" />
               </div>
+            </motion.div>
+          </div>
 
-              <div className="md:w-1/2 flex justify-center items-center">
-                <div className="relative">
-                  {/* Animated particles */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    {[...Array(5)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute h-2 w-2 rounded-full bg-blue-400"
-                        initial={{
-                          x: 0,
-                          y: 0,
-                          opacity: 0.7,
-                        }}
-                        animate={{
-                          x: Math.sin(i) * 80,
-                          y: Math.cos(i) * 80,
-                          opacity: [0.2, 0.8, 0.2],
-                        }}
-                        transition={{
-                          duration: 3 + i,
-                          repeat: Infinity,
-                          repeatType: "reverse",
-                        }}
-                      />
-                    ))}
+          {/* Feature 2 - Chat with Papers */}
+          <div className="col-span-1 relative">
+            <motion.div
+              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <MessageSquareText className="h-10 w-10 text-blue-400 mb-4" />
+              <h3 className="text-2xl font-semibold mb-3 text-white">
+                Chat with Papers
+              </h3>
+              <p className="text-gray-300 mb-6">
+                Interact with research papers through natural conversation. Ask
+                questions and get insights from any paper.
+              </p>
+
+              <Link href="/search" className="inline-block z-10 relative">
+                <motion.div
+                  className="flex items-center text-blue-400 font-medium"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  Start Chatting <ArrowRight className="h-4 w-4 ml-1" />
+                </motion.div>
+              </Link>
+
+              <div className="absolute bottom-4 right-4 opacity-10 pointer-events-none">
+                <BookMarked className="h-20 w-20" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Feature 3 - Paper Search */}
+          <div className="col-span-1 relative">
+            <motion.div
+              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <Search className="h-10 w-10 text-blue-400 mb-4" />
+              <h3 className="text-2xl font-semibold mb-3 text-white">
+                Paper Search
+              </h3>
+              <p className="text-gray-300 mb-6">
+                Search through millions of academic papers on arXiv. Filter by
+                topic, author, or date to find relevant research.
+              </p>
+
+              <Link href="/search" className="inline-block z-10 relative">
+                <motion.div
+                  className="flex items-center text-blue-400 font-medium"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  Search Papers <ArrowRight className="h-4 w-4 ml-1" />
+                </motion.div>
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Feature 4 - AI Analysis */}
+          <div className="col-span-1 md:col-span-2 relative">
+            <motion.div
+              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="flex flex-col md:flex-row md:items-center gap-8">
+                <div className="md:w-1/2">
+                  <Sparkles className="h-10 w-10 text-blue-400 mb-4" />
+                  <h3 className="text-2xl font-semibold mb-3 text-white">
+                    Powered by Advanced AI
+                  </h3>
+                  <p className="text-gray-300 mb-6">
+                    Our platform uses state-of-the-art AI models to analyze
+                    research papers, understand complex academic concepts, and
+                    generate insights that help accelerate your research
+                    process.
+                  </p>
+
+                  <Link href="/review" className="inline-block z-10 relative">
+                    <motion.div
+                      className="flex items-center text-blue-400 font-medium"
+                      whileHover={{ x: 5 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      See How It Works <ArrowRight className="h-4 w-4 ml-1" />
+                    </motion.div>
+                  </Link>
+                </div>
+
+                <div className="md:w-1/2 flex justify-center items-center pointer-events-none">
+                  <div className="relative">
+                    {/* Animated particles */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {[...Array(5)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="absolute h-2 w-2 rounded-full bg-blue-400"
+                          initial={{
+                            x: 0,
+                            y: 0,
+                            opacity: 0.7,
+                          }}
+                          animate={{
+                            x: Math.sin(i) * 80,
+                            y: Math.cos(i) * 80,
+                            opacity: [0.2, 0.8, 0.2],
+                          }}
+                          transition={{
+                            duration: 3 + i,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <motion.div
+                      className="h-32 w-32 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center"
+                      animate={{
+                        boxShadow: [
+                          "0 0 20px rgba(59, 130, 246, 0.3)",
+                          "0 0 40px rgba(59, 130, 246, 0.5)",
+                          "0 0 20px rgba(59, 130, 246, 0.3)",
+                        ],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                      }}
+                    >
+                      <Zap className="h-16 w-16 text-white" />
+                    </motion.div>
                   </div>
-
-                  <motion.div
-                    className="h-32 w-32 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center"
-                    animate={{
-                      boxShadow: [
-                        "0 0 20px rgba(59, 130, 246, 0.3)",
-                        "0 0 40px rgba(59, 130, 246, 0.5)",
-                        "0 0 20px rgba(59, 130, 246, 0.3)",
-                      ],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      repeatType: "reverse",
-                    }}
-                  >
-                    <Zap className="h-16 w-16 text-white" />
-                  </motion.div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </div>
 
@@ -354,7 +355,7 @@ export default function Home() {
           ))}
         </div>
 
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -368,7 +369,7 @@ export default function Home() {
           >
             <Link href="/review">Get Started</Link>
           </Button>
-        </motion.div>
+        </motion.div> */}
       </div>
     </div>
   );

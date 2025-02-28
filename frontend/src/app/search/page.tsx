@@ -8,7 +8,7 @@ import { PaperGrid } from "@/components/paper-grid";
 import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -65,17 +65,11 @@ export default function SearchPage() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto py-8 space-y-6 relative z-10">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="default"
-            asChild
-            className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white"
-          >
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Link>
-          </Button>
+        <div className="flex items-center gap-3 mb-10">
+          <Search className="h-8 w-8 text-blue-400" />
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+            Search
+          </h1>
         </div>
 
         <form onSubmit={handleSearch} className="flex gap-2">

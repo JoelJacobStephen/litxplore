@@ -26,7 +26,7 @@ export function ChatMessageBubble({
           "max-w-[80%] rounded-lg p-4",
           isUser
             ? "bg-primary text-primary-foreground rounded-br-none"
-            : "bg-muted text-foreground rounded-bl-none",
+            : "bg-persian-blue-50 text-foreground rounded-bl-none border border-persian-blue-100",
           isLoading && "animate-pulse"
         )}
       >
@@ -51,7 +51,7 @@ export function ChatMessageBubble({
                 rel="noopener noreferrer"
                 className={cn(
                   "hover:underline",
-                  isUser ? "text-blue-200" : "text-blue-400"
+                  isUser ? "text-blue-200" : "text-persian-blue-600"
                 )}
               >
                 {children}
@@ -61,7 +61,7 @@ export function ChatMessageBubble({
               <code
                 className={cn(
                   "rounded px-1 py-0.5",
-                  isUser ? "bg-primary-foreground/20" : "bg-muted-foreground/20"
+                  isUser ? "bg-primary-foreground/20" : "bg-persian-blue-100/50"
                 )}
               >
                 {children}
@@ -91,7 +91,7 @@ export function ChatMessageBubble({
               <blockquote
                 className={cn(
                   "border-l-2 pl-2 italic",
-                  isUser ? "border-secondary text-secondary" : "border-primary"
+                  isUser ? "border-secondary text-secondary" : "border-persian-blue-300"
                 )}
               >
                 {children}
@@ -103,7 +103,7 @@ export function ChatMessageBubble({
         </ReactMarkdown>
 
         {message.role === "assistant" && message.id && (
-          <div className="mt-2 text-xs text-muted-foreground/60 flex items-center gap-2">
+          <div className="mt-2 text-xs text-persian-blue-400 flex items-center gap-2">
             {isLoading && (
               <span className="flex gap-1">
                 <span className="animate-bounce">.</span>

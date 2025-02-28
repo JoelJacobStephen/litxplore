@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@clerk/nextjs";
@@ -31,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 
 interface Review {
   id: number;
@@ -158,7 +158,7 @@ export default function HistoryPage() {
         >
           {[1, 2, 3].map((i) => (
             <motion.div key={i} variants={itemVariants}>
-              <Card className="h-64">
+              <Card className="h-[350px]">
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4 bg-gray-800" />
                   <Skeleton className="h-4 w-1/3 bg-gray-800" />
@@ -178,7 +178,7 @@ export default function HistoryPage() {
     return (
       <div className="container mx-auto p-6 relative z-10">
         <div className="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded backdrop-blur-sm">
-          Error: {error}
+          Unable to find or load generated literature reviews
         </div>
       </div>
     );
@@ -225,7 +225,7 @@ export default function HistoryPage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Card
-                className="flex flex-col cursor-pointer group hover:border-blue-600 transition-colors relative h-full"
+                className="flex flex-col cursor-pointer group hover:border-blue-600 transition-colors h-[350px]"
                 onClick={() => handleReviewClick(review)}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -247,19 +247,17 @@ export default function HistoryPage() {
                     })}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow relative z-10">
-                  <ScrollArea className="h-[160px]">
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-blue-400">Topic</h4>
-                      <p className="text-sm text-gray-400 mb-2">
-                        {review.topic}
-                      </p>
-                      <h4 className="font-semibold text-blue-400">Review</h4>
-                      <p className="text-sm text-gray-300 line-clamp-6 prose-sm prose-invert">
-                        {review.content}
-                      </p>
+                <CardContent className="flex-grow relative z-10 overflow-hidden">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-blue-400">Topic</h4>
+                    <p className="text-sm text-gray-400 mb-2 line-clamp-2">
+                      {review.topic}
+                    </p>
+                    <h4 className="font-semibold text-blue-400">Review</h4>
+                    <div className="text-sm text-gray-300 prose-sm prose-invert line-clamp-6">
+                      <ReactMarkdown>{review.content}</ReactMarkdown>
                     </div>
-                  </ScrollArea>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>

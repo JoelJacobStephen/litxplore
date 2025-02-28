@@ -73,15 +73,15 @@ export function ChatInterface({
             className={cn(
               "p-4 max-w-[90%]",
               message.role === "user"
-                ? "ml-auto bg-secondary text-primary-foreground" // User message
-                : "bg-card text-card-foreground border" // Assistant message
+                ? "ml-auto bg-slate-700 text-secondary-foreground" // User message
+                : "bg-persian-blue-900 text-card-foreground border" // Assistant message
             )}
           >
             <div
               className={cn(
                 "prose prose-sm max-w-none",
                 message.role === "user"
-                  ? "prose-invert" // Light text for user messages
+                  ? "prose-stone" // Light text for user messages
                   : "prose-stone dark:prose-invert" // Dark text for assistant messages
               )}
             >
@@ -117,7 +117,7 @@ export function ChatInterface({
                           : "bg-muted/20 block p-2",
                         message.role === "user"
                           ? "text-primary-foreground"
-                          : "text-foreground",
+                          : "text-persian-blue-900",
                         className
                       )}
                       {...props}
