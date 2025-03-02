@@ -42,6 +42,40 @@ interface Review {
   updated_at: string;
 }
 
+const DeleteButton = ({
+  reviewId,
+  setDeletingReviewId,
+}: {
+  reviewId: number;
+  setDeletingReviewId: (id: number | null) => void;
+}) => {
+  // Function to handle delete button click with event stopping
+  const handleClick = (e: React.MouseEvent) => {
+    // These are crucial to prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
+    setDeletingReviewId(reviewId);
+    return false;
+  };
+
+  return (
+    <div
+      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+      onClick={handleClick}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hover:bg-red-900/20 hover:text-red-400"
+        onClick={handleClick}
+      >
+        <Trash2 className="h-4 w-4 text-red-400" />
+      </Button>
+    </div>
+  );
+};
+
 export default function HistoryPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,18 +259,16 @@ export default function HistoryPage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Card
-                className="flex flex-col cursor-pointer group hover:border-blue-600 transition-colors h-[350px]"
+                className="flex flex-col cursor-pointer group hover:border-blue-600 transition-colors h-[350px] relative"
                 onClick={() => handleReviewClick(review)}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-900/20 hover:text-red-400"
-                  onClick={(e) => handleDeleteClick(e, review.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-red-400" />
-                </Button>
+
+                <DeleteButton
+                  reviewId={review.id}
+                  setDeletingReviewId={setDeletingReviewId}
+                />
+
                 <CardHeader className="relative z-10">
                   <CardTitle className="line-clamp-2 group-hover:text-blue-400 transition-colors">
                     {review.title}
