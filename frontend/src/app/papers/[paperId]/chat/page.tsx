@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import Link from "next/link";
 import { useMobile } from "@/hooks/use-mobile";
-import LoadingSpinner from "@/components/LoadingSpinner";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 

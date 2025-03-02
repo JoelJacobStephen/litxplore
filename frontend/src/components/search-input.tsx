@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, ArrowRight, Plus } from "lucide-react";
+import { Search, Loader2, Plus } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
 import { searchPapers } from "@/lib/services/paper-service";
 import { motion } from "framer-motion";
@@ -172,9 +172,9 @@ export function SearchInput({
                           {paper.authors.slice(0, 3).join(", ")}
                           {paper.authors.length > 3 && " et al."}
                         </div>
-                        {paper.year && (
+                        {paper.published && (
                           <div className="text-xs text-zinc-500 mt-0.5">
-                            {paper.year}
+                            {new Date(paper.published).getFullYear()}
                           </div>
                         )}
                       </div>
