@@ -17,6 +17,7 @@ export default function Loading() {
           <TabsTrigger value="review">Review</TabsTrigger>
           <TabsTrigger value="citations">References</TabsTrigger>
         </TabsList>
+        {/*  */}
 
         <TabsContent value="review">
           <Card className="p-6">
