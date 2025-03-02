@@ -220,48 +220,54 @@ export const ReviewDisplay = ({
 
         <TabsContent value="citations" className="flex-1">
           <Card className="p-6 h-full overflow-auto">
-            <div className="grid gap-4">
+            <motion.div variants={containerVariants} className="grid gap-4">
               {citations?.map((paper, index) => (
-                <div
+                <motion.div
                   key={paper.id}
-                  className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.01 }}
+                  className="p-4 rounded-lg border bg-persian-blue-950/10 hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="text-2xl font-bold text-primary">
+                    <span className="text-2xl font-bold text-blue-400 dark:text-blue-500">
                       [{index + 1}]
                     </span>
                     <div className="flex-1">
-                      <h3 className="font-semibold mb-2">{paper.title}</h3>
+                      <h3 className="font-semibold mb-2 text-blue-900 dark:text-blue-300">
+                        {paper.title}
+                      </h3>
                       <p className="text-sm text-muted-foreground mb-2">
                         {paper.authors.join(", ")}
                       </p>
-                      <p className="text-sm mb-2">
+                      <p className="text-sm mb-2 text-slate-700 dark:text-slate-300">
                         Published:{" "}
                         {new Date(paper.published).toLocaleDateString()}
                       </p>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                         {paper.summary}
                       </p>
                       {paper.url && (
-                        <Button
-                          variant="link"
-                          className="px-0 text-primary"
-                          asChild
-                        >
-                          <a
-                            href={paper.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <motion.div whileTap={{ scale: 0.98 }}>
+                          <Button
+                            variant="link"
+                            className="px-0 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                            asChild
                           >
-                            View Paper
-                          </a>
-                        </Button>
+                            <a
+                              href={paper.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View Paper
+                            </a>
+                          </Button>
+                        </motion.div>
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </Card>
         </TabsContent>
       </Tabs>
