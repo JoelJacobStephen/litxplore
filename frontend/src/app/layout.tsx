@@ -17,6 +17,27 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "LitXplore - Literature Review Generator",
   description: "Generate academic literature reviews using AI",
+  icons: {
+    icon: [
+      { url: "/icons/favicon.ico", sizes: "any" },
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/icons/apple-icon.png" }],
+    other: [
+      { url: "/icons/icon.png", type: "image/png", sizes: "32x32" },
+      {
+        url: "/icons/web-app-manifest-192x192.png",
+        type: "image/png",
+        sizes: "192x192",
+      },
+      {
+        url: "/icons/web-app-manifest-512x512.png",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+  },
+  manifest: "/icons/manifest.json",
 };
 
 export default function RootLayout({
