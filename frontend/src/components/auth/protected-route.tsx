@@ -8,7 +8,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
-      router.push("/");
+      router.push("/sign-in");
     }
   }, [isLoaded, isSignedIn, router]);
 
