@@ -26,7 +26,14 @@ COPY requirements.txt .
 # Create virtual environment and install dependencies
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir -r requirements.txt
+# Set environment variables to disable CUDA/GPU support
+ENV CUDA_VISIBLE_DEVICES=""
+ENV CUDA_HOME=""
+ENV FORCE_CPU="1"
+ENV NO_CUDA="1"
+# Install without caching and using minimal dependencies
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Final stage
 FROM python:3.11-slim

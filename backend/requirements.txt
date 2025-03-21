@@ -26,15 +26,17 @@ cryptography>=39.0.1
 # AI and LangChain
 openai
 google-generativeai
-langchain
-langserve
-langchain-community
-langchain-openai
-langchain-google-genai
+langchain>=0.0.267
+langserve>=0.0.30
+# Specify minimal versions to reduce dependencies
+langchain-community>=0.0.16
+langchain-openai>=0.0.5
+langchain-google-genai>=0.0.5
 
 # Vector store and embeddings
 faiss-cpu
-sentence-transformers
+# Use a slimmer version of sentence-transformers without full models
+sentence-transformers==2.2.2
 
 # Document processing
 arxiv

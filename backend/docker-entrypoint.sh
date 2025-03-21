@@ -121,6 +121,14 @@ if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
   echo "Error: PostgreSQL did not become ready in time. Proceeding anyway and hoping for the best..."
 fi
 
+# Create database if it doesn't exist
+echo "Checking if database exists..."
+PGPASSWORD=$POSTGRES_PASSWORD psql -h db -U $POSTGRES_USER -lqt | grep -q "$POSTGRES_DB" || {
+  echo "Database $POSTGRES_DB does not exist. Creating..."
+  PGPASSWORD=$POSTGRES_PASSWORD psql -h db -U $POSTGRES_USER -c "CREATE DATABASE $POSTGRES_DB;"
+  echo "Database $POSTGRES_DB created."
+}
+
 # Apply database migrations
 echo "Running database migrations..."
 alembic upgrade head

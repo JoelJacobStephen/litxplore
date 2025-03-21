@@ -14,10 +14,14 @@ if [ -d ".git" ]; then
   git pull
 fi
 
+# Clean up Docker system to free space
+echo "Cleaning up Docker system to free space..."
+docker system prune -f --volumes
+
 # Build and start containers using production configuration
 echo "Building and starting containers..."
 docker-compose -f docker-compose.prod.yml down
-docker-compose -f docker-compose.prod.yml build
+docker-compose -f docker-compose.prod.yml build --no-cache --force-rm
 docker-compose -f docker-compose.prod.yml up -d
 
 echo "Deployment complete! Backend should now be running behind Nginx proxy."
