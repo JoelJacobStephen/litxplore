@@ -23,14 +23,14 @@ app = FastAPI(
 )
 
 # Setup CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"]
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=settings.CORS_ORIGINS,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+#     expose_headers=["*"]
+# )
 
 # Create uploads directory if it doesn't exist
 os.makedirs("uploads", exist_ok=True)
