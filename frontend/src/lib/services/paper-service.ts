@@ -92,12 +92,18 @@ export async function generateReview({
   topic: string;
 }): Promise<ReviewResponse> {
   try {
+    // Add a cache-busting query parameter with a timestamp
+    const cacheBuster = new Date().getTime();
+    
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/review/generate-review`,
+      `${API_BASE_URL}/api/v1/review/generate-review?_=${cacheBuster}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
         },
         body: JSON.stringify({
           paper_ids: papers,

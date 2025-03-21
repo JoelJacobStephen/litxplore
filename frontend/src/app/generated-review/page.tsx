@@ -12,18 +12,34 @@ export default function GeneratedReviewPage() {
   const router = useRouter();
   const generatedReview = useReviewStore((state) => state.generatedReview);
   const [isLoading, setIsLoading] = useState(!generatedReview);
+  const [redirectTimeoutId, setRedirectTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
+  // Redirect to review page if no review is present and we're not loading
   useEffect(() => {
     if (!generatedReview && !isLoading) {
-      router.push("/review");
+      const timeoutId = setTimeout(() => {
+        router.push("/review");
+      }, 500);
+      setRedirectTimeoutId(timeoutId);
     }
-  }, [generatedReview, router, isLoading]);
+    
+    return () => {
+      if (redirectTimeoutId) {
+        clearTimeout(redirectTimeoutId);
+      }
+    };
+  }, [generatedReview, router, isLoading, redirectTimeoutId]);
 
+  // Update loading state when review is available
   useEffect(() => {
     if (generatedReview) {
       setIsLoading(false);
+      if (redirectTimeoutId) {
+        clearTimeout(redirectTimeoutId);
+        setRedirectTimeoutId(null);
+      }
     }
-  }, [generatedReview]);
+  }, [generatedReview, redirectTimeoutId]);
 
   if (isLoading || !generatedReview) {
     return <Loading />;

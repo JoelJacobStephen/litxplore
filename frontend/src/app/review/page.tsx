@@ -111,6 +111,9 @@ export default function ReviewPage() {
       return;
     }
 
+    // Clear any existing generated review to prevent caching issues
+    useReviewStore.getState().clearGeneratedReview();
+    
     setIsGenerating(true);
     router.push("/generated-review");
 

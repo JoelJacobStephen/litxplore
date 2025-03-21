@@ -12,9 +12,11 @@ interface ReviewState {
     citations: Paper[];
     topic: string;
   }) => void;
+  clearGeneratedReview: () => void;
 }
 
 export const useReviewStore = create<ReviewState>((set) => ({
   generatedReview: null,
   setGeneratedReview: (review) => set({ generatedReview: review }),
+  clearGeneratedReview: () => set({ generatedReview: null }),
 }));
