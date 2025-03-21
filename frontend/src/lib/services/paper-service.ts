@@ -58,23 +58,67 @@ export async function chatWithPaper(
 
 export const streamChat = async (
   paperId: string,
-  message: string
+  message: string,
+  model: string = "gemini-2.0-flash", // Default to Gemini 2.0 Flash
+  customSystemPrompt?: string // Optional custom system prompt
 ): Promise<Response> => {
   try {
+    // Add cache-busting timestamp to prevent caching
+    const cacheBuster = new Date().getTime();
+
+    // Expert research paper assistant prompt
+    const defaultSystemPrompt = `
+      You are an expert research paper assistant with deep knowledge of academic literature and scientific research.
+      Your purpose is to help users understand the content, methodology, findings, and implications of the research paper they're reading.
+      
+      Follow these guidelines when responding to questions:
+      
+      1. Focus on providing accurate, detailed information based specifically on this paper's content.
+      2. When discussing methodology, be precise about what the researchers did and why.
+      3. When discussing results, clearly explain what was found and its significance.
+      4. When explaining technical concepts, break them down into understandable components while preserving accuracy.
+      5. When asked about implications or applications, be specific about what the research suggests and its limitations.
+      6. If referring to figures, tables, or sections, be specific about their location and content.
+      7. If the answer isn't explicitly in the paper, clearly state this and offer related information that is present.
+      8. When appropriate, contextualize the paper within its broader research field.
+      9. Use academic language but explain complex terms.
+      10. Structure your answers with clear organization using appropriate headings and bullet points when helpful.
+      
+      Your goal is to help users deeply understand this specific paper as if they were discussing it with a knowledgeable colleague or professor in the field.
+    `;
+
+    // Use custom system prompt if provided, otherwise use default
+    const systemPrompt = customSystemPrompt || defaultSystemPrompt;
+
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/papers/${paperId}/chat`,
+      `${API_BASE_URL}/api/v1/papers/${paperId}/chat?_=${cacheBuster}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({
+          message,
+          model,
+          systemPrompt,
+        }),
       }
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Failed to get chat response");
+      // Try to get error details, but handle cases where response isn't JSON
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.detail || `Failed with status ${response.status}`
+        );
+      } catch (jsonError) {
+        // If we can't parse JSON, use the status text
+        throw new Error(`Failed to get chat response: ${response.statusText}`);
+      }
     }
 
     return response;
@@ -94,7 +138,7 @@ export async function generateReview({
   try {
     // Add a cache-busting query parameter with a timestamp
     const cacheBuster = new Date().getTime();
-    
+
     const response = await fetch(
       `${API_BASE_URL}/api/v1/review/generate-review?_=${cacheBuster}`,
       {
@@ -102,8 +146,8 @@ export async function generateReview({
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0",
+          Pragma: "no-cache",
+          Expires: "0",
         },
         body: JSON.stringify({
           paper_ids: papers,

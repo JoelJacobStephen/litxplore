@@ -1,52 +1,100 @@
 import { StreamingTextResponse, experimental_StreamData } from "ai";
 import { streamChat } from "@/lib/services/paper-service";
+import { NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 export async function POST(req: Request) {
-  const { messages, paperId } = await req.json();
-  const lastMessage = messages[messages.length - 1];
-
   try {
-    const response = await streamChat(paperId, lastMessage.content);
-    const data = new experimental_StreamData();
+    const { messages, paperId, model = "gemini-2.0-flash", systemPrompt } = await req.json();
+    
+    if (!paperId) {
+      return NextResponse.json(
+        { error: "Paper ID is required" },
+        { status: 400 }
+      );
+    }
+    
+    if (!messages || !messages.length) {
+      return NextResponse.json(
+        { error: "At least one message is required" },
+        { status: 400 }
+      );
+    }
+    
+    const lastMessage = messages[messages.length - 1];
+    const userQuery = lastMessage.content;
+    
+    if (!userQuery) {
+      return NextResponse.json(
+        { error: "Message content cannot be empty" },
+        { status: 400 }
+      );
+    }
 
-    // Create a transform stream
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) return;
+    try {
+      // Stream the chat response
+      const response = await streamChat(paperId, userQuery, model, systemPrompt);
+      const data = new experimental_StreamData();
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+      // Create a transform stream
+      const stream = new ReadableStream({
+        async start(controller) {
+          const reader = response.body?.getReader();
+          if (!reader) {
+            controller.error(new Error('No readable stream available'));
+            data.close();
+            return;
+          }
 
-            const text = new TextDecoder().decode(value);
-            const chunks = text.split("\n\n");
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
 
-            for (const chunk of chunks) {
-              if (chunk.startsWith("data: ")) {
-                const jsonData = JSON.parse(chunk.slice(6));
-                controller.enqueue(new TextEncoder().encode(jsonData.content));
+              const text = new TextDecoder().decode(value);
+              const chunks = text.split("\n\n");
 
-                if (jsonData.sources) {
-                  data.append({ sources: jsonData.sources });
+              for (const chunk of chunks) {
+                if (chunk.startsWith("data: ")) {
+                  try {
+                    const jsonData = JSON.parse(chunk.slice(6));
+                    controller.enqueue(new TextEncoder().encode(jsonData.content));
+
+                    // Send source metadata if available
+                    if (jsonData.sources) {
+                      data.append({ sources: jsonData.sources });
+                    }
+                  } catch (e) {
+                    console.error("Error parsing chunk:", e, chunk);
+                    // Continue processing other chunks
+                  }
                 }
               }
             }
+            controller.close();
+            data.close();
+          } catch (error) {
+            console.error("Stream processing error:", error);
+            controller.error(error);
+            data.close();
           }
-          controller.close();
-          data.close();
-        } catch (error) {
-          console.error("Stream error:", error);
-          controller.error(error);
-          data.close();
-        }
-      },
-    });
+        },
+      });
 
-    return new StreamingTextResponse(stream); // Remove the headers option as it's not supported
+      return new StreamingTextResponse(stream, { status: 200 });
+    } catch (error) {
+      console.error("Chat streaming error:", error);
+      return NextResponse.json(
+        { error: "Failed to generate streaming response" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error("Chat error:", error);
-    throw error;
+    console.error("Chat request processing error:", error);
+    return NextResponse.json(
+      { error: "Failed to process request" },
+      { status: 500 }
+    );
   }
 }
