@@ -12,6 +12,9 @@ def get_or_create_user(
     """
     Get an existing user or create a new one based on Clerk user data
     """
+    # If email is empty, use clerk_id + placeholder domain to ensure uniqueness
+    if not email:
+        email = f"{clerk_id}@litxplore.generated"
     user = db.query(User).filter(User.clerk_id == clerk_id).first()
     
     if not user:

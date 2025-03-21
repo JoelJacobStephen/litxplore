@@ -66,6 +66,9 @@ async def get_current_user(
         # Extract user info from token
         clerk_id = payload["sub"]
         email = payload.get("email", "")
+        # If email is empty, use clerk_id + placeholder domain to ensure uniqueness
+        if not email:
+            email = f"{clerk_id}@litxplore.generated"
         first_name = payload.get("firstName", "")
         last_name = payload.get("lastName", "")
         
