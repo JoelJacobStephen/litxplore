@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import Dict, Any, List
+import os
 from app.models.review import ReviewRequest, ReviewResponse, Review
 from app.services.paper_service import PaperService
 from app.services.langchain_service import LangChainService
@@ -51,6 +52,10 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
             topic=review_request.topic
         )
         
+        # Clean up uploaded PDF files after successful review generation
+        if uploaded_ids:
+            await cleanup_uploaded_pdfs(uploaded_ids)
+            
         return ReviewResponse(
             review=review_text,
             citations=papers,
@@ -142,3 +147,18 @@ async def delete_review(
     db.commit()
     
     return {"message": "Review deleted successfully"}
+
+async def cleanup_uploaded_pdfs(paper_ids: List[str]):
+    """Delete uploaded PDF files to free up space."""
+    try:
+        upload_dir = "uploads"
+        for paper_id in paper_ids:
+            if paper_id.startswith('upload_'):
+                content_hash = paper_id.replace('upload_', '')
+                pdf_path = os.path.join(upload_dir, f"{content_hash}.pdf")
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+                    print(f"Deleted PDF file: {pdf_path}")
+    except Exception as e:
+        # Log the error but don't fail the request
+        print(f"Error cleaning up PDF files: {str(e)}")

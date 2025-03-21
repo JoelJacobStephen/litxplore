@@ -374,6 +374,7 @@ class PaperService:
 
     async def generate_review(self, topic: str, papers: List[Paper], max_papers: int = 10) -> str:
         """Generate literature review using both ArXiv and uploaded papers."""
+        temp_files = []  # Keep track of any temporary files created
         try:
             documents = []
             
@@ -397,3 +398,11 @@ class PaperService:
                 status_code=500, 
                 detail=f"Failed to generate review: {str(e)}"
             )
+        finally:
+            # Clean up any temporary files created during processing
+            for temp_file in temp_files:
+                if os.path.exists(temp_file):
+                    try:
+                        os.unlink(temp_file)
+                    except Exception as e:
+                        print(f"Error deleting temporary file {temp_file}: {str(e)}")
