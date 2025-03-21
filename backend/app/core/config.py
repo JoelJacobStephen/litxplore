@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     API_V1_STR: str
     PROJECT_NAME: str
     
+    # Deployment Settings
+    BEHIND_PROXY: bool = False
+    PRODUCTION: bool = False
+    
     # CORS Settings
     CORS_ORIGINS: List[str]
     CORS_ALLOW_CREDENTIALS: bool
@@ -55,6 +59,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
         env_file_encoding = "utf-8"
+        extra = "ignore"  # Allow extra attributes
 
 
 @lru_cache()

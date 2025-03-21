@@ -6,13 +6,13 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8000"  # Only accessible from localhost as nginx proxies this
     env_file:
       - .env
     environment:
       - DOCKER_ENV=true
-      - BEHIND_PROXY=false
-      - PRODUCTION=false
+      - BEHIND_PROXY=true
+      - PRODUCTION=true
     depends_on:
       - db
       - redis
@@ -32,15 +32,17 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - POSTGRES_DB=${POSTGRES_DB:-litxplore_db}
-    ports:
-      - "5432:5432"
+    # Don't expose postgres port in production for security
+    # ports:
+    #   - "5432:5432"  
     networks:
       - litxplore-network
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6380:6379"
+    # Don't expose redis port in production for security
+    # ports:
+    #   - "6380:6379"
     volumes:
       - redis_data:/data
     networks:

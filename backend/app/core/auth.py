@@ -38,56 +38,110 @@ async def get_current_user(
     FastAPI dependency that validates the Clerk JWT token and returns the current user.
     If the user doesn't exist in the database, it creates a new user record.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Check if credentials are provided
+    if not credentials:
+        logger.error("No authentication credentials provided")
+        raise HTTPException(status_code=401, detail="No authentication credentials provided")
+    
     try:
         token = credentials.credentials
+        logger.debug(f"Processing authentication token (first 10 chars): {token[:10]}...")
+        
         # Get the key ID from the token header
-        unverified_header = PyJWT.get_unverified_header(token)
-        kid = unverified_header["kid"]
+        try:
+            unverified_header = PyJWT.get_unverified_header(token)
+            kid = unverified_header.get("kid")
+            if not kid:
+                logger.error("Token header missing 'kid' field")
+                raise HTTPException(status_code=401, detail="Invalid token format: Missing 'kid' field")
+        except Exception as header_error:
+            logger.error(f"Failed to parse token header: {str(header_error)}")
+            raise HTTPException(status_code=401, detail=f"Invalid token header: {str(header_error)}")
         
         # Find the matching public key from JWKS
-        jwks = get_jwks()
-        key = None
-        for jwk in jwks["keys"]:
-            if jwk["kid"] == kid:
-                key = PyJWT.algorithms.RSAAlgorithm.from_jwk(jwk)
-                break
+        try:
+            jwks = get_jwks()
+            logger.debug(f"JWKS retrieved with {len(jwks.get('keys', []))} keys")
+            
+            key = None
+            for jwk in jwks.get("keys", []):
+                if jwk.get("kid") == kid:
+                    key = PyJWT.algorithms.RSAAlgorithm.from_jwk(jwk)
+                    break
+            
+            if not key:
+                logger.error(f"Key with kid={kid} not found in JWKS")
+                raise HTTPException(status_code=401, detail="Invalid token: Key not found in JWKS")
+        except Exception as jwks_error:
+            logger.error(f"JWKS processing error: {str(jwks_error)}")
+            raise HTTPException(status_code=401, detail=f"JWKS error: {str(jwks_error)}")
         
-        if not key:
-            raise HTTPException(status_code=401, detail="Invalid token: Key not found")
-        
-        # Update token verification with correct audience handling
-        payload = PyJWT.decode(
-            token,
-            key=key,
-            algorithms=["RS256"],
-            issuer=settings.CLERK_ISSUER,
-        )
+        # Decode and verify the token
+        try:
+            logger.debug(f"Decoding token with issuer: {settings.CLERK_ISSUER}")
+            payload = PyJWT.decode(
+                token,
+                key=key,
+                algorithms=["RS256"],
+                issuer=settings.CLERK_ISSUER,
+            )
+            logger.debug("Token successfully decoded and verified")
+        except ExpiredSignatureError as exp_error:
+            logger.error(f"Token expired: {str(exp_error)}")
+            raise HTTPException(status_code=401, detail="Token has expired")
+        except (InvalidTokenError, PyJWTError) as token_error:
+            logger.error(f"Token validation error: {str(token_error)}")
+            raise HTTPException(status_code=401, detail=f"Invalid token: {str(token_error)}")
         
         # Extract user info from token
-        clerk_id = payload["sub"]
-        email = payload.get("email", "")
-        # If email is empty, use clerk_id + placeholder domain to ensure uniqueness
-        if not email:
-            email = f"{clerk_id}@litxplore.generated"
-        first_name = payload.get("firstName", "")
-        last_name = payload.get("lastName", "")
+        try:
+            clerk_id = payload.get("sub")
+            if not clerk_id:
+                logger.error("Token payload missing 'sub' claim (user ID)")
+                raise HTTPException(status_code=401, detail="Invalid token: Missing user ID")
+            
+            email = payload.get("email", "")
+            # If email is empty, use clerk_id + placeholder domain to ensure uniqueness
+            if not email:
+                email = f"{clerk_id}@litxplore.generated"
+                logger.debug(f"Generated email for user: {email}")
+            
+            first_name = payload.get("firstName", "")
+            last_name = payload.get("lastName", "")
+            logger.debug(f"User info extracted: clerk_id={clerk_id}, email={email}")
+        except Exception as extract_error:
+            logger.error(f"Failed to extract user info from token: {str(extract_error)}")
+            raise HTTPException(status_code=401, detail=f"User info extraction error: {str(extract_error)}")
         
         # Get or create user in database
-        user = get_or_create_user(
-            db=db,
-            clerk_id=clerk_id,
-            email=email,
-            first_name=first_name,
-            last_name=last_name
-        )
+        try:
+            logger.debug(f"Attempting to get or create user with clerk_id={clerk_id}")
+            user = get_or_create_user(
+                db=db,
+                clerk_id=clerk_id,
+                email=email,
+                first_name=first_name,
+                last_name=last_name
+            )
+            logger.debug(f"User retrieved/created successfully: id={user.id}")
+            return user
+        except Exception as user_error:
+            logger.error(f"Database error while processing user: {str(user_error)}")
+            # Include original exception details in the response
+            raise HTTPException(
+                status_code=401, 
+                detail=f"Authentication failed: Database error: {str(user_error)}"
+            )
         
-        return user
-        
-    except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except (InvalidTokenError, PyJWTError) as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    except HTTPException:
+        # Re-raise HTTP exceptions as they already have appropriate status codes
+        raise
     except Exception as e:
+        # Log and wrap any unexpected errors
+        logger.error(f"Unexpected authentication error: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
 def get_or_create_user(

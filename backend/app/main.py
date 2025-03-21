@@ -23,14 +23,19 @@ app = FastAPI(
 )
 
 # Setup CORS
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=settings.CORS_ORIGINS,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-#     expose_headers=["*"]
-# )
+# Only add CORS middleware when not behind a reverse proxy that handles CORS
+if not settings.BEHIND_PROXY:
+    print("Adding CORS middleware (not running behind proxy)")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"]
+    )
+else:
+    print("Skipping CORS middleware (running behind proxy that handles CORS)")
 
 # Create uploads directory if it doesn't exist
 os.makedirs("uploads", exist_ok=True)
@@ -71,20 +76,25 @@ app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["u
 # Fix the history router path
 app.include_router(history.router, prefix=f"{settings.API_V1_STR}", tags=["history"])
 
-# Health check endpoint
+# Health check endpoints
 @app.get("/health")
+@app.get(f"{settings.API_V1_STR}/healthcheck")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "LitXplore API"}
 
 # Database test endpoint
 @app.get("/db-test")
+@app.get(f"{settings.API_V1_STR}/db-test")
 def test_db(db: Session = Depends(get_db)):
     try:
         # Try to execute a simple query
-        db.execute("SELECT 1")
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
         return {"status": "Database connection successful"}
     except Exception as e:
-        return {"status": "Database connection failed", "error": str(e)}
+        import traceback
+        trace = traceback.format_exc()
+        return {"status": "Database connection failed", "error": str(e), "trace": trace}
 
 @app.on_event("startup")
 async def startup_event():

@@ -40,6 +40,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
+        postgresql-client \
+        sed \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -54,8 +56,12 @@ COPY --from=builder /opt/venv /opt/venv
 # Copy application code
 COPY . .
 
-# Change ownership of the app directory
-RUN chown -R appuser:appuser /app
+# Copy the entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+
+# Set permissions and ownership
+RUN chmod +x /app/docker-entrypoint.sh && \
+    chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
@@ -63,5 +69,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start the application
-CMD ["/bin/bash", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"] 
+# Run the entrypoint script
+CMD ["/app/docker-entrypoint.sh"] 
