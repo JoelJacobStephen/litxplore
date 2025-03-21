@@ -191,8 +191,7 @@ export default function Home() {
                 Paper Search
               </h3>
               <p className="text-gray-300 mb-6">
-                Search through millions of academic papers on arXiv. Filter by
-                topic, author, or date to find relevant research.
+                Search through millions of academic papers on arXiv.
               </p>
 
               <Link href="/search" className="inline-block z-10 relative">
@@ -219,12 +218,13 @@ export default function Home() {
                 <div className="md:w-1/2">
                   <Sparkles className="h-10 w-10 text-blue-400 mb-4" />
                   <h3 className="text-2xl font-semibold mb-3 text-white">
-                    Powered by Advanced AI
+                    Powered by AI
                   </h3>
                   <p className="text-gray-300 mb-6">
-                    Our platform uses state-of-the-art AI models to analyze
-                    research papers, understand complex academic concepts, and
-                    generate insights that help accelerate your research
+                    The platform uses state-of-the-art AI models to fetch
+                    relevant papers from arXiv, analyze research papers,
+                    understand complex academic concepts, and generate detailed
+                    literature reviews that help accelerate your research
                     process.
                   </p>
 
@@ -320,7 +320,7 @@ export default function Home() {
               step: "2",
               title: "AI Analysis",
               description:
-                "Our AI analyzes relevant papers using advanced language models",
+                "The platform analyzes relevant papers using advanced language models",
               color: "from-blue-600 to-blue-800",
               delay: 0.2,
             },
