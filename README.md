@@ -1,6 +1,6 @@
-# LitXplorer
+# LitXplore
 
-LitXplorer is a research exploration platform that simplifies discovering and synthesizing academic literature. It allows users to find relevant research papers by entering a topic, uploading PDFs, or directly searching ArXiv through an integrated web interface. Once papers are selected, an advanced LLM-driven workflow powered by LangChain analyzes the content and generates a comprehensive literature review with accurate citations. Designed for researchers and academics, LitXplorer streamlines the literature review process, saving time and enhancing research quality.
+LitXplore is a research exploration platform that simplifies discovering and synthesizing academic literature. It allows users to find relevant research papers by entering a topic, uploading PDFs, or directly searching ArXiv through an integrated web interface. Once papers are selected, an advanced LLM-driven workflow powered by LangChain analyzes the content and generates a comprehensive literature review with accurate citations. Designed for researchers and academics, LitXplore streamlines the literature review process, saving time and enhancing research quality.
 
 ## Features
 
