@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: litxplore-backend:latest
+    container_name: litxplore_backend
     ports:
       - "8000:8000"  # Only accessible from localhost as nginx proxies this
     env_file:
@@ -27,6 +29,18 @@ services:
     restart: unless-stopped
     networks:
       - litxplore-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      replicas: 1
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
 
   db:
     image: postgres:15-alpine
