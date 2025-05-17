@@ -26,13 +26,20 @@ export async function generateDocument(
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       console.error("Document generation failed:", errorData);
-      const errorMessage =
-        errorData.detail?.[0]?.msg ||
-        errorData.detail ||
-        "Failed to generate document";
-      throw new Error(errorMessage);
+      
+      // Handle the new error format
+      if (errorData.status === "error" && errorData.error) {
+        throw new Error(errorData.error.message || "Failed to generate document");
+      } else {
+        // Handle old format or other error formats
+        const errorMessage =
+          errorData.detail?.[0]?.msg ||
+          errorData.detail ||
+          "Failed to generate document";
+        throw new Error(errorMessage);
+      }
     }
 
     const contentType = response.headers.get("content-type");

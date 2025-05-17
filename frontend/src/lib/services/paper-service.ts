@@ -14,8 +14,14 @@ export async function searchPapers(query: string): Promise<Paper[]> {
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || "Failed to search papers");
+      const errorData = await response.json().catch(() => ({}));
+
+      // Handle the new error format
+      if (errorData.status === "error" && errorData.error) {
+        throw new Error(errorData.error.message || "Failed to search papers");
+      } else {
+        throw new Error(errorData.detail || "Failed to search papers");
+      }
     }
 
     const data = await response.json();
@@ -49,8 +55,14 @@ export async function chatWithPaper(
   );
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to get response");
+    const errorData = await response.json().catch(() => ({}));
+
+    // Handle the new error format
+    if (errorData.status === "error" && errorData.error) {
+      throw new Error(errorData.error.message || "Failed to get response");
+    } else {
+      throw new Error(errorData.detail || "Failed to get response");
+    }
   }
 
   return response.json();
@@ -112,9 +124,17 @@ export const streamChat = async (
       // Try to get error details, but handle cases where response isn't JSON
       try {
         const errorData = await response.json();
-        throw new Error(
-          errorData.detail || `Failed with status ${response.status}`
-        );
+
+        // Handle the new error format
+        if (errorData.status === "error" && errorData.error) {
+          throw new Error(
+            errorData.error.message || `Failed with status ${response.status}`
+          );
+        } else {
+          throw new Error(
+            errorData.detail || `Failed with status ${response.status}`
+          );
+        }
       } catch (jsonError) {
         // If we can't parse JSON, use the status text
         throw new Error(`Failed to get chat response: ${response.statusText}`);
@@ -157,8 +177,14 @@ export async function generateReview({
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(JSON.stringify(error));
+      const errorData = await response.json().catch(() => ({}));
+
+      // Handle the new error format
+      if (errorData.status === "error" && errorData.error) {
+        throw new Error(errorData.error.message || "Failed to generate review");
+      } else {
+        throw new Error(JSON.stringify(errorData));
+      }
     }
 
     return await response.json();

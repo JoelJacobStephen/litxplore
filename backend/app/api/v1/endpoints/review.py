@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, Depends, Request
 from typing import Dict, Any, List
 import os
+import logging
 from app.models.review import ReviewRequest, ReviewResponse, Review
 from app.services.paper_service import PaperService
 from app.services.langchain_service import LangChainService
@@ -8,6 +9,7 @@ from app.core.config import get_settings
 from app.core.auth import get_current_user
 from app.models.user import User
 from app.db.database import get_db
+from app.utils.error_utils import raise_validation_error, raise_not_found, raise_internal_error, ErrorCode
 from sqlalchemy.orm import Session
 
 settings = get_settings()
@@ -19,9 +21,9 @@ langchain_service = LangChainService()
 async def generate_review(request: Request, review_request: ReviewRequest) -> ReviewResponse:
     try:
         if not review_request.paper_ids:
-            raise HTTPException(
-                status_code=400,
-                detail="No paper IDs provided"
+            raise_validation_error(
+                message="No paper IDs provided",
+                error_code=ErrorCode.VALIDATION_ERROR
             )
         
         # Separate uploaded files from arXiv papers
@@ -41,9 +43,9 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
             papers.extend(uploaded_papers)
             
         if not papers:
-            raise HTTPException(
-                status_code=404,
-                detail="No papers found with the provided IDs"
+            raise_not_found(
+                message="No papers found with the provided IDs",
+                details={"paper_ids": review_request.paper_ids}
             )
         
         # Generate review using LangChain
@@ -65,9 +67,10 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generating review: {str(e)}"
+        logging.exception("Failed to generate review")
+        raise_internal_error(
+            message=f"Error generating review: {str(e)}",
+            error_code=ErrorCode.INTERNAL_ERROR
         )
 
 @router.post("/save")
@@ -94,9 +97,10 @@ async def save_review(
         
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to save review: {str(e)}"
+        logging.exception("Failed to save review")
+        raise_internal_error(
+            message=f"Failed to save review: {str(e)}",
+            error_code=ErrorCode.DATABASE_ERROR
         )
 
 @router.get("/history")
@@ -123,9 +127,10 @@ async def get_review_history(
         ]
         
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch review history: {str(e)}"
+        logging.exception("Failed to fetch review history")
+        raise_internal_error(
+            message=f"Failed to fetch review history: {str(e)}",
+            error_code=ErrorCode.DATABASE_ERROR
         )
 
 @router.delete("/{review_id}")
@@ -141,7 +146,10 @@ async def delete_review(
     ).first()
     
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise_not_found(
+            message="Review not found",
+            details={"review_id": review_id}
+        )
     
     db.delete(review)
     db.commit()

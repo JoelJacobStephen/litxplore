@@ -36,10 +36,19 @@ export class ReviewService {
     });
 
     if (!response.ok) {
-      const error = await response
+      const errorData = await response
         .json()
-        .catch(() => ({ detail: "Failed to save review" }));
-      throw new Error(error.detail || "Failed to save review");
+        .catch(() => ({
+          status: "error",
+          error: { message: "Failed to save review" },
+        }));
+
+      // Handle the new error format
+      if (errorData.status === "error" && errorData.error) {
+        throw new Error(errorData.error.message || "Failed to save review");
+      } else {
+        throw new Error(errorData.detail || "Failed to save review");
+      }
     }
 
     return response.json();
@@ -61,8 +70,16 @@ export class ReviewService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || "Failed to fetch review history");
+      const errorData = await response.json().catch(() => ({}));
+
+      // Handle the new error format
+      if (errorData.status === "error" && errorData.error) {
+        throw new Error(
+          errorData.error.message || "Failed to fetch review history"
+        );
+      } else {
+        throw new Error(errorData.detail || "Failed to fetch review history");
+      }
     }
 
     return response.json();
@@ -84,8 +101,14 @@ export class ReviewService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || "Failed to fetch review");
+      const errorData = await response.json().catch(() => ({}));
+
+      // Handle the new error format
+      if (errorData.status === "error" && errorData.error) {
+        throw new Error(errorData.error.message || "Failed to fetch review");
+      } else {
+        throw new Error(errorData.detail || "Failed to fetch review");
+      }
     }
 
     return response.json();
@@ -106,8 +129,14 @@ export class ReviewService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || "Failed to delete review");
+      const errorData = await response.json().catch(() => ({}));
+
+      // Handle the new error format
+      if (errorData.status === "error" && errorData.error) {
+        throw new Error(errorData.error.message || "Failed to delete review");
+      } else {
+        throw new Error(errorData.detail || "Failed to delete review");
+      }
     }
   }
 }

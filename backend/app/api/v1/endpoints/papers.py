@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, File, UploadFile
+from fastapi import APIRouter, Depends, Query, File, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, AsyncGenerator
 import arxiv
 import json
+import logging
 from ....models.paper import Paper, ChatRequest, ChatResponse
 from ....services.paper_service import PaperService
 from ....core.config import get_settings
+from ....utils.error_utils import raise_validation_error, raise_not_found, raise_internal_error, ErrorCode
 
 router = APIRouter()
 paper_service = PaperService()
@@ -24,15 +26,16 @@ async def search_papers(
             # Search papers by query
             papers = await paper_service.search_papers(query)
         else:
-            raise HTTPException(
-                status_code=400,
-                detail="Either query or ids parameter is required"
+            raise_validation_error(
+                message="Either query or ids parameter is required",
+                error_code=ErrorCode.VALIDATION_ERROR
             )
         return papers
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to search papers: {str(e)}"
+        logging.exception("Failed to search papers")
+        raise_internal_error(
+            message=f"Failed to search papers: {str(e)}",
+            error_code=ErrorCode.INTERNAL_ERROR
         )
 
 @router.get("/{paper_id}", response_model=Paper)
@@ -43,9 +46,9 @@ async def get_paper(paper_id: str):
         try:
             paper = next(client.results(search))
         except StopIteration:
-            raise HTTPException(
-                status_code=404,
-                detail="Paper not found"
+            raise_not_found(
+                message="Paper not found",
+                details={"paper_id": paper_id}
             )
             
         return Paper(
@@ -57,9 +60,10 @@ async def get_paper(paper_id: str):
             url=paper.pdf_url
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch paper: {str(e)}"
+        logging.exception(f"Failed to fetch paper {paper_id}")
+        raise_internal_error(
+            message=f"Failed to fetch paper: {str(e)}",
+            error_code=ErrorCode.EXTERNAL_SERVICE_ERROR
         )
 
 @router.post("/{paper_id}/chat")
@@ -79,25 +83,28 @@ async def chat_with_paper(paper_id: str, request: ChatRequest):
         )
         
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to process chat: {str(e)}"
+        logging.exception(f"Failed to process chat for paper {paper_id}")
+        raise_internal_error(
+            message=f"Failed to process chat: {str(e)}",
+            error_code=ErrorCode.INTERNAL_ERROR
         )
 
 # Add new endpoint for PDF upload
 @router.post("/upload", response_model=Paper)
 async def upload_pdf(file: UploadFile = File(...)):
     if not file.filename.endswith('.pdf'):
-        raise HTTPException(
-            status_code=400,
-            detail="File must be a PDF"
+        raise_validation_error(
+            message="File must be a PDF",
+            error_code=ErrorCode.VALIDATION_ERROR,
+            details={"filename": file.filename}
         )
         
     try:
         paper = await paper_service.process_uploaded_pdf(file)
         return paper
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to process PDF: {str(e)}"
+        logging.exception("Failed to process uploaded PDF")
+        raise_internal_error(
+            message=f"Failed to process PDF: {str(e)}",
+            error_code=ErrorCode.INTERNAL_ERROR
         )
