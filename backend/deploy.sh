@@ -33,9 +33,17 @@ echo "Starting new container alongside the old one..."
 # Remove any previous temporary containers
 docker rm -f litxplore_backend_new 2>/dev/null || true
 
-# First get details of the current running container so we can match configs
-echo "Getting configuration from current container if it exists..."
+# First, check if any containers are running in the stack
+echo "Getting information about the current deployment..."
 RUNNING_CONTAINER=$(docker ps -q --filter "name=backend_api_1" --filter "name=litxplore_backend" | head -n1)
+
+# Start the services if they're not already running
+if [ -z "$RUNNING_CONTAINER" ]; then
+  echo "No existing containers found. Starting the full stack first..."
+  docker-compose -f docker-compose.prod.yml up -d
+  echo "Waiting for services to initialize..."
+  sleep 10
+fi
 
 # Start a new container with the newly built image
 echo "Starting new container with new image..."
@@ -44,8 +52,9 @@ docker run -d --name litxplore_backend_new \
   -e POSTGRES_USER=${POSTGRES_USER:-postgres} \
   -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres} \
   -e POSTGRES_DB=${POSTGRES_DB:-litxplore_db} \
-  -e POSTGRES_HOST=db \
-  --network litxplore-network \
+  -e POSTGRES_HOST=host.docker.internal \
+  -e REDIS_HOST=host.docker.internal \
+  --network bridge \
   -p 8001:8000 \
   -v $(pwd)/uploads:/app/uploads \
   litxplore-backend:latest
