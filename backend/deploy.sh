@@ -33,20 +33,55 @@ echo "Starting new container alongside the old one..."
 # Remove any previous temporary containers
 docker rm -f litxplore_backend_new 2>/dev/null || true
 
-# Start a new container with a different name but same config
-docker-compose -f docker-compose.prod.yml run --name litxplore_backend_new -d --service-ports \
+# First get details of the current running container so we can match configs
+echo "Getting configuration from current container if it exists..."
+RUNNING_CONTAINER=$(docker ps -q --filter "name=backend_api_1" --filter "name=litxplore_backend" | head -n1)
+
+# Start a new container with the newly built image
+echo "Starting new container with new image..."
+docker run -d --name litxplore_backend_new \
   -e DOCKER_ENV=true -e BEHIND_PROXY=true -e PRODUCTION=true \
-  api
+  -e POSTGRES_USER=${POSTGRES_USER:-postgres} \
+  -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres} \
+  -e POSTGRES_DB=${POSTGRES_DB:-litxplore_db} \
+  -e POSTGRES_HOST=db \
+  --network litxplore-network \
+  -p 8001:8000 \
+  -v $(pwd)/uploads:/app/uploads \
+  litxplore-backend:latest
 
 # Check if new deployment is successful
 echo "Waiting for health check to pass on new container..."
-sleep 10
+sleep 15  # Give the container more time to fully start
 
-# Try the health check on the new container
-NEW_CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' litxplore_backend_new)
-HEALTH_STATUS=$(curl -s http://$NEW_CONTAINER_IP:8000/health | grep -c "healthy" || echo "0")
+# Display container details for debugging
+echo "Container details:"
+docker ps -a | grep litxplore_backend_new
 
-if [ "$HEALTH_STATUS" -gt 0 ]; then
+# For our setup, let's use localhost and the mapped port 8001 to check health
+# This is more reliable than trying to determine the container's internal IP
+echo "Testing health check at http://localhost:8001/health"
+HEALTH_OUTPUT=$(curl -s http://localhost:8001/health || echo "Failed to connect")
+
+# If curl failed completely
+if [ "$HEALTH_OUTPUT" = "Failed to connect" ]; then
+  echo "Warning: Could not connect to health endpoint"
+  
+  # Show container logs for debugging
+  echo "\nLast 20 lines of container logs:"
+  docker logs --tail 20 litxplore_backend_new
+fi
+HEALTH_STATUS=0
+
+echo "Health check output: $HEALTH_OUTPUT"
+
+if echo "$HEALTH_OUTPUT" | grep -q "healthy"; then
+  HEALTH_STATUS=1
+fi
+
+echo "Health status: $HEALTH_STATUS"
+
+if [ "$HEALTH_STATUS" = "1" ]; then
   echo "✅ New backend is healthy! Switching traffic..."
   
   # Get the current production container ID if it exists
