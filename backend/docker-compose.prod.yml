@@ -35,12 +35,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    deploy:
-      replicas: 1
-      update_config:
-        order: start-first
-        failure_action: rollback
-        delay: 10s
 
   db:
     image: postgres:15-alpine
