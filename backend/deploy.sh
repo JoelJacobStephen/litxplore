@@ -74,12 +74,17 @@ echo "Waiting for API container to initialize (20 seconds)..."
 sleep 20
 
 # Verify the API container is running
-API_CONTAINER=$(docker ps -q --filter "name=backend_api_1" | head -n1)
+API_CONTAINER=$(docker ps -q --filter "name=litxplore_backend" | head -n1)
 if [ -z "$API_CONTAINER" ]; then
-  echo "❌ API container failed to start. Checking logs..."
-  docker-compose -f docker-compose.prod.yml logs api
-  echo "Deployment failed. Please check the logs for more information."
-  exit 1
+  # Try alternative name pattern
+  API_CONTAINER=$(docker ps -q --filter "name=backend_api" | head -n1)
+  
+  if [ -z "$API_CONTAINER" ]; then
+    echo "❌ API container failed to start. Checking logs..."
+    docker-compose -f docker-compose.prod.yml logs api
+    echo "Deployment failed. Please check the logs for more information."
+    exit 1
+  fi
 fi
 
 echo "✅ API container started successfully: $API_CONTAINER"
