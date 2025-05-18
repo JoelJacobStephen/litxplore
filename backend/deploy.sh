@@ -66,7 +66,14 @@ if [ -f .env ]; then
 fi
 
 # Now start the API container using docker-compose
-echo "Starting the API container using docker-compose..."  
+echo "Making sure API container uses updated environment variables..."
+# Force recreate the API container to ensure it uses latest env vars
+if docker ps -a | grep -q litxplore_backend; then
+  echo "Removing existing API container to use updated environment variables..."
+  docker rm -f litxplore_backend || true
+fi
+
+echo "Starting the API container using docker-compose..."
 docker-compose -f docker-compose.prod.yml up -d api
 
 # Give time for the container to fully initialize
