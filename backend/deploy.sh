@@ -57,16 +57,28 @@ if ! docker network inspect litxplore-network &>/dev/null; then
   docker network create litxplore-network
 fi
 
-# Start a new backend container with the newly built image
+# Load environment variables from .env file if present
+if [ -f .env ]; then
+  echo "Loading environment variables from .env file..."
+  source .env
+fi
+
+# Start a new container with the newly built image
 echo "Starting new container with new image..."
 docker run -d --name litxplore_backend_new \
   -e DOCKER_ENV=true -e BEHIND_PROXY=true -e PRODUCTION=true \
   -e POSTGRES_USER=${POSTGRES_USER:-postgres} \
   -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres} \
   -e POSTGRES_DB=${POSTGRES_DB:-litxplore_db} \
-  -e POSTGRES_HOST=db \
-  -e REDIS_HOST=redis \
-  --network backend_litxplore-network \
+  -e POSTGRES_HOST=host.docker.internal \
+  -e REDIS_HOST=host.docker.internal \
+  -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
+  -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
+  -e CLERK_SECRET_KEY="${CLERK_SECRET_KEY}" \
+  -e CLERK_PUBLISHABLE_KEY="${CLERK_PUBLISHABLE_KEY}" \
+  -e CLERK_ISSUER="${CLERK_ISSUER}" \
+  -e CLERK_JWKS_URL="${CLERK_JWKS_URL}" \
+  --network bridge \
   -p 8001:8000 \
   -v $(pwd)/uploads:/app/uploads \
   litxplore-backend:latest
