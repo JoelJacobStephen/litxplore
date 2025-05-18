@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-# Production deployment script for LitXplore backend with zero-downtime
-
 echo "Deploying LitXplore backend in production mode (zero-downtime)..."
 
 # Set production environment
@@ -23,38 +21,46 @@ docker-compose -f docker-compose.prod.yml build api
 echo "Pulling latest images for supporting services..."
 docker-compose -f docker-compose.prod.yml pull db redis
 
-# Apply database migrations if needed (add this if you have migrations to run)
-# echo "Running database migrations..."
-# docker-compose -f docker-compose.prod.yml exec -T api alembic upgrade head
-
-# Use a temporary container name for the new version
-echo "Starting new container alongside the old one..."
+# When encountering the ContainerConfig error, we need to clean up properly
+echo "Checking for existing docker resources..."
 
 # Remove any previous temporary containers
 docker rm -f litxplore_backend_new 2>/dev/null || true
 
-# First, check if any containers are running in the stack
-echo "Getting information about the current deployment..."
-RUNNING_CONTAINER=$(docker ps -q --filter "name=backend_api_1" --filter "name=litxplore_backend" | head -n1)
+# Clean up problematic containers if they exist
+EXISTING_DB=$(docker ps -a -q --filter "name=backend_db")
+EXISTING_REDIS=$(docker ps -a -q --filter "name=backend_redis")
+EXISTING_API=$(docker ps -a -q --filter "name=litxplore_backend")
 
-# Start the services if they're not already running
-if [ -z "$RUNNING_CONTAINER" ]; then
-  echo "No existing containers found. Starting the full stack first..."
-  docker-compose -f docker-compose.prod.yml up -d
-  echo "Waiting for services to initialize..."
-  sleep 10
+if [ ! -z "$EXISTING_DB" ] || [ ! -z "$EXISTING_REDIS" ] || [ ! -z "$EXISTING_API" ]; then
+  echo "Found existing containers that might cause issues. Cleaning up..."
+  
+  # Stop existing containers gracefully
+  docker stop $EXISTING_DB $EXISTING_REDIS $EXISTING_API 2>/dev/null || true
+  
+  # Remove containers
+  docker rm $EXISTING_DB $EXISTING_REDIS $EXISTING_API 2>/dev/null || true
+  
+  echo "Containers cleaned up."
 fi
 
-# Start a new container with the newly built image
+# Start database and redis manually to avoid the ContainerConfig error
+echo "Starting database and redis containers..."
+docker-compose -f docker-compose.prod.yml up -d db redis
+
+echo "Waiting for services to initialize..."
+sleep 10
+
+# Start a new backend container with the newly built image
 echo "Starting new container with new image..."
 docker run -d --name litxplore_backend_new \
   -e DOCKER_ENV=true -e BEHIND_PROXY=true -e PRODUCTION=true \
   -e POSTGRES_USER=${POSTGRES_USER:-postgres} \
   -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres} \
   -e POSTGRES_DB=${POSTGRES_DB:-litxplore_db} \
-  -e POSTGRES_HOST=host.docker.internal \
-  -e REDIS_HOST=host.docker.internal \
-  --network bridge \
+  -e POSTGRES_HOST=db \
+  -e REDIS_HOST=redis \
+  --network litxplore-network \
   -p 8001:8000 \
   -v $(pwd)/uploads:/app/uploads \
   litxplore-backend:latest
@@ -67,8 +73,7 @@ sleep 15  # Give the container more time to fully start
 echo "Container details:"
 docker ps -a | grep litxplore_backend_new
 
-# For our setup, let's use localhost and the mapped port 8001 to check health
-# This is more reliable than trying to determine the container's internal IP
+# Testing health endpoint
 echo "Testing health check at http://localhost:8001/health"
 HEALTH_OUTPUT=$(curl -s http://localhost:8001/health || echo "Failed to connect")
 
@@ -77,11 +82,11 @@ if [ "$HEALTH_OUTPUT" = "Failed to connect" ]; then
   echo "Warning: Could not connect to health endpoint"
   
   # Show container logs for debugging
-  echo "\nLast 20 lines of container logs:"
+  echo "Last 20 lines of container logs:"
   docker logs --tail 20 litxplore_backend_new
 fi
-HEALTH_STATUS=0
 
+HEALTH_STATUS=0
 echo "Health check output: $HEALTH_OUTPUT"
 
 if echo "$HEALTH_OUTPUT" | grep -q "healthy"; then
@@ -93,8 +98,8 @@ echo "Health status: $HEALTH_STATUS"
 if [ "$HEALTH_STATUS" = "1" ]; then
   echo "✅ New backend is healthy! Switching traffic..."
   
-  # Get the current production container ID if it exists
-  OLD_CONTAINER=$(docker ps -q --filter "name=litxplore_backend" --filter "name=backend_api_1" | head -n1)
+  # Check if a production container exists
+  OLD_CONTAINER=$(docker ps -q --filter "name=litxplore_backend" | head -n1)
   
   # If we have an existing container, gracefully switch traffic
   if [ ! -z "$OLD_CONTAINER" ]; then
@@ -123,4 +128,3 @@ else
 fi
 
 echo "Deployment process complete."
-echo "Remember to check the logs with: docker-compose -f docker-compose.prod.yml logs -f api"
