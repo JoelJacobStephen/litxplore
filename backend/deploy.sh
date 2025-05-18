@@ -63,6 +63,14 @@ if [ -f .env ]; then
   source .env
 fi
 
+# Get the network name from docker-compose
+NETWORK_NAME=$(docker network ls | grep litxplore | awk '{print $2}' | head -n1)
+if [ -z "$NETWORK_NAME" ]; then
+  NETWORK_NAME="backend_litxplore-network"
+fi
+
+echo "Using Docker network: $NETWORK_NAME"
+
 # Start a new container with the newly built image
 echo "Starting new container with new image..."
 docker run -d --name litxplore_backend_new \
@@ -70,18 +78,22 @@ docker run -d --name litxplore_backend_new \
   -e POSTGRES_USER=${POSTGRES_USER:-postgres} \
   -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres} \
   -e POSTGRES_DB=${POSTGRES_DB:-litxplore_db} \
-  -e POSTGRES_HOST=host.docker.internal \
-  -e REDIS_HOST=host.docker.internal \
+  -e POSTGRES_HOST=db \
+  -e REDIS_HOST=redis \
   -e OPENAI_API_KEY="${OPENAI_API_KEY}" \
   -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
   -e CLERK_SECRET_KEY="${CLERK_SECRET_KEY}" \
   -e CLERK_PUBLISHABLE_KEY="${CLERK_PUBLISHABLE_KEY}" \
   -e CLERK_ISSUER="${CLERK_ISSUER}" \
   -e CLERK_JWKS_URL="${CLERK_JWKS_URL}" \
-  --network bridge \
+  --network $NETWORK_NAME \
   -p 8001:8000 \
   -v $(pwd)/uploads:/app/uploads \
   litxplore-backend:latest
+  
+# Give more time for the container to fully initialize and connect to database
+echo "Waiting for container to fully initialize (30 seconds)..."
+sleep 30
 
 # Check if new deployment is successful
 echo "Waiting for health check to pass on new container..."
