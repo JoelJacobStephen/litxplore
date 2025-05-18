@@ -51,6 +51,12 @@ docker-compose -f docker-compose.prod.yml up -d db redis
 echo "Waiting for services to initialize..."
 sleep 10
 
+# Check if network exists and create it if not
+if ! docker network inspect litxplore-network &>/dev/null; then
+  echo "Creating litxplore-network network..."
+  docker network create litxplore-network
+fi
+
 # Start a new backend container with the newly built image
 echo "Starting new container with new image..."
 docker run -d --name litxplore_backend_new \
@@ -60,7 +66,7 @@ docker run -d --name litxplore_backend_new \
   -e POSTGRES_DB=${POSTGRES_DB:-litxplore_db} \
   -e POSTGRES_HOST=db \
   -e REDIS_HOST=redis \
-  --network litxplore-network \
+  --network backend_litxplore-network \
   -p 8001:8000 \
   -v $(pwd)/uploads:/app/uploads \
   litxplore-backend:latest
