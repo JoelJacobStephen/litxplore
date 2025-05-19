@@ -58,46 +58,90 @@ export async function POST(req: Request) {
           }
 
           try {
+            let buffer = "";
+            
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
 
+              // Decode the chunk and add to buffer
               const text = new TextDecoder().decode(value);
-              // Split by the SSE delimiter and process each chunk
-              const chunks = text.split("\n\n");
+              buffer += text;
+              
+              // Process complete events (delimited by double newlines)
+              const events = buffer.split("\n\n");
+              
+              // Keep the last potentially incomplete event in the buffer
+              buffer = events.pop() || "";
 
-              for (const chunk of chunks) {
-                if (chunk.trim() && chunk.startsWith("data: ")) {
+              for (const event of events) {
+                if (event.trim() && event.startsWith("data: ")) {
                   try {
-                    const jsonData = JSON.parse(chunk.slice(6));
+                    // Extract data after "data: "
+                    const jsonText = event.slice(6);
+                    const jsonData = JSON.parse(jsonText);
                     
-                    // Process the content chunk
-                    if (jsonData.content) {
-                      controller.enqueue(
-                        new TextEncoder().encode(jsonData.content)
-                      );
+                    if (jsonData.content && typeof jsonData.content === 'string') {
+                      // Handle nested JSON objects (common issue with SSE streaming)
+                      if (jsonData.content.startsWith('{"content"')) {
+                        try {
+                          // Try to parse the nested JSON content
+                          const innerJson = JSON.parse(jsonData.content);
+                          if (innerJson.content && typeof innerJson.content === 'string') {
+                            controller.enqueue(
+                              new TextEncoder().encode(innerJson.content)
+                            );
+                          }
+                        } catch (innerError) {
+                          // Clean the content if we can't parse it
+                          const cleanContent = jsonData.content.replace(/\{"content":[^}]*\}/g, "");
+                          if (cleanContent.trim()) {
+                            controller.enqueue(
+                              new TextEncoder().encode(cleanContent)
+                            );
+                          }
+                        }
+                      } else {
+                        // Normal content
+                        controller.enqueue(
+                          new TextEncoder().encode(jsonData.content)
+                        );
+                      }
                     }
 
-                    // Send source metadata if available
-                    if (jsonData.sources && jsonData.sources.length > 0) {
+                    // Handle source metadata
+                    if (jsonData.sources && Array.isArray(jsonData.sources)) {
                       data.append({ sources: jsonData.sources });
                     }
                   } catch (e) {
-                    console.error("Error parsing chunk:", e, chunk);
-                    // Try to recover partial data if possible
-                    if (chunk.slice(6).trim()) {
-                      try {
-                        controller.enqueue(
-                          new TextEncoder().encode(chunk.slice(6).trim())
-                        );
-                      } catch (e2) {
-                        console.error("Failed to recover partial data:", e2);
-                      }
+                    console.error("Error parsing event:", e, event);
+                    
+                    // Try to salvage plain text if JSON parsing fails
+                    const plainText = event.slice(6).trim();
+                    if (plainText && !plainText.includes('{"content"')) {
+                      controller.enqueue(
+                        new TextEncoder().encode(plainText)
+                      );
                     }
                   }
                 }
               }
             }
+            
+            // Process any remaining data in the buffer
+            if (buffer.trim() && buffer.startsWith("data: ")) {
+              try {
+                const jsonData = JSON.parse(buffer.slice(6));
+                if (jsonData.content) {
+                  controller.enqueue(
+                    new TextEncoder().encode(jsonData.content)
+                  );
+                }
+              } catch (e) {
+                // Ignore parsing errors for the last chunk
+              }
+            }
+            
             controller.close();
             data.close();
           } catch (error) {
