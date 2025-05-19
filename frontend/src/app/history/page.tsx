@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDistanceToNow } from "date-fns";
+import { format, isToday } from "date-fns";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -274,9 +274,9 @@ export default function HistoryPage() {
                     {review.title}
                   </CardTitle>
                   <CardDescription>
-                    {formatDistanceToNow(new Date(review.created_at), {
-                      addSuffix: true,
-                    })}
+                    {isToday(new Date(review.created_at))
+                      ? "Today"
+                      : format(new Date(review.created_at), "d MMM yyyy")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow relative z-10 overflow-hidden">
@@ -306,9 +306,9 @@ export default function HistoryPage() {
               </DialogTitle>
               <DialogDescription className="text-gray-400">
                 Created{" "}
-                {formatDistanceToNow(new Date(selectedReview.created_at), {
-                  addSuffix: true,
-                })}
+                {isToday(new Date(selectedReview.created_at))
+                  ? "Today"
+                  : format(new Date(selectedReview.created_at), "d MMM yyyy")}
               </DialogDescription>
               <ReviewDisplay
                 review={selectedReview.content}

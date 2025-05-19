@@ -51,25 +51,77 @@ class PaperService:
             )
         
     async def search_papers(self, query: str) -> List[Paper]:
-        client = arxiv.Client()
-        search = arxiv.Search(
-            query=query,
-            max_results=10,
-            sort_by=arxiv.SortCriterion.Relevance
-        )
+        """Search for papers using the arXiv API with better error handling and retry logic."""
+        import time
         
-        papers = []
-        for result in client.results(search):
-            papers.append(Paper(
-                id=result.entry_id.split("/")[-1],
-                title=result.title,
-                authors=[author.name for author in result.authors],
-                summary=result.summary,
-                published=result.published,
-                url=result.pdf_url
-            ))
+        # Clean up and format the query for better search results
+        clean_query = query.strip()
+        if not clean_query:
+            return []
+            
+        # Maximum retry attempts
+        max_retries = 3
+        retry_delay = 1  # seconds
         
-        return papers
+        for attempt in range(max_retries):
+            try:
+                client = arxiv.Client()
+                search = arxiv.Search(
+                    query=clean_query,
+                    max_results=10,
+                    sort_by=arxiv.SortCriterion.Relevance
+                )
+                
+                papers = []
+                # Use a flag to check if we got any results
+                got_results = False
+                
+                for result in client.results(search):
+                    got_results = True
+                    papers.append(Paper(
+                        id=result.entry_id.split("/")[-1],
+                        title=result.title,
+                        authors=[author.name for author in result.authors],
+                        summary=result.summary,
+                        published=result.published,
+                        url=result.pdf_url
+                    ))
+                
+                # If we didn't get any results but the query seems valid, try a broader search
+                if not got_results and len(clean_query) > 3:
+                    # Try a more permissive search with 'all:' prefix which searches all fields
+                    alternative_search = arxiv.Search(
+                        query=f"all:{clean_query}",
+                        max_results=10,
+                        sort_by=arxiv.SortCriterion.Relevance
+                    )
+                    
+                    for result in client.results(alternative_search):
+                        papers.append(Paper(
+                            id=result.entry_id.split("/")[-1],
+                            title=result.title,
+                            authors=[author.name for author in result.authors],
+                            summary=result.summary,
+                            published=result.published,
+                            url=result.pdf_url
+                        ))
+                
+                return papers
+                
+            except Exception as e:
+                # Log the error
+                print(f"ArXiv search error (attempt {attempt+1}/{max_retries}): {str(e)}")
+                
+                if attempt < max_retries - 1:
+                    # Wait before retrying
+                    time.sleep(retry_delay)
+                    # Increase delay for next attempt
+                    retry_delay *= 2
+                else:
+                    # Last attempt failed, return empty list instead of raising exception
+                    return []
+        
+        return []
 
     async def get_papers_by_ids(self, paper_ids: List[str]) -> List[Paper]:
         """Fetch papers by their IDs."""

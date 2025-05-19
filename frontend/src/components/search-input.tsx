@@ -42,12 +42,21 @@ export function SearchInput({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: searchResults, isLoading } = useQuery({
+  const { data: searchResults, isLoading, error, isError } = useQuery({
     queryKey: ["paper-search", debouncedSearch],
     queryFn: () => searchPapers(debouncedSearch),
     enabled: debouncedSearch.length > 2,
     staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000
   });
+  
+  // Log errors if they occur
+  useEffect(() => {
+    if (isError && error) {
+      console.error("Search error:", error);
+    }
+  }, [isError, error]);
 
   // Close popover and reset search when component unmounts
   useEffect(() => {

@@ -155,8 +155,8 @@ async def get_review_history(
                 "topic": review.topic,
                 "content": review.content,
                 "citations": review.citations,
-                "created_at": str(review.created_at),
-                "updated_at": str(review.updated_at)
+                "created_at": review.created_at.isoformat() if review.created_at else None,
+                "updated_at": review.updated_at.isoformat() if review.updated_at else None
             }
             for review in reviews
         ]

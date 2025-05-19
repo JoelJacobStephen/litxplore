@@ -17,6 +17,7 @@ import {
 import { generateDocument } from "@/lib/services/document-service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface ReviewDisplayProps {
   review: string;
@@ -241,7 +242,7 @@ export const ReviewDisplay = ({
                       </p>
                       <p className="text-sm mb-2 text-slate-700 dark:text-slate-300">
                         Published:{" "}
-                        {new Date(paper.published).toLocaleDateString()}
+                        {format(new Date(paper.published), "d MMM yyyy")}
                       </p>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                         {paper.summary}

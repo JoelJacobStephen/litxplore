@@ -8,9 +8,26 @@ import {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export async function searchPapers(query: string): Promise<Paper[]> {
+  // Don't try to search with empty queries
+  if (!query || query.trim().length < 3) {
+    console.log("Search query too short, skipping API call");
+    return [];
+  }
+
   try {
+    console.log(`Searching for papers with query: "${query}"`); 
+    
+    // Add cache-busting parameter to avoid stale results
+    const cacheBuster = Date.now();
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/papers/search?query=${encodeURIComponent(query)}`
+      `${API_BASE_URL}/api/v1/papers/search?query=${encodeURIComponent(query)}&_=${cacheBuster}`,
+      {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      }
     );
 
     if (!response.ok) {
@@ -25,12 +42,21 @@ export async function searchPapers(query: string): Promise<Paper[]> {
     }
 
     const data = await response.json();
+    
+    // Log whether we got any results
+    if (!data || data.length === 0) {
+      console.log(`No papers found for query: "${query}"`); 
+      return [];
+    }
+    
+    console.log(`Found ${data.length} papers for query: "${query}"`); 
+    
     return data.map((paper: any) => ({
       ...paper,
       url: paper.url || paper.pdf_url || null, // Ensure URL is always defined
     }));
   } catch (error) {
-    console.error("Search papers error:", error);
+    console.error(`Search papers error for query "${query}":`, error);
     return []; // Return empty array on error
   }
 }
