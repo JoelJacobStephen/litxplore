@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from typing import Dict, Any, List
 import os
 import logging
@@ -19,6 +19,11 @@ langchain_service = LangChainService()
 
 @router.post("/generate-review", response_model=ReviewResponse)
 async def generate_review(request: Request, review_request: ReviewRequest) -> ReviewResponse:
+    # Extract uploaded file IDs immediately to ensure they can be cleaned up in any case
+    uploaded_ids = [pid for pid in review_request.paper_ids if pid.startswith('upload_')] if review_request.paper_ids else []
+    review_text = None
+    papers = []
+    
     try:
         if not review_request.paper_ids:
             raise_validation_error(
@@ -27,11 +32,9 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
             )
         
         # Separate uploaded files from arXiv papers
-        uploaded_ids = [pid for pid in review_request.paper_ids if pid.startswith('upload_')]
         arxiv_ids = [pid for pid in review_request.paper_ids if not pid.startswith('upload_')]
         
-        papers = []
-        
+        # Process papers first - this happens while the token is still valid
         # Fetch arxiv papers
         if arxiv_ids:
             arxiv_papers = await paper_service.get_papers_by_ids(arxiv_ids)
@@ -48,15 +51,29 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
                 details={"paper_ids": review_request.paper_ids}
             )
         
-        # Generate review using LangChain
+        # Schedule the cleanup to happen regardless of token validity
+        # This creates a background task that doesn't require the token to be valid
+        if not hasattr(request.state, 'background_tasks'):
+            request.state.background_tasks = []
+            
+        request.state.background_tasks.append({
+            'task': 'cleanup_pdfs',
+            'paper_ids': uploaded_ids
+        })
+        
+        # Generate review using LangChain - might take a long time
         review_text = await langchain_service.generate_review(
             papers=papers,
             topic=review_request.topic
         )
         
-        # Clean up uploaded PDF files after successful review generation
+        # Clean up PDFs immediately - don't wait for background task
+        # This might fail if token expired, but we have the background task as backup
         if uploaded_ids:
-            await cleanup_uploaded_pdfs(uploaded_ids)
+            try:
+                await cleanup_uploaded_pdfs(uploaded_ids)
+            except Exception as cleanup_error:
+                logging.error(f"Initial cleanup failed, will retry in background: {str(cleanup_error)}")
             
         return ReviewResponse(
             review=review_text,
@@ -65,13 +82,31 @@ async def generate_review(request: Request, review_request: ReviewRequest) -> Re
         )
         
     except HTTPException as he:
+        # Re-raise HTTP exceptions but ensure cleanup is attempted
+        if uploaded_ids:
+            try:
+                await cleanup_uploaded_pdfs(uploaded_ids)
+            except Exception as cleanup_error:
+                logging.error(f"Cleanup failed during HTTP exception: {str(cleanup_error)}")
         raise he
     except Exception as e:
         logging.exception("Failed to generate review")
+        if uploaded_ids:
+            try:
+                await cleanup_uploaded_pdfs(uploaded_ids)
+            except Exception as cleanup_error:
+                logging.error(f"Cleanup failed during exception: {str(cleanup_error)}")
         raise_internal_error(
             message=f"Error generating review: {str(e)}",
             error_code=ErrorCode.INTERNAL_ERROR
         )
+    finally:
+        # One last attempt at cleanup if all else failed
+        if uploaded_ids:
+            try:
+                await cleanup_uploaded_pdfs(uploaded_ids)
+            except Exception as final_error:
+                logging.error(f"Final cleanup attempt failed: {str(final_error)}")
 
 @router.post("/save")
 async def save_review(
@@ -157,7 +192,10 @@ async def delete_review(
     return {"message": "Review deleted successfully"}
 
 async def cleanup_uploaded_pdfs(paper_ids: List[str]):
-    """Delete uploaded PDF files to free up space."""
+    """Delete uploaded PDF files to free up space.
+    This function is intentionally not dependent on user authentication to allow
+    cleanup even when tokens expire during long-running operations.
+    """
     try:
         upload_dir = "uploads"
         for paper_id in paper_ids:
@@ -170,3 +208,5 @@ async def cleanup_uploaded_pdfs(paper_ids: List[str]):
     except Exception as e:
         # Log the error but don't fail the request
         print(f"Error cleaning up PDF files: {str(e)}")
+        logging.error(f"Error cleaning up PDF files: {str(e)}")
+    return {"cleanup_status": "completed"}

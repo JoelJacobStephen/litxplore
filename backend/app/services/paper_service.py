@@ -161,19 +161,59 @@ class PaperService:
             os.unlink(temp_pdf_path)
 
     async def chat_with_paper_stream(self, paper_id: str, message: str) -> AsyncGenerator[Dict[str, Any], None]:
-        """Chat with paper with streaming support and improved prompting."""
+        """Chat with paper with streaming support and improved prompting.
+        
+        Handles both arXiv papers and uploaded PDF files.
+        Ensures cleanup of all temporary files regardless of success or failure.
+        """
+        temp_pdf_path = None
+        uploaded_file_path = None
+        
         try:
-            # Fetch paper and prepare documents
-            client = arxiv.Client()
-            search = arxiv.Search(id_list=[paper_id])
-            paper = next(client.results(search))
-            
-            # Download PDF
-            response = requests.get(paper.pdf_url)
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
-                temp_pdf.write(response.content)
-                temp_pdf_path = temp_pdf.name
+            # Handle different types of papers (arXiv vs uploaded)
+            if paper_id.startswith('upload_'):
+                # This is an uploaded PDF file
+                content_hash = paper_id.replace('upload_', '')
+                upload_dir = "uploads"
+                pdf_path = os.path.join(upload_dir, f"{content_hash}.pdf")
                 
+                if not os.path.exists(pdf_path):
+                    yield {
+                        "content": f"Error: Uploaded PDF file not found",
+                        "sources": []
+                    }
+                    return
+                    
+                # Make a temporary copy of the uploaded file to process it
+                # This allows us to delete the original after processing if needed
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
+                    with open(pdf_path, "rb") as uploaded_file:
+                        temp_pdf.write(uploaded_file.read())
+                    temp_pdf_path = temp_pdf.name
+                
+                # Store the path to the uploaded file so we can clean it up later
+                uploaded_file_path = pdf_path
+                    
+            else:
+                # Regular arXiv paper
+                try:
+                    client = arxiv.Client()
+                    search = arxiv.Search(id_list=[paper_id])
+                    paper = next(client.results(search))
+                    
+                    # Download PDF
+                    response = requests.get(paper.pdf_url)
+                    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
+                        temp_pdf.write(response.content)
+                        temp_pdf_path = temp_pdf.name
+                except Exception as e:
+                    yield {
+                        "content": f"Error fetching paper: {str(e)}",
+                        "sources": []
+                    }
+                    return
+            
+            # Process the PDF file
             try:
                 # Load and process PDF
                 loader = PyPDFLoader(temp_pdf_path)
@@ -228,15 +268,34 @@ class PaperService:
                     }
                     await asyncio.sleep(0.05)
 
-            finally:
-                if os.path.exists(temp_pdf_path):
-                    os.unlink(temp_pdf_path)
+            except Exception as e:
+                # Yield error but continue to the finally clause for cleanup
+                yield {
+                    "content": f"Error processing document: {str(e)}",
+                    "sources": []
+                }
 
         except Exception as e:
+            # Catch-all for any unexpected exceptions
             yield {
                 "content": f"Error: {str(e)}",
                 "sources": []
             }
+        finally:
+            # Clean up temporary PDF file in all cases
+            if temp_pdf_path and os.path.exists(temp_pdf_path):
+                try:
+                    os.unlink(temp_pdf_path)
+                except Exception as e:
+                    print(f"Error cleaning up temporary file: {str(e)}")
+            
+            # If this was an uploaded PDF, we should delete the original file too
+            if uploaded_file_path and os.path.exists(uploaded_file_path):
+                try:
+                    os.remove(uploaded_file_path)
+                    print(f"Deleted uploaded PDF file after chat: {uploaded_file_path}")
+                except Exception as e:
+                    print(f"Error cleaning up uploaded file: {str(e)}")
 
     async def process_uploaded_pdf(self, file: UploadFile) -> Paper:
         """Process an uploaded PDF file and convert it to a Paper object."""

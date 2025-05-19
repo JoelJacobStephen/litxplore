@@ -1,7 +1,10 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+import asyncio
+import logging
+from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -43,11 +46,38 @@ os.makedirs("uploads", exist_ok=True)
 # Mount the uploads directory
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+# Define background task middleware for PDF cleanup
+class BackgroundTaskMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Process the request and get response
+        response = await call_next(request)
+        
+        # Check if there are any background tasks registered
+        if hasattr(request.state, 'background_tasks') and request.state.background_tasks:
+            # Process background tasks after sending response
+            asyncio.create_task(self._process_background_tasks(request.state.background_tasks))
+            
+        return response
+    
+    async def _process_background_tasks(self, tasks):
+        for task in tasks:
+            try:
+                if task['task'] == 'cleanup_pdfs':
+                    # Import here to avoid circular imports
+                    from app.api.v1.endpoints.review import cleanup_uploaded_pdfs
+                    await cleanup_uploaded_pdfs(task['paper_ids'])
+                    logging.info(f"Background task: cleaned up {len(task['paper_ids'])} PDFs")
+            except Exception as e:
+                logging.error(f"Error processing background task: {str(e)}")
+
 # Setup rate limiting
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+# Add background task middleware - this must be added AFTER the SlowAPIMiddleware
+app.add_middleware(BackgroundTaskMiddleware)
 
 # Include routers
 app.include_router(
