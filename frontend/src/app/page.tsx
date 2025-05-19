@@ -125,8 +125,8 @@ export default function Home() {
               </h3>
               <p className="text-gray-300 mb-6">
                 Generate comprehensive literature reviews based on your research
-                topic. Our AI analyzes papers and creates well-structured
-                academic reviews with citations.
+                topic. It analyzes papers and creates well-structured academic
+                reviews with citations.
               </p>
 
               <Link href="/review" className="inline-block z-10 relative">
@@ -221,8 +221,8 @@ export default function Home() {
                     Powered by AI
                   </h3>
                   <p className="text-gray-300 mb-6">
-                    The platform uses state-of-the-art AI models to fetch
-                    relevant papers from arXiv, analyze research papers,
+                    The platform fetches relevant papers from arXiv and uses
+                    state-of-the-art AI models to analyze research papers,
                     understand complex academic concepts, and generate detailed
                     literature reviews that help accelerate your research
                     process.
