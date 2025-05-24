@@ -4,6 +4,7 @@ from typing import List, Optional, AsyncGenerator
 import arxiv
 import json
 import logging
+import os
 from ....models.paper import Paper, ChatRequest, ChatResponse
 from ....services.paper_service import PaperService
 from ....core.config import get_settings
@@ -11,6 +12,21 @@ from ....utils.error_utils import raise_validation_error, raise_not_found, raise
 
 router = APIRouter()
 paper_service = PaperService()
+
+# Define maximum file size (15MB in bytes)
+MAX_FILE_SIZE = 15 * 1024 * 1024
+
+def is_valid_pdf(content: bytes) -> bool:
+    """
+    Check if the file content is a valid PDF by examining the header.
+    PDF files must start with %PDF- followed by version number.
+    """
+    if len(content) < 8:
+        return False
+    
+    # Check for PDF header
+    header = content[:8]
+    return header.startswith(b'%PDF-')
 
 @router.get("/search", response_model=List[Paper])
 async def search_papers(
@@ -89,22 +105,74 @@ async def chat_with_paper(paper_id: str, request: ChatRequest):
             error_code=ErrorCode.INTERNAL_ERROR
         )
 
-# Add new endpoint for PDF upload
+# Enhanced PDF upload endpoint with security checks
 @router.post("/upload", response_model=Paper)
 async def upload_pdf(file: UploadFile = File(...)):
-    if not file.filename.endswith('.pdf'):
+    # Check if file exists and has a filename
+    if not file or not file.filename:
+        raise_validation_error(
+            message="No file provided",
+            error_code=ErrorCode.VALIDATION_ERROR
+        )
+    
+    # Validate file extension
+    if not file.filename.lower().endswith('.pdf'):
         raise_validation_error(
             message="File must be a PDF",
             error_code=ErrorCode.VALIDATION_ERROR,
             details={"filename": file.filename}
         )
         
+    # Create a temporary file to check size and contents
+    temp_file_path = None
     try:
+        # Read a small part of the file first to check content type
+        content_start = await file.read(2048)
+        
+        # Check if the file is a valid PDF by examining the header
+        if not is_valid_pdf(content_start):
+            raise_validation_error(
+                message="Invalid file content. The file does not appear to be a valid PDF",
+                error_code=ErrorCode.VALIDATION_ERROR
+            )
+        
+        # Reset file position to beginning
+        await file.seek(0)
+        
+        # Get file size (with size limit)
+        file_size = 0
+        temp_file_path = os.path.join('/tmp', f"temp_upload_{os.urandom(8).hex()}.pdf")
+        with open(temp_file_path, 'wb') as temp_file:
+            while True:
+                chunk = await file.read(1024 * 1024)  # Read 1MB at a time
+                if not chunk:
+                    break
+                file_size += len(chunk)
+                if file_size > MAX_FILE_SIZE:
+                    raise_validation_error(
+                        message=f"File size exceeds the maximum allowed size of {MAX_FILE_SIZE // (1024 * 1024)}MB",
+                        error_code=ErrorCode.VALIDATION_ERROR
+                    )
+                temp_file.write(chunk)
+        
+        # Reset the file again for processing
+        await file.seek(0)
+        
         paper = await paper_service.process_uploaded_pdf(file)
         return paper
+    except HTTPException:
+        # Re-raise HTTPExceptions (like validation errors)
+        raise
     except Exception as e:
         logging.exception("Failed to process uploaded PDF")
         raise_internal_error(
             message=f"Failed to process PDF: {str(e)}",
             error_code=ErrorCode.INTERNAL_ERROR
         )
+    finally:
+        # Clean up temp file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except Exception:
+                pass

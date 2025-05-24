@@ -360,12 +360,36 @@ class PaperService:
             # Create a temporary file to store the PDF
             with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
                 content = await file.read()
+                
+                # Additional security check
+                if len(content) == 0:
+                    raise ValueError("Empty file provided")
+                
+                # Check for potentially malicious markers in PDF content
+                # These checks are basic and not comprehensive - consider using a dedicated security library
+                suspicious_markers = [
+                    b"JS", b"/JavaScript", b"/JS ", b"/Launch", b"/OpenAction",
+                    b"/AA", b"/AcroForm", b"/XFA", b"getAnnots"
+                ]
+                
+                content_sample = content[:5000].lower()  # Check only beginning of file
+                for marker in suspicious_markers:
+                    if marker.lower() in content_sample:
+                        raise ValueError(f"Potentially malicious content detected: {marker.decode()}")
+                
                 temp_pdf.write(content)
                 temp_pdf_path = temp_pdf.name
 
-            # Extract text from PDF
-            loader = PyPDFLoader(temp_pdf_path)
-            pages = loader.load()
+            # Extract text from PDF safely with strict parsing
+            try:
+                loader = PyPDFLoader(temp_pdf_path, password=None, extract_images=False)
+                pages = loader.load()
+            except Exception as e:
+                raise ValueError(f"Could not parse PDF file: {str(e)}")
+            
+            # Simple validation on the extracted content
+            if not pages or sum(len(page.page_content.strip()) for page in pages) < 50:
+                raise ValueError("PDF contains no meaningful text content")
             
             # Combine text from all pages
             full_text = "\n".join(page.page_content for page in pages)
@@ -404,7 +428,6 @@ class PaperService:
             # Save the PDF to the uploads directory
             pdf_path = os.path.join(upload_dir, f"{content_hash}.pdf")
             with open(pdf_path, "wb") as f:
-                # Seek to beginning of file since we already read it
                 f.write(content)
 
             # Use default values if extraction failed
@@ -424,6 +447,12 @@ class PaperService:
                 url=f"/uploads/{content_hash}.pdf"
             )
 
+        except ValueError as ve:
+            # Re-raise validation errors with appropriate status code
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid PDF file: {str(ve)}"
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=500,

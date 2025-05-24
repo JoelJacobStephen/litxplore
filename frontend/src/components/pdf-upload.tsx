@@ -11,6 +11,7 @@ interface PDFUploadProps {
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB in bytes
 
 export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
@@ -31,6 +32,12 @@ export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
       return;
     }
 
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File size exceeds the limit of 15MB");
+      return;
+    }
+
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -42,17 +49,24 @@ export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to upload PDF");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.detail?.error?.message || "Failed to upload PDF"
+        );
       }
 
       const paper: Paper = await response.json();
       onPaperAdd(paper);
       toast.success("PDF uploaded successfully");
     } catch (error) {
-      toast.error("Failed to upload PDF");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload PDF"
+      );
       console.error("Upload error:", error);
     } finally {
       setIsUploading(false);
+      // Clear the file input
+      if (e.target.value) e.target.value = "";
     }
   };
 
