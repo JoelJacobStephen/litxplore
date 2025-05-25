@@ -29,6 +29,8 @@ services:
     restart: unless-stopped
     networks:
       - litxplore-network
+    # Ensure consistent UID/GID for container user matches appuser in Dockerfile
+    user: "1000:1000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s

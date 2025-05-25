@@ -7,6 +7,12 @@ echo "Deploying LitXplore backend in production mode (zero-downtime)..."
 export PRODUCTION=true
 export BEHIND_PROXY=true
 
+# Ensure uploads directory exists with proper permissions
+echo "Setting up uploads directory with proper permissions..."
+mkdir -p ./uploads
+chmod 777 ./uploads  # Set wide permissions to ensure container can write
+echo "✅ Uploads directory prepared"
+
 # Pull latest changes if in git repository
 if [ -d ".git" ]; then
   echo "Pulling latest changes from git..."
