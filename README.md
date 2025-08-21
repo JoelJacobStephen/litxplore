@@ -46,7 +46,7 @@ LitXplore is a research exploration platform that simplifies discovering and syn
 - SQLAlchemy ORM
 - Redis
 - LangChain
-- Google Vertex AI (Gemini)
+- Google Vertex AI (Gemini Integration)
 - Alembic for migrations
 
 ## Prerequisites
