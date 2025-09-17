@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Response, status
 from typing import List
 from ....models.paper import Paper, ReviewContent
 from ....services.document_service import DocumentService
+from ....utils.error_utils import raise_validation_error, raise_internal_error, ErrorCode
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
@@ -63,12 +64,12 @@ async def generate_document(request: DocumentGenerateRequest):
         )
         
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+        raise_validation_error(
+            message=str(e),
+            error_code=ErrorCode.VALIDATION_ERROR
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Document generation failed: {str(e)}"
+        raise_internal_error(
+            message=f"Document generation failed: {str(e)}",
+            error_code=ErrorCode.INTERNAL_ERROR
         )

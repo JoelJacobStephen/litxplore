@@ -8,6 +8,8 @@ import os
 from ....models.paper import Paper, ChatRequest, ChatResponse
 from ....services.paper_service import PaperService
 from ....core.config import get_settings
+from ....core.auth import get_current_user
+from ....models.user import User
 from ....utils.error_utils import raise_validation_error, raise_not_found, raise_internal_error, ErrorCode
 
 router = APIRouter()
@@ -107,7 +109,11 @@ async def chat_with_paper(paper_id: str, request: ChatRequest):
 
 # Enhanced PDF upload endpoint with security checks
 @router.post("/upload", response_model=Paper)
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    
     # Check if file exists and has a filename
     if not file or not file.filename:
         raise_validation_error(

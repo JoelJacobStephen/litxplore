@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useRouter } from "next/navigation";
-import { searchPapers } from "@/lib/services/paper-service";
+import { useSearchPapers } from "@/lib/hooks/api-hooks";
 import { PaperGrid } from "@/components/paper-grid";
 import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";
@@ -22,11 +21,7 @@ export default function SearchPage() {
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [searchInput, setSearchInput] = useState(query);
 
-  const { data: papers, isLoading } = useQuery({
-    queryKey: ["papers", query],
-    queryFn: () => searchPapers(query),
-    enabled: !!query,
-  });
+  const { data: papers, isLoading } = useSearchPapers(query, !!query);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

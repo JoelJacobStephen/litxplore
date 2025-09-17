@@ -1,20 +1,19 @@
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Paper } from "@/lib/types/paper";
 import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
+import { useUploadPaper } from "@/lib/hooks/api-hooks";
 
 interface PDFUploadProps {
   onPaperAdd: (paper: Paper) => void;
   currentPaperCount: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB in bytes
 
 export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
-  const [isUploading, setIsUploading] = useState(false);
+  const uploadPaper = useUploadPaper();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,42 +31,25 @@ export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
       return;
     }
 
-    // Check file size
     if (file.size > MAX_FILE_SIZE) {
       toast.error("File size exceeds the limit of 15MB");
       return;
     }
 
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/papers/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.detail?.error?.message || "Failed to upload PDF"
-        );
-      }
-
-      const paper: Paper = await response.json();
-      onPaperAdd(paper);
-      toast.success("PDF uploaded successfully");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to upload PDF"
-      );
-      console.error("Upload error:", error);
-    } finally {
-      setIsUploading(false);
-      // Clear the file input
-      if (e.target.value) e.target.value = "";
-    }
+    uploadPaper.mutate(file, {
+      onSuccess: (paper) => {
+        onPaperAdd(paper);
+        toast.success("PDF uploaded successfully");
+        // Clear the file input
+        if (e.target.value) e.target.value = "";
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to upload PDF");
+        console.error("Upload error:", error);
+        // Clear the file input even on error
+        if (e.target.value) e.target.value = "";
+      },
+    });
   };
 
   return (
@@ -76,10 +58,10 @@ export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
         type="file"
         accept=".pdf"
         onChange={handleFileChange}
-        disabled={isUploading}
+        disabled={uploadPaper.isPending}
         className="max-w-xs"
       />
-      {isUploading && (
+      {uploadPaper.isPending && (
         <div className="flex items-center text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Uploading...

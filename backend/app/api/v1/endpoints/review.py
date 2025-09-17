@@ -18,7 +18,12 @@ paper_service = PaperService()
 langchain_service = LangChainService()
 
 @router.post("/generate-review", response_model=ReviewResponse)
-async def generate_review(request: Request, review_request: ReviewRequest) -> ReviewResponse:
+async def generate_review(
+    request: Request, 
+    review_request: ReviewRequest,
+    current_user: User = Depends(get_current_user)
+) -> ReviewResponse:
+    
     # Extract uploaded file IDs immediately to ensure they can be cleaned up in any case
     uploaded_ids = [pid for pid in review_request.paper_ids if pid.startswith('upload_')] if review_request.paper_ids else []
     review_text = None

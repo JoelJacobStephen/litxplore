@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.auth import get_current_user
 from app.db.database import get_db
 from app.models.user import User
 from app.models.review import Review
+from app.utils.error_utils import raise_internal_error, ErrorCode
 
 router = APIRouter()
 
@@ -21,4 +22,7 @@ async def clear_user_history(
         return {"message": "History cleared successfully"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise_internal_error(
+            message=str(e),
+            error_code=ErrorCode.DATABASE_ERROR
+        )

@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { generateDocument } from "@/lib/services/document-service";
+import { useGenerateDocument } from "@/lib/hooks/api-hooks";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -34,6 +34,7 @@ export const ReviewDisplay = ({
   showDownload = true,
   isDialog = false, // Add this prop
 }: ReviewDisplayProps) => {
+  const generateDocument = useGenerateDocument();
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     show: {
@@ -55,48 +56,52 @@ export const ReviewDisplay = ({
     },
   };
 
-  const handleDownload = async (format: "pdf" | "latex") => {
-    try {
-      if (!review) {
-        toast.error("No review content available");
-        return;
-      }
+  const handleDownload = (format: "pdf" | "latex") => {
+    if (!review) {
+      toast.error("No review content available");
+      return;
+    }
 
-      if (!topic) {
-        toast.error("Review topic is required");
-        return;
-      }
+    if (!topic) {
+      toast.error("Review topic is required");
+      return;
+    }
 
-      toast.info(`Preparing ${format.toUpperCase()} document...`);
+    toast.info(`Preparing ${format.toUpperCase()} document...`);
 
-      const blob = await generateDocument(
-        {
+    generateDocument.mutate(
+      {
+        review: {
           review: review,
           citations: citations,
           topic: topic,
         },
-        format
-      );
+        format,
+      },
+      {
+        onSuccess: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `literature-review.${format}`;
+          document.body.appendChild(a);
+          a.click();
 
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `literature-review.${format}`;
-      document.body.appendChild(a);
-      a.click();
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          }, 0);
 
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 0);
-
-      toast.success(`${format.toUpperCase()} downloaded successfully`);
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to download review"
-      );
-    }
+          toast.success(`${format.toUpperCase()} downloaded successfully`);
+        },
+        onError: (error) => {
+          console.error("Download error:", error);
+          toast.error(
+            error instanceof Error ? error.message : "Failed to download review"
+          );
+        },
+      }
+    );
   };
 
   return (

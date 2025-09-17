@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ReviewService } from "@/lib/services/review-service";
+import { useState, useEffect } from "react";
+import { useReviewHistory, useDeleteReview } from "@/lib/hooks/api-hooks";
 import {
   Card,
   CardContent,
@@ -77,15 +77,20 @@ const DeleteButton = ({
 };
 
 export default function HistoryPage() {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [parsedCitations, setParsedCitations] = useState<Paper[]>([]);
   const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
+
+  // React Query hooks
+  const {
+    data: reviews = [],
+    isLoading: loading,
+    error,
+  } = useReviewHistory(isLoaded && isSignedIn);
+  const deleteReview = useDeleteReview();
 
   // Animation variants
   const containerVariants = {
@@ -103,34 +108,11 @@ export default function HistoryPage() {
     show: { opacity: 1, y: 0 },
   };
 
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push("/sign-in");
-      return;
-    }
-
-    const fetchReviews = async () => {
-      try {
-        const token = await getToken();
-        if (!token) {
-          throw new Error("No authentication token available");
-        }
-        const reviewHistory = await ReviewService.getReviewHistory(token);
-        setReviews(reviewHistory);
-        setError(null);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch reviews"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (isSignedIn) {
-      fetchReviews();
-    }
-  }, [isLoaded, isSignedIn, router, getToken]);
+  // Redirect to sign-in if not authenticated
+  if (isLoaded && !isSignedIn) {
+    router.push("/sign-in");
+    return null;
+  }
 
   useEffect(() => {
     if (selectedReview?.citations) {
@@ -157,22 +139,17 @@ export default function HistoryPage() {
     setDeletingReviewId(reviewId);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!deletingReviewId) return;
 
-    try {
-      const token = await getToken();
-      if (!token) {
-        throw new Error("No authentication token available");
-      }
-
-      await ReviewService.deleteReview(token, deletingReviewId);
-      setReviews(reviews.filter((review) => review.id !== deletingReviewId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete review");
-    } finally {
-      setDeletingReviewId(null);
-    }
+    deleteReview.mutate(deletingReviewId, {
+      onSuccess: () => {
+        setDeletingReviewId(null);
+      },
+      onError: (err) => {
+        console.error("Failed to delete review:", err);
+      },
+    });
   };
 
   if (!isLoaded || loading) {
@@ -212,7 +189,8 @@ export default function HistoryPage() {
     return (
       <div className="container mx-auto p-6 relative z-10">
         <div className="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded backdrop-blur-sm">
-          Unable to find or load generated literature reviews
+          {error.message ||
+            "Unable to find or load generated literature reviews"}
         </div>
       </div>
     );

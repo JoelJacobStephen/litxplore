@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { PaperGrid } from "@/components/paper-grid";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paper } from "@/lib/types/paper";
-import { searchPapers, generateReview } from "@/lib/services/paper-service";
-import { ReviewService } from "@/lib/services/review-service";
+import {
+  useGenerateReview,
+  useSaveReview,
+  useSearchPapers,
+} from "@/lib/hooks/api-hooks";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
 import { BookOpen, Loader2 } from "lucide-react";
@@ -19,14 +21,15 @@ import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
 import { useAuth } from "@clerk/nextjs";
 
 export default function ReviewPage() {
-  const { getToken } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [topic, setTopic] = useState("");
   const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
-  const [isGenerating, setIsGenerating] = useState(false);
   const [displayedPapers, setDisplayedPapers] = useState<Paper[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+
+  // React Query hooks
+  const generateReview = useGenerateReview();
+  const saveReview = useSaveReview();
 
   // Initialize selected papers from URL params
   useEffect(() => {
@@ -37,11 +40,8 @@ export default function ReviewPage() {
   }, [searchParams]);
 
   // Fetch initial papers when topic is entered
-  const { data: suggestedPapers, isLoading: isLoadingSuggested } = useQuery({
-    queryKey: ["suggested-papers", topic],
-    queryFn: () => searchPapers(topic),
-    enabled: !!topic,
-  });
+  const { data: suggestedPapers, isLoading: isLoadingSuggested } =
+    useSearchPapers(topic, !!topic);
 
   // Merge search results with displayed papers
   useEffect(() => {
@@ -55,15 +55,6 @@ export default function ReviewPage() {
     const formData = new FormData(e.target as HTMLFormElement);
     const newTopic = formData.get("topic") as string;
     setTopic(newTopic);
-    setIsSearching(true);
-    try {
-      const papers = await searchPapers(newTopic);
-      setDisplayedPapers(papers);
-    } catch (error) {
-      console.error("Search error:", error);
-    } finally {
-      setIsSearching(false);
-    }
   };
 
   const handlePaperSelect = (paperId: string, selected: boolean) => {
@@ -105,7 +96,7 @@ export default function ReviewPage() {
     });
   };
 
-  const handleGenerateReview = async () => {
+  const handleGenerateReview = () => {
     if (!selectedPapers.size) {
       toast.error("Please select at least one paper");
       return;
@@ -113,51 +104,52 @@ export default function ReviewPage() {
 
     // Clear any existing generated review to prevent caching issues
     useReviewStore.getState().clearGeneratedReview();
-    
-    setIsGenerating(true);
+
     router.push("/generated-review");
 
-    try {
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-
-      const response = await generateReview({
+    generateReview.mutate(
+      {
         papers: Array.from(selectedPapers),
         topic: topic || "Literature Review",
-      });
+      },
+      {
+        onSuccess: (response) => {
+          const generatedReview = {
+            review: response.review,
+            citations: response.citations || [],
+            topic: topic || "Literature Review",
+          };
 
-      const generatedReview = {
-        review: response.review,
-        citations: response.citations || [],
-        topic: topic || "Literature Review",
-      };
+          useReviewStore.setState({ generatedReview });
 
-      useReviewStore.setState({ generatedReview });
-
-      // Save the review with the token
-      try {
-        await ReviewService.saveReview(token, {
-          title: topic || "Literature Review",
-          topic: topic || "Literature Review",
-          content: response.review,
-          citations: JSON.stringify(response.citations),
-        });
-        toast.success("Review saved successfully!");
-      } catch (saveError) {
-        console.error("Failed to save review:", saveError);
-        toast.error(
-          "Review generated but failed to save. You can try saving it later."
-        );
+          // Save the review
+          saveReview.mutate(
+            {
+              title: topic || "Literature Review",
+              topic: topic || "Literature Review",
+              content: response.review,
+              citations: JSON.stringify(response.citations),
+            },
+            {
+              onSuccess: () => {
+                toast.success("Review generated and saved successfully!");
+              },
+              onError: (saveError) => {
+                console.error("Failed to save review:", saveError);
+                toast.error(
+                  "Review generated but failed to save. You can try saving it later."
+                );
+              },
+            }
+          );
+        },
+        onError: (error) => {
+          console.error("Failed to generate review:", error);
+          toast.error("Failed to generate review. Please try again.");
+          router.push("/review"); // Return to review page on error
+        },
       }
-    } catch (error) {
-      console.error("Failed to generate review:", error);
-      toast.error("Failed to generate review. Please try again.");
-      router.push("/review"); // Return to review page on error
-    } finally {
-      setIsGenerating(false);
-    }
+    );
   };
 
   return (
@@ -178,8 +170,8 @@ export default function ReviewPage() {
               defaultValue={topic}
               required
             />
-            <Button type="submit" disabled={isSearching}>
-              {isSearching ? (
+            <Button type="submit" disabled={isLoadingSuggested}>
+              {isLoadingSuggested ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Searching...
@@ -237,10 +229,10 @@ export default function ReviewPage() {
         <div className="fixed bottom-6 right-6 z-50">
           <Button
             onClick={handleGenerateReview}
-            disabled={isGenerating || selectedPapers.size === 0}
+            disabled={generateReview.isPending || selectedPapers.size === 0}
             className="shadow-lg"
           >
-            {isGenerating ? (
+            {generateReview.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating Review...

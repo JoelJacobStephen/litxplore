@@ -1,15 +1,12 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { getReview } from "@/lib/services/paper-service";
+import { useReview } from "@/lib/hooks/api-hooks";
 import { ReviewDisplay } from "@/components/ReviewDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Paper } from "@/lib/types/paper";
 
 export default function ReviewPage({ params }: { params: { id: string } }) {
-  const { data: review, isLoading } = useQuery({
-    queryKey: ["review", params.id],
-    queryFn: () => getReview(params.id),
-  });
+  const { data: review, isLoading } = useReview(params.id);
 
   if (isLoading) {
     return (
@@ -30,11 +27,21 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
     );
   }
 
+  // Parse citations string to Paper array
+  let parsedCitations: Paper[] = [];
+  if (review.citations) {
+    try {
+      parsedCitations = JSON.parse(review.citations);
+    } catch (err) {
+      console.error("Failed to parse citations:", err);
+    }
+  }
+
   return (
     <ReviewDisplay
-      review={review.review}
+      review={review.content}
       topic={review.topic}
-      citations={review.citations}
+      citations={parsedCitations}
       showDownload={true}
     />
   );

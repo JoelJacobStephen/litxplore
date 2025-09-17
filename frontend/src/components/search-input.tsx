@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2, Plus } from "lucide-react";
 import { Paper } from "@/lib/types/paper";
-import { searchPapers } from "@/lib/services/paper-service";
+import { useSearchPapers } from "@/lib/hooks/api-hooks";
 import { motion } from "framer-motion";
 import {
   Command,
@@ -42,15 +41,13 @@ export function SearchInput({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: searchResults, isLoading, error, isError } = useQuery({
-    queryKey: ["paper-search", debouncedSearch],
-    queryFn: () => searchPapers(debouncedSearch),
-    enabled: debouncedSearch.length > 2,
-    staleTime: 30000,
-    retry: 2,
-    retryDelay: 1000
-  });
-  
+  const {
+    data: searchResults,
+    isLoading,
+    error,
+    isError,
+  } = useSearchPapers(debouncedSearch, debouncedSearch.length > 2);
+
   // Log errors if they occur
   useEffect(() => {
     if (isError && error) {
