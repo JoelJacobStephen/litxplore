@@ -44,3 +44,18 @@ export interface ReviewContent {
   citations: Paper[];
   topic: string;
 }
+
+export enum TaskStatus {
+  PENDING = "pending",
+  RUNNING = "running",
+  COMPLETED = "completed",
+  FAILED = "failed",
+}
+
+export interface TaskResponse {
+  id: string;
+  status: TaskStatus;
+  error_message?: string;
+  created_at: string;
+  result_data?: any;
+}

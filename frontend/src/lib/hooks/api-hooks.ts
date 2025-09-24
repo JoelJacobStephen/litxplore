@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthenticatedFetch } from "../query-provider";
 import {
   Paper,
-  ReviewResponse,
   ChatResponse,
   ReviewContent,
+  TaskResponse,
+  TaskStatus,
 } from "../types/paper";
 
 // ============================================================================
@@ -26,6 +27,11 @@ export const queryKeys = {
     all: ["reviews"] as const,
     history: () => [...queryKeys.reviews.all, "history"] as const,
     byId: (id: string) => [...queryKeys.reviews.all, "detail", id] as const,
+  },
+  tasks: {
+    all: ["tasks"] as const,
+    byId: (id: string) => [...queryKeys.tasks.all, "detail", id] as const,
+    userTasks: () => [...queryKeys.tasks.all, "userTasks"] as const,
   },
 } as const;
 
@@ -156,7 +162,7 @@ export function useStreamChatWithPaper() {
 // ============================================================================
 
 /**
- * Generate literature review
+ * Start review generation task
  */
 export function useGenerateReview() {
   const authenticatedFetch = useAuthenticatedFetch();
@@ -166,10 +172,18 @@ export function useGenerateReview() {
     mutationFn: async ({
       papers,
       topic,
+      maxPapers = 10,
     }: {
       papers: string[];
       topic: string;
-    }): Promise<ReviewResponse> => {
+      maxPapers?: number;
+    }): Promise<TaskResponse> => {
+      console.log("Starting review generation task with:", {
+        papers,
+        topic,
+        maxPapers,
+      });
+
       const response = await authenticatedFetch(
         "/api/v1/review/generate-review",
         {
@@ -177,14 +191,26 @@ export function useGenerateReview() {
           body: JSON.stringify({
             paper_ids: papers,
             topic,
+            max_papers: maxPapers,
           }),
         }
       );
-      return response.json();
+
+      console.log("API Response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error response:", errorText);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("Task created:", data);
+      return data;
     },
-    onSuccess: () => {
-      // Invalidate reviews cache
-      queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all });
+    onSuccess: (_data) => {
+      // Invalidate tasks cache
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
     },
   });
 }
@@ -373,4 +399,125 @@ export function useStreamResponse() {
       }
     },
   });
+}
+
+// ============================================================================
+// TASK HOOKS
+// ============================================================================
+
+/**
+ * Get task status by ID with polling
+ */
+export function useTaskStatus(taskId: string | null, enabled = true) {
+  const authenticatedFetch = useAuthenticatedFetch();
+
+  return useQuery({
+    queryKey: queryKeys.tasks.byId(taskId || ""),
+    queryFn: async (): Promise<TaskResponse> => {
+      if (!taskId) throw new Error("Task ID is required");
+
+      const response = await authenticatedFetch(`/api/v1/tasks/${taskId}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to fetch task: ${response.status} - ${errorText}`
+        );
+      }
+
+      return response.json();
+    },
+    enabled: enabled && !!taskId,
+    refetchInterval: (query) => {
+      // Poll every 2 seconds if task is pending or running
+      const data = query.state.data as TaskResponse | undefined;
+      if (
+        data?.status === TaskStatus.PENDING ||
+        data?.status === TaskStatus.RUNNING
+      ) {
+        return 2000;
+      }
+      // Stop polling if completed or failed
+      return false;
+    },
+    refetchIntervalInBackground: false,
+  });
+}
+
+/**
+ * Get user tasks
+ */
+export function useUserTasks(enabled = true) {
+  const authenticatedFetch = useAuthenticatedFetch();
+
+  return useQuery({
+    queryKey: queryKeys.tasks.userTasks(),
+    queryFn: async (): Promise<TaskResponse[]> => {
+      const response = await authenticatedFetch("/api/v1/tasks/");
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to fetch tasks: ${response.status} - ${errorText}`
+        );
+      }
+
+      return response.json();
+    },
+    enabled,
+  });
+}
+
+/**
+ * Cancel a task
+ */
+export function useCancelTask() {
+  const authenticatedFetch = useAuthenticatedFetch();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskId: string): Promise<void> => {
+      const response = await authenticatedFetch(
+        `/api/v1/tasks/${taskId}/cancel`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to cancel task: ${response.status} - ${errorText}`
+        );
+      }
+    },
+    onSuccess: (_, taskId) => {
+      // Invalidate the specific task and user tasks
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.byId(taskId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.userTasks() });
+    },
+  });
+}
+
+/**
+ * Hook to poll task until completion and return the result
+ */
+export function useTaskPolling(taskId: string | null, enabled = true) {
+  const taskQuery = useTaskStatus(taskId, enabled);
+
+  const taskData = taskQuery.data as TaskResponse | undefined;
+  const isCompleted = taskData?.status === TaskStatus.COMPLETED;
+  const isFailed = taskData?.status === TaskStatus.FAILED;
+  const isFinished = isCompleted || isFailed;
+
+  return {
+    ...taskQuery,
+    isCompleted,
+    isFailed,
+    isFinished,
+    isRunning: taskData?.status === TaskStatus.RUNNING,
+    isPending: taskData?.status === TaskStatus.PENDING,
+    errorMessage: taskData?.error_message,
+    result: taskData?.result_data,
+  };
 }

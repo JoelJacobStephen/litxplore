@@ -9,7 +9,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from app.api.v1.endpoints import review, papers, documents, history, users  # Change from relative to absolute import
+from app.api.v1.endpoints import review, papers, documents, history, users, tasks  # Change from relative to absolute import
 from .core.config import get_settings
 from app.db.database import engine, Base, get_db
 from sqlalchemy.orm import Session
@@ -102,6 +102,9 @@ app.include_router(
 
 # Add users router
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
+
+# Add tasks router
+app.include_router(tasks.router, prefix=f"{settings.API_V1_STR}/tasks", tags=["tasks"])
 
 # Fix the history router path
 app.include_router(history.router, prefix=f"{settings.API_V1_STR}", tags=["history"])

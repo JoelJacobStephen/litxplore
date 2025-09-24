@@ -2,7 +2,7 @@
 
 ## Overview
 
-The LitXplore backend implements a sophisticated literature review generation system that combines arXiv paper retrieval, PDF upload processing, and AI-powered review synthesis using LangChain and Google's Gemini model. This document provides a comprehensive breakdown of the entire process from initial request to final review delivery.
+The LitXplore backend implements a sophisticated asynchronous literature review generation system that combines arXiv paper retrieval, PDF upload processing, and AI-powered review synthesis using LangChain and Google's Gemini model. The system uses a task-based architecture with background processing and real-time status polling to provide a responsive user experience during long-running review generation operations.
 
 ## System Architecture
 
@@ -10,37 +10,45 @@ The LitXplore backend implements a sophisticated literature review generation sy
 
 1. **FastAPI Endpoints** (`app/api/v1/endpoints/`)
 
-   - Review generation endpoint
+   - Review generation endpoint (task-based)
+   - Task management endpoints
    - Paper management endpoints
    - Document generation endpoints
 
 2. **Services Layer** (`app/services/`)
 
+   - `TaskService`: Background task management and execution
    - `LangChainService`: AI-powered review generation
    - `PaperService`: Paper retrieval and processing
    - `DocumentService`: PDF/LaTeX document generation
 
 3. **Models** (`app/models/`)
 
-   - Data structures for papers, reviews, and users
+   - Data structures for papers, reviews, users, and tasks
    - Pydantic validation models
+   - Task status and type enums
 
 4. **Core Infrastructure**
    - Authentication with Clerk
-   - Database with PostgreSQL
+   - Database with PostgreSQL (including tasks table)
    - File storage for uploaded PDFs
+   - Background task processing with asyncio
 
 ## Complete Review Generation Flow
 
-### Phase 1: Request Initiation
+### Phase 1: Task Creation and Initiation
 
 #### 1.1 API Endpoint (`/api/v1/review/generate-review`)
 
-**Location**: `app/api/v1/endpoints/review.py:20-82`
+**Location**: `app/api/v1/endpoints/review.py:23-70`
 
 ```python
-@router.post("/generate-review", response_model=ReviewResponse)
-async def generate_review(request: Request, review_request: ReviewRequest) -> ReviewResponse:
+@router.post("/generate-review", response_model=TaskResponse)
+async def generate_review(
+    review_request: ReviewRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> TaskResponse:
 ```
 
 **Input Structure** (`ReviewRequest`):
@@ -52,157 +60,261 @@ class ReviewRequest(BaseModel):
     max_papers: int      # Max papers to analyze (1-20, default 10)
 ```
 
-#### 1.2 Initial Validation and Setup
+**Output Structure** (`TaskResponse`):
+
+```python
+class TaskResponse(BaseModel):
+    id: str                    # Unique task ID
+    status: TaskStatus         # PENDING, RUNNING, COMPLETED, FAILED
+    error_message: str         # Error description if failed
+    created_at: datetime       # Task creation timestamp
+    result_data: dict          # Review results when completed
+```
+
+#### 1.2 Task Creation Process
 
 1. **Authentication**: User authentication via Clerk JWT tokens
 2. **Input Validation**: Validates paper IDs and topic requirements
-3. **Paper ID Classification**: Separates arXiv IDs from uploaded PDF IDs
+3. **Task Creation**: Creates a new task record in the database
    ```python
-   arxiv_ids = [pid for pid in review_request.paper_ids if not pid.startswith('upload_')]
-   uploaded_ids = [pid for pid in review_request.paper_ids if pid.startswith('upload_')]
+   task = await task_service.create_task(
+       db=db,
+       user=current_user
+   )
    ```
+4. **Background Task Launch**: Starts the review generation in the background
+   ```python
+   await task_service.start_review_generation_task(
+       task_id=task.id,
+       paper_ids=review_request.paper_ids,
+       topic=review_request.topic,
+       max_papers=review_request.max_papers
+   )
+   ```
+5. **Immediate Response**: Returns task ID and initial status to frontend
 
-### Phase 2: Paper Retrieval and Processing
+### Phase 2: Frontend Status Polling
 
-#### 2.1 ArXiv Paper Fetching
+#### 2.1 Task Polling System
 
-**Location**: `app/services/paper_service.py:126-164`
+**Location**: `frontend/src/lib/hooks/api-hooks.ts:408-436`
 
-```python
-async def get_papers_by_ids(self, paper_ids: List[str]) -> List[Paper]:
+The frontend immediately starts polling the task status using React Query:
+
+```typescript
+export function useTaskPolling(taskId: string | null, enabled = true) {
+  const taskQuery = useTaskStatus(taskId, enabled);
+  // ... polling logic with 2-second intervals
+}
 ```
 
-**Process**:
+**Polling Behavior**:
 
-1. **ID Formatting**: Removes version suffixes (v1, v2, etc.)
-2. **ArXiv API Query**: Uses `arxiv.Client()` with OR-based search
-3. **Data Extraction**: Converts arXiv results to internal `Paper` model
-4. **Error Handling**: Retry logic with exponential backoff
+1. **Immediate Start**: Begins polling as soon as task ID is received
+2. **2-Second Intervals**: Polls every 2 seconds while task is PENDING or RUNNING
+3. **Auto-Stop**: Stops polling when task reaches COMPLETED or FAILED status
+4. **Status Updates**: Displays current task status and error messages
+5. **Error Handling**: Handles network errors and missing tasks
 
-**Paper Model Structure**:
+#### 2.2 User Interface Updates
 
-```python
-class Paper(BaseModel):
-    id: str           # ArXiv ID or upload_{hash}
-    title: str        # Paper title
-    authors: List[str] # Author names
-    summary: str      # Abstract/summary
-    published: datetime # Publication date
-    url: Optional[str] # PDF URL or local path
+**Location**: `frontend/src/app/generated-review/page.tsx`
+
+The UI provides real-time feedback during processing:
+
+```typescript
+// Simple status display with cancel option
+<p className="text-sm text-muted-foreground">
+  {isRunning
+    ? "Generating your review... This may take a few moments."
+    : "Preparing to start review generation..."}
+</p>
 ```
 
-#### 2.2 Uploaded PDF Processing
+### Phase 3: Background Task Execution
 
-**Location**: `app/services/paper_service.py:466-486`
+#### 3.1 Task Service Execution
 
-```python
-async def get_uploaded_papers(self, paper_ids: List[str]) -> List[Paper]:
-```
+**Location**: `app/services/task_service.py:59-141`
 
-**Process**:
-
-1. **Hash Extraction**: Extracts content hash from `upload_{hash}` format
-2. **File Verification**: Checks if PDF exists in uploads directory
-3. **Metadata Retrieval**: Loads previously extracted metadata
-4. **Paper Object Creation**: Constructs Paper objects from stored data
-
-### Phase 3: LangChain Service Integration
-
-#### 3.1 LangChain Service Initialization
-
-**Location**: `app/services/langchain_service.py:17-49`
+The background task runs independently of the HTTP request:
 
 ```python
-class LangChainService:
-    def __init__(self):
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=settings.CHUNK_SIZE,      # Default: 1000
-            chunk_overlap=settings.CHUNK_OVERLAP  # Default: 200
-        )
-
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            google_api_key=settings.GEMINI_API_KEY,
-            temperature=0.7
-        )
+async def _execute_review_generation(
+    self,
+    task_id: str,
+    paper_ids: list[str],
+    topic: str,
+    max_papers: int
+) -> None:
 ```
 
-**Key Components**:
+**Execution Steps**:
 
-- **Text Splitter**: Handles document chunking for processing
-- **LLM Integration**: Google Gemini 2.0 Flash model
-- **Prompt Templates**: Structured prompts for consistent output
+1. **Task Status Update**: Changes status from PENDING to RUNNING
+2. **Paper Retrieval**: Fetches papers from arXiv and uploaded files
+3. **Review Generation**: Uses LangChain service for AI-powered generation
+4. **Result Storage**: Saves generated review in task result_data
+5. **Status Completion**: Updates task status to COMPLETED or FAILED
 
-#### 3.2 Review Generation Process
+#### 3.2 Paper Retrieval (Background)
+
+**Location**: `app/services/paper_service.py:126-164` and `app/services/paper_service.py:466-486`
+
+Paper retrieval happens asynchronously in the background:
+
+1. **ID Classification**: Separates arXiv IDs from uploaded PDF IDs
+2. **ArXiv Papers**: Fetches from arXiv API with retry logic
+3. **Uploaded Papers**: Retrieves from local storage with metadata
+
+### Phase 4: AI Review Generation (Background)
+
+#### 4.1 LangChain Service Integration
 
 **Location**: `app/services/langchain_service.py:137-182`
+
+Review generation happens in the background with progress updates:
 
 ```python
 async def generate_review(self, papers: List[Paper], topic: str) -> str:
 ```
 
-**Detailed Process**:
+**Process Steps**:
 
-1. **Context Preparation**:
+1. **Context Preparation**: Formats paper data for AI consumption
+2. **Prompt Construction**: Creates academic writing prompt
+3. **AI Generation**: Uses Google Gemini 2.0 Flash model
 
-   ```python
-   papers_context = "\n\n".join(
-       f"Reference {i+1}:\nTitle: {p.title}\nAuthors: {', '.join(p.authors)}\nSummary: {p.summary}"
-       for i, p in enumerate(papers)
-   )
-   ```
+#### 4.2 Review Generation Details
 
-2. **Prompt Construction**: Creates comprehensive academic writing prompt with:
-
-   - Literature review requirements
-   - Citation formatting instructions
-   - Structure guidelines (Introduction, Main body, Research gaps, Conclusion)
-   - Academic writing standards
-
-3. **AI Generation**:
-
-   ```python
-   response = await asyncio.to_thread(
-       lambda: self.llm.invoke(prompt).content
-   )
-   ```
-
-4. **Output Formatting**: Returns markdown-formatted literature review
-
-### Phase 4: Response Assembly and Cleanup
-
-#### 4.1 Response Construction
-
-**Location**: `app/api/v1/endpoints/review.py:78-82`
+**Context Preparation**:
 
 ```python
-return ReviewResponse(
-    review=review_text,      # Generated literature review
-    citations=papers,        # List of Paper objects
-    topic=review_request.topic # Original topic
+papers_context = "\n\n".join(
+    f"Reference {i+1}:\nTitle: {p.title}\nAuthors: {', '.join(p.authors)}\nSummary: {p.summary}"
+    for i, p in enumerate(papers)
 )
 ```
 
-#### 4.2 File Cleanup System
-
-**Multi-layered Cleanup Strategy**:
-
-1. **Immediate Cleanup**: Attempts cleanup right after generation
-2. **Background Tasks**: Scheduled cleanup via middleware
-3. **Error Handling Cleanup**: Cleanup in exception handlers
-4. **Final Cleanup**: Cleanup in finally blocks
-
-**Background Task Middleware** (`app/main.py:50-72`):
+**AI Generation**:
 
 ```python
-class BackgroundTaskMiddleware(BaseHTTPMiddleware):
-    async def _process_background_tasks(self, tasks):
-        for task in tasks:
-            if task['task'] == 'cleanup_pdfs':
-                await cleanup_uploaded_pdfs(task['paper_ids'])
+# Generate review
+review_text = await self.langchain_service.generate_review(papers, topic)
+
+# Update task status to completed
+task.status = TaskStatus.COMPLETED
 ```
 
+### Phase 5: Task Completion and Result Delivery
+
+#### 5.1 Task Result Storage
+
+**Location**: `app/services/task_service.py:120-141`
+
+When review generation completes, the result is stored in the task:
+
+```python
+# Store the result
+result_data = {
+    "review": review_text,
+    "citations": [paper.dict() for paper in papers],
+    "topic": topic
+}
+task.set_result_data(result_data)
+task.status = TaskStatus.COMPLETED
+db.commit()
+```
+
+#### 5.2 Frontend Result Processing
+
+**Location**: `frontend/src/app/generated-review/page.tsx:45-70`
+
+When polling detects completion, the frontend processes the result:
+
+```typescript
+useEffect(() => {
+  if (isCompleted && result && !hasNavigated) {
+    // Store the generated review
+    const generatedReview = {
+      review: result.review,
+      citations: result.citations || [],
+      topic: result.topic,
+    };
+
+    useReviewStore.getState().setGeneratedReview(generatedReview);
+
+    // Auto-save the review
+    saveReview.mutate({...});
+  }
+}, [isCompleted, result, hasNavigated, saveReview]);
+```
+
+#### 5.3 Automatic File Cleanup
+
+**Background Cleanup**: Uploaded PDF files are automatically cleaned up after processing to free up storage space. This happens within the background task execution.
+
 ## Advanced Features
+
+### Task Management System
+
+#### Task Status Endpoints
+
+**Location**: `app/api/v1/endpoints/tasks.py`
+
+The system provides comprehensive task management endpoints:
+
+1. **Get Task Status** (`GET /api/v1/tasks/{task_id}`):
+
+   - Returns current task status, progress, and results
+   - Used by frontend for polling
+
+2. **Get User Tasks** (`GET /api/v1/tasks/`):
+
+   - Lists all tasks for the current user
+   - Supports filtering by task type and status
+
+3. **Cancel Task** (`POST /api/v1/tasks/{task_id}/cancel`):
+   - Allows users to cancel running tasks
+   - Properly cleans up background processes
+
+#### Task Database Schema
+
+```sql
+CREATE TABLE tasks (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    status ENUM('pending', 'running', 'completed', 'failed'),
+    result_data TEXT,     -- JSON string of results
+    error_message TEXT,   -- Error description if failed
+    created_at TIMESTAMP
+);
+```
+
+### Frontend Polling Architecture
+
+#### React Query Integration
+
+The frontend uses React Query for efficient task polling:
+
+```typescript
+// Automatic polling with smart intervals
+refetchInterval: (query) => {
+  const data = query.state.data as TaskResponse | undefined;
+  if (data?.status === TaskStatus.PENDING || data?.status === TaskStatus.RUNNING) {
+    return 2000; // Poll every 2 seconds
+  }
+  return false; // Stop polling when complete
+},
+```
+
+#### User Experience Features
+
+1. **Real-time Status**: Live status updates showing current task state
+2. **Cancellation Support**: Users can cancel long-running tasks
+3. **Error Handling**: Graceful handling of failures with retry options
+4. **Background Processing**: Tasks continue even if user closes browser
+5. **Automatic Save**: Completed reviews are automatically saved
 
 ### PDF Upload and Processing Pipeline
 
@@ -270,27 +382,33 @@ graph TD
     C -->|Valid| D[Input Validation]
     C -->|Invalid| E[401 Error]
 
-    D --> F[Paper ID Classification]
-    F --> G[ArXiv Paper Fetching]
-    F --> H[Uploaded PDF Processing]
+    D --> F[Create Task Record]
+    F --> G[Start Background Task]
+    G --> H[Return Task ID]
+    H --> I[Client Receives Task ID]
 
-    G --> I[PaperService.get_papers_by_ids]
-    H --> J[PaperService.get_uploaded_papers]
+    I --> J[Start Polling Loop]
+    J --> K[GET /tasks/task_id]
+    K --> L{Task Status}
 
-    I --> K[Paper Objects Collection]
-    J --> K
+    L -->|PENDING/RUNNING| M[Display Progress]
+    M --> N[Wait 2 seconds]
+    N --> J
 
-    K --> L[LangChainService.generate_review]
-    L --> M[Context Preparation]
-    M --> N[Prompt Construction]
-    N --> O[Gemini AI Processing]
-    O --> P[Review Generation]
+    L -->|COMPLETED| O[Display Review]
+    L -->|FAILED| P[Show Error]
 
-    P --> Q[Response Assembly]
-    Q --> R[File Cleanup]
-    R --> S[Client Response]
+    %% Background Task Flow
+    G --> Q[Background: Update Status to RUNNING]
+    Q --> R[Background: Fetch Papers]
+    R --> S[Background: Generate Review]
+    S --> T[Background: Store Result]
+    T --> U[Background: Update Status to COMPLETED]
 
-    R --> T[Background Cleanup Tasks]
+    %% Error Handling
+    R --> V[Background: Handle Errors]
+    S --> V
+    V --> W[Background: Update Status to FAILED]
 ```
 
 ## Error Handling and Resilience
@@ -375,4 +493,31 @@ REDIS_* settings
 - **File System**: Upload directory accessibility
 - **Memory Usage**: Resource utilization monitoring
 
-This comprehensive flow ensures robust, scalable, and secure literature review generation while maintaining excellent user experience through proper error handling, cleanup mechanisms, and performance optimization.
+## Summary of New Asynchronous Architecture
+
+### Key Improvements
+
+1. **Non-blocking Operations**: Frontend requests no longer block during long-running review generation
+2. **Real-time Status**: Users see live status updates and can cancel operations
+3. **Improved Reliability**: Background tasks continue even if user closes browser
+4. **Better Error Handling**: Comprehensive error reporting and recovery options
+5. **Enhanced Scalability**: Multiple review generations can run concurrently
+6. **Simplified Architecture**: Reduced complexity with essential fields only
+
+### Architecture Benefits
+
+- **Separation of Concerns**: Request handling separated from processing
+- **Fault Tolerance**: Task failures don't affect the web server
+- **User Experience**: Responsive interface with progress indication
+- **Resource Management**: Efficient handling of long-running operations
+- **Monitoring**: Complete audit trail of all review generation tasks
+
+### Technical Stack
+
+- **Backend**: FastAPI + asyncio for background task processing
+- **Database**: PostgreSQL with simplified tasks table for state management
+- **Frontend**: React Query for efficient polling and state management
+- **Real-time Updates**: 2-second polling intervals with automatic stop conditions
+- **Error Recovery**: Comprehensive error handling at all levels
+
+This comprehensive asynchronous flow ensures robust, scalable, and secure literature review generation while maintaining excellent user experience through proper task management, real-time feedback, and efficient resource utilization.

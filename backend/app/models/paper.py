@@ -12,6 +12,11 @@ class Paper(BaseModel):
     summary: str
     published: datetime
     url: Optional[str] = None
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 class ChatRequest(BaseModel):
     message: str

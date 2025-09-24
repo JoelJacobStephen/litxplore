@@ -16,6 +16,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     reviews = relationship("Review", back_populates="user")
+    tasks = relationship("Task", back_populates="user")
 
     def __repr__(self):
         return f"<User {self.email}>"

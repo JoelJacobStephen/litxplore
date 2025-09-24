@@ -108,12 +108,7 @@ export default function HistoryPage() {
     show: { opacity: 1, y: 0 },
   };
 
-  // Redirect to sign-in if not authenticated
-  if (isLoaded && !isSignedIn) {
-    router.push("/sign-in");
-    return null;
-  }
-
+  // Parse citations when selectedReview changes
   useEffect(() => {
     if (selectedReview?.citations) {
       try {
@@ -129,14 +124,15 @@ export default function HistoryPage() {
     }
   }, [selectedReview]);
 
+  // Redirect to sign-in if not authenticated
+  if (isLoaded && !isSignedIn) {
+    router.push("/sign-in");
+    return null;
+  }
+
   const handleReviewClick = (review: Review) => {
     setSelectedReview(review);
     setIsDialogOpen(true);
-  };
-
-  const handleDeleteClick = (e: React.MouseEvent, reviewId: number) => {
-    e.stopPropagation(); // Prevent card click event
-    setDeletingReviewId(reviewId);
   };
 
   const handleDeleteConfirm = () => {

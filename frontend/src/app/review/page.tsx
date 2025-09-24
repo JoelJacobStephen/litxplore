@@ -7,19 +7,13 @@ import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paper } from "@/lib/types/paper";
-import {
-  useGenerateReview,
-  useSaveReview,
-  useSearchPapers,
-} from "@/lib/hooks/api-hooks";
+import { useGenerateReview, useSearchPapers } from "@/lib/hooks/api-hooks";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
 import { BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
-import { useAuth } from "@clerk/nextjs";
-
 export default function ReviewPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -29,7 +23,6 @@ export default function ReviewPage() {
 
   // React Query hooks
   const generateReview = useGenerateReview();
-  const saveReview = useSaveReview();
 
   // Initialize selected papers from URL params
   useEffect(() => {
@@ -105,48 +98,22 @@ export default function ReviewPage() {
     // Clear any existing generated review to prevent caching issues
     useReviewStore.getState().clearGeneratedReview();
 
-    router.push("/generated-review");
-
     generateReview.mutate(
       {
         papers: Array.from(selectedPapers),
         topic: topic || "Literature Review",
+        maxPapers: 10,
       },
       {
-        onSuccess: (response) => {
-          const generatedReview = {
-            review: response.review,
-            citations: response.citations || [],
-            topic: topic || "Literature Review",
-          };
+        onSuccess: (taskResponse) => {
+          console.log("Review generation task started!", taskResponse);
 
-          useReviewStore.setState({ generatedReview });
-
-          // Save the review
-          saveReview.mutate(
-            {
-              title: topic || "Literature Review",
-              topic: topic || "Literature Review",
-              content: response.review,
-              citations: JSON.stringify(response.citations),
-            },
-            {
-              onSuccess: () => {
-                toast.success("Review generated and saved successfully!");
-              },
-              onError: (saveError) => {
-                console.error("Failed to save review:", saveError);
-                toast.error(
-                  "Review generated but failed to save. You can try saving it later."
-                );
-              },
-            }
-          );
+          // Navigate to the generated review page with task ID
+          router.push(`/generated-review?taskId=${taskResponse.id}`);
         },
         onError: (error) => {
-          console.error("Failed to generate review:", error);
-          toast.error("Failed to generate review. Please try again.");
-          router.push("/review"); // Return to review page on error
+          console.error("Failed to start review generation:", error);
+          toast.error("Failed to start review generation. Please try again.");
         },
       }
     );

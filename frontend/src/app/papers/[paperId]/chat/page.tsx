@@ -6,11 +6,15 @@ import { Paper } from "@/lib/types/paper";
 import { PDFViewer } from "@/components/pdf-viewer";
 import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Maximize2, Minimize2, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -77,7 +81,9 @@ export default function ChatPage() {
     return (
       <div className="flex h-screen flex-col items-center justify-center p-6">
         <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
-          <h3 className="mb-4 text-xl font-semibold text-center">Error Loading Paper</h3>
+          <h3 className="mb-4 text-xl font-semibold text-center">
+            Error Loading Paper
+          </h3>
           <p className="mb-6 text-muted-foreground text-center">{error}</p>
           <Button className="w-full" onClick={() => router.push("/search")}>
             Return to Search
@@ -107,7 +113,7 @@ export default function ChatPage() {
             <span>Back to Search</span>
           </Link>
         </Button>
-        
+
         <div className="flex items-center">
           <Button
             variant="ghost"
@@ -117,10 +123,13 @@ export default function ChatPage() {
           >
             <BookOpen className="h-4 w-4" />
             <span className="hidden sm:inline">
-              {isMobile 
-                ? (showPdf ? "Hide PDF" : "Show PDF")
-                : (collapsedPdf ? "Expand PDF" : "Collapse PDF")
-              }
+              {isMobile
+                ? showPdf
+                  ? "Hide PDF"
+                  : "Show PDF"
+                : collapsedPdf
+                ? "Expand PDF"
+                : "Collapse PDF"}
             </span>
           </Button>
         </div>
@@ -134,18 +143,26 @@ export default function ChatPage() {
               <PDFViewer url={paper.url} />
             </div>
           )}
-          <div className={cn("flex-1 overflow-hidden", showPdf ? "h-[50%]" : "h-full")}>
+          <div
+            className={cn(
+              "flex-1 overflow-hidden",
+              showPdf ? "h-[50%]" : "h-full"
+            )}
+          >
             <ChatInterface paper={paper} isEmbedded />
           </div>
         </div>
       ) : (
         // Desktop layout - resizable panels
-        <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
-          <ResizablePanel 
-            defaultSize={60} 
-            minSize={20} 
-            maxSize={80} 
-            collapsible={true} 
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="flex-1 overflow-hidden"
+        >
+          <ResizablePanel
+            defaultSize={60}
+            minSize={20}
+            maxSize={80}
+            collapsible={true}
             collapsedSize={0}
             onCollapse={() => setCollapsedPdf(true)}
             onExpand={() => setCollapsedPdf(false)}
@@ -155,19 +172,28 @@ export default function ChatPage() {
               <PDFViewer url={paper.url} />
             </div>
           </ResizablePanel>
-          
+
           <ResizableHandle withHandle>
             <div className="flex h-full w-6 items-center justify-center">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 rounded-full p-0 text-muted-foreground">
-                {collapsedPdf ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full p-0 text-muted-foreground"
+              >
+                {collapsedPdf ? (
+                  <ChevronRight className="h-3 w-3" />
+                ) : (
+                  <ChevronLeft className="h-3 w-3" />
+                )}
               </Button>
             </div>
           </ResizableHandle>
-          
-          <ResizablePanel className="overflow-hidden" defaultSize={40} minSize={20}>
+
+          <ResizablePanel
+            className="overflow-hidden"
+            defaultSize={40}
+            minSize={20}
+          >
             <ChatInterface paper={paper} isEmbedded />
           </ResizablePanel>
         </ResizablePanelGroup>
