@@ -10,26 +10,43 @@ from sqlalchemy.engine import Engine
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Determine the host to use - Docker environment will use 'db' (service name),
-# while local development will use the value from settings
-postgres_host = "db" if os.environ.get("DOCKER_ENV") == "true" else settings.POSTGRES_HOST
+# Determine database URL - prioritize DATABASE_URL for external databases like Neon
+if settings.DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+    logger.info("Using DATABASE_URL for database connection")
+else:
+    # Fallback to individual database settings
+    postgres_host = "db" if os.environ.get("DOCKER_ENV") == "true" else settings.POSTGRES_HOST
+    
+    # Ensure required settings are available
+    if not all([settings.POSTGRES_USER, settings.POSTGRES_PASSWORD, postgres_host, settings.POSTGRES_PORT, settings.POSTGRES_DB]):
+        raise ValueError("Either DATABASE_URL or all individual database settings (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB) must be provided")
+    
+    # Log the database connection parameters (omitting sensitive info)
+    connection_info = f"postgresql://{settings.POSTGRES_USER}:***@{postgres_host}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+    logger.info(f"Connecting to database at: {connection_info}")
+    
+    # Create the connection URL
+    SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{postgres_host}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
 
-# Log the database connection parameters (omitting sensitive info)
-connection_info = f"postgresql://{settings.POSTGRES_USER}:***@{postgres_host}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
-logger.info(f"Connecting to database at: {connection_info}")
-
-# Create the connection URL
-SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{postgres_host}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
-
-# Configure engine with a larger pool_size and longer timeout for Docker environment
+# Configure engine for optimal performance with external databases like Neon
 engine_args = {
     "pool_pre_ping": True,  # Verify connections before using them
-    "pool_size": 10,       # Larger connection pool
-    "max_overflow": 20,
-    "pool_recycle": 3600,  # Recycle connections after an hour
+    "pool_size": 5,        # Smaller pool for external databases
+    "max_overflow": 10,    # Reduced overflow for cloud databases
+    "pool_recycle": 1800,  # Recycle connections more frequently (30 minutes)
     "pool_timeout": 30,    # Wait longer for connections
-    "connect_args": {"connect_timeout": 10}  # PostgreSQL connection timeout
 }
+
+# Add SSL and connection timeout for external databases
+if settings.DATABASE_URL or (settings.POSTGRES_HOST and not os.environ.get("DOCKER_ENV")):
+    engine_args["connect_args"] = {
+        "connect_timeout": 10,
+        "sslmode": "require"  # Force SSL for external connections
+    }
+else:
+    # Local database connection args
+    engine_args["connect_args"] = {"connect_timeout": 10}
 
 try:
     engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_args)

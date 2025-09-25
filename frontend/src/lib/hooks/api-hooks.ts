@@ -333,7 +333,7 @@ export function useGenerateDocument() {
       const response = await authenticatedFetch("/api/v1/documents/generate", {
         method: "POST",
         body: JSON.stringify({
-          review_content: review.review,
+          content: review.review,
           citations: review.citations,
           topic: review.topic,
           format,

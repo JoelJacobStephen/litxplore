@@ -1,5 +1,5 @@
-# Use Python 3.11 slim as base image
-FROM python:3.11-slim as builder
+# Use Python 3.12 slim as base image (latest stable with security patches)
+FROM python:3.12-slim as builder
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -15,6 +15,7 @@ RUN apt-get update \
         build-essential \
         curl \
         libpq-dev \
+    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create and set working directory
@@ -36,7 +37,7 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
     pip install --no-cache-dir -r requirements.txt
 
 # Final stage
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -47,8 +48,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
-        postgresql-client \
         sed \
+        curl \
+    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user

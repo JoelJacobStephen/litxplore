@@ -22,11 +22,12 @@ class Settings(BaseSettings):
     CORS_ALLOW_HEADERS: List[str]
     
     # Database Settings
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_HOST: str
-    POSTGRES_PORT: str
-    POSTGRES_DB: str
+    DATABASE_URL: Optional[str] = None  # For Neon or other external PostgreSQL
+    POSTGRES_USER: Optional[str] = None
+    POSTGRES_PASSWORD: Optional[str] = None
+    POSTGRES_HOST: Optional[str] = None
+    POSTGRES_PORT: Optional[str] = None
+    POSTGRES_DB: Optional[str] = None
     
     # API Keys
     GEMINI_API_KEY: str

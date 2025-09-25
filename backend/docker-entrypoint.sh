@@ -26,23 +26,32 @@ if [ "$DOCKER_ENV" = "true" ]; then
 API_V1_STR=${API_V1_STR:-/api/v1}
 PROJECT_NAME=${PROJECT_NAME:-LitXplore}
 
+# Deployment Settings
+BEHIND_PROXY=${BEHIND_PROXY:-"false"}
+PRODUCTION=${PRODUCTION:-"false"}
+
 # CORS Settings
 CORS_ORIGINS=["http://localhost:3000", "https://litxplore.tech", "https://litxplore.vercel.app"]
 CORS_ALLOW_CREDENTIALS=true
-CORS_ALLOW_METHODS=["GET","POST","PUT","DELETE"]
+CORS_ALLOW_METHODS=["GET","POST","PUT","DELETE","OPTIONS","PATCH"]
 CORS_ALLOW_HEADERS=["*"]
 
-# Database Settings
-POSTGRES_USER=${POSTGRES_USER:-postgres}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-POSTGRES_HOST=db
+# Database Settings (Neon PostgreSQL)
+DATABASE_URL=${DATABASE_URL}
+POSTGRES_USER=${POSTGRES_USER}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+POSTGRES_HOST=${POSTGRES_HOST}
 POSTGRES_PORT=${POSTGRES_PORT:-5432}
-POSTGRES_DB=${POSTGRES_DB:-litxplore_db}
+POSTGRES_DB=${POSTGRES_DB}
 
 # Redis Settings
 REDIS_HOST=redis
 REDIS_PORT=${REDIS_PORT:-6379}
 REDIS_PASSWORD=${REDIS_PASSWORD:-optional-password}
+
+# API Keys
+GEMINI_API_KEY=${GEMINI_API_KEY}
+OPENAI_API_KEY=${OPENAI_API_KEY}
 
 # Clerk Authentication Settings
 CLERK_ISSUER=${CLERK_ISSUER:-https://warm-ram-79.clerk.accounts.dev}
@@ -50,31 +59,23 @@ CLERK_FRONTEND_API=${CLERK_FRONTEND_API:-https://warm-ram-79.clerk.accounts.dev}
 CLERK_JWKS_URL=${CLERK_JWKS_URL:-https://warm-ram-79.clerk.accounts.dev/.well-known/jwks.json}
 CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
 CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-JWT_ALGORITHM=RS256
+JWT_ALGORITHM=${JWT_ALGORITHM:-RS256}
+
+# Rate Limiting
+RATE_LIMIT_PER_DAY=${RATE_LIMIT_PER_DAY:-100}
 
 # LangChain Settings
 CHUNK_SIZE=${CHUNK_SIZE:-1000}
 CHUNK_OVERLAP=${CHUNK_OVERLAP:-200}
 SIMILARITY_THRESHOLD=${SIMILARITY_THRESHOLD:-0.75}
 MAX_PAPERS=${MAX_PAPERS:-10}
-
-# Rate Limiting
-RATE_LIMIT_PER_DAY=${RATE_LIMIT_PER_DAY:-100}
-
-# Deployment Settings
-BEHIND_PROXY=${BEHIND_PROXY:-"false"}
-PRODUCTION=${PRODUCTION:-"false"}
-
-# API Keys
-GEMINI_API_KEY=${GEMINI_API_KEY}
-OPENAI_API_KEY=${OPENAI_API_KEY}
 EOL
   else
     # If .env exists, update values as needed
-    # Check if POSTGRES_HOST is set to localhost and update it
-    if grep -q "POSTGRES_HOST=localhost" .env; then
-      echo "Updating POSTGRES_HOST in .env to 'db'"
-      sed -i.bak 's/POSTGRES_HOST=localhost/POSTGRES_HOST=db/g' .env && rm -f .env.bak
+    # Update database settings for Neon
+    if [ -n "$DATABASE_URL" ]; then
+      echo "Using Neon database URL from environment"
+      sed -i.bak "s|DATABASE_URL=.*|DATABASE_URL=${DATABASE_URL}|g" .env && rm -f .env.bak
     fi
     
     # Ensure CORS settings include frontend URLs
@@ -95,39 +96,17 @@ EOL
   grep -v "_KEY\|PASSWORD" .env || echo "Could not read .env file"
 fi
 
-# Wait for PostgreSQL to be ready
-echo "Waiting for PostgreSQL to be ready..."
+# For Neon database, we don't need to wait or create the database
+# as it's managed externally
+echo "Using Neon PostgreSQL database - skipping local database setup..."
 
-# Maximum number of attempts
-MAX_ATTEMPTS=30
-
-# Counter for attempts
-ATTEMPTS=0
-
-# Wait until PostgreSQL is ready or max attempts reached
-while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
-  if pg_isready -h db -p 5432 -U $POSTGRES_USER; then
-    echo "PostgreSQL is ready!"
-    break
-  fi
-  
-  echo "PostgreSQL is not ready yet. Waiting... (Attempt $((ATTEMPTS+1))/$MAX_ATTEMPTS)"
-  ATTEMPTS=$((ATTEMPTS+1))
-  sleep 2
-done
-
-# Check if we reached max attempts
-if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
-  echo "Error: PostgreSQL did not become ready in time. Proceeding anyway and hoping for the best..."
+# Test database connection if DATABASE_URL is available
+if [ -n "$DATABASE_URL" ]; then
+  echo "Testing database connection..."
+  # We'll let Alembic handle the connection test
+else
+  echo "Warning: DATABASE_URL not set. Make sure to set it in your environment."
 fi
-
-# Create database if it doesn't exist
-echo "Checking if database exists..."
-PGPASSWORD=$POSTGRES_PASSWORD psql -h db -U $POSTGRES_USER -lqt | grep -q "$POSTGRES_DB" || {
-  echo "Database $POSTGRES_DB does not exist. Creating..."
-  PGPASSWORD=$POSTGRES_PASSWORD psql -h db -U $POSTGRES_USER -c "CREATE DATABASE $POSTGRES_DB;"
-  echo "Database $POSTGRES_DB created."
-}
 
 # Apply database migrations
 echo "Running database migrations..."

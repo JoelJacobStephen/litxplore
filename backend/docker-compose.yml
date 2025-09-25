@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: litxplore_backend_dev
     ports:
       - "8000:8000"
     env_file:
@@ -13,41 +14,39 @@ services:
       - DOCKER_ENV=true
       - BEHIND_PROXY=false
       - PRODUCTION=false
+      - REDIS_HOST=redis
     depends_on:
-      - db
-      - redis
+      redis:
+        condition: service_started
     volumes:
       - ./uploads:/app/uploads
+      - ./app:/app/app # Mount source code for development
     restart: unless-stopped
     networks:
       - litxplore-network
-
-  db:
-    image: postgres:15-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - POSTGRES_DB=${POSTGRES_DB:-litxplore_db}
-    ports:
-      - "5432:5432"
-    networks:
-      - litxplore-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   redis:
     image: redis:7-alpine
+    container_name: litxplore_redis_dev
     ports:
       - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
       - litxplore-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
-  postgres_data:
   redis_data:
 
 networks:

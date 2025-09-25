@@ -5,6 +5,7 @@ __pycache__/
 *.so
 .Python
 .env
+.env.*
 .venv
 env/
 venv/
@@ -23,14 +24,34 @@ build/
 *.swp
 *.swo
 
-# Project specific
-uploads/*
-!uploads/.gitkeep
+# Testing
+tests/
 .pytest_cache/
 .coverage
 htmlcov/
+test_*.py
+*_test.py
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Project specific
+uploads/*
+!uploads/.gitkeep
 .DS_Store
+*.log
+logs/
 
 # Docker
 Dockerfile
-.dockerignore 
+.dockerignore
+docker-compose.yml
+docker-compose.prod.yml
+docker-compose.*.yml
+
+# Deployment
+deploy.sh
+scripts/
+start.sh 

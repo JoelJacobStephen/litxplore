@@ -17,13 +17,21 @@ from app.core.config import settings
 # this is the Alembic Config object
 config = context.config
 
-# Determine the host to use - Docker environment will use 'db' (service name),
-# while local development will use the value from settings
-postgres_host = "db" if os.environ.get("DOCKER_ENV") == "true" else settings.POSTGRES_HOST
-
-# Modify the database URL configuration with error handling
+# Configure database URL - prioritize DATABASE_URL for external databases like Neon
 try:
-    database_url = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{postgres_host}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+    if settings.DATABASE_URL:
+        database_url = settings.DATABASE_URL
+        print("Using DATABASE_URL for Alembic migrations")
+    else:
+        # Fallback to individual database settings
+        postgres_host = "db" if os.environ.get("DOCKER_ENV") == "true" else settings.POSTGRES_HOST
+        
+        if not all([settings.POSTGRES_USER, settings.POSTGRES_PASSWORD, postgres_host, settings.POSTGRES_PORT, settings.POSTGRES_DB]):
+            raise ValueError("Either DATABASE_URL or all individual database settings must be provided")
+        
+        database_url = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{postgres_host}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+        print(f"Using individual database settings for Alembic migrations")
+    
     config.set_main_option("sqlalchemy.url", database_url)
 except Exception as e:
     print(f"Error configuring database URL: {e}")
