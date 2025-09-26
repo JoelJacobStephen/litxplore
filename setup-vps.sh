@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # ==============================================================================
-# Production VPS Setup Script
+# Production VPS Setup Script (v1.1 - Custom Compose Path)
 # Description: Automates the setup of a production-ready server based on
 #              the principles of the "Setting up a Production-Ready VPS" blog.
 # Author: Gemini
-# Version: 1.0
+# Version: 1.1
 # ==============================================================================
 
 # --- Configuration & Colors ---
@@ -42,23 +42,28 @@ function initial_checks_and_inputs() {
         exit 1
     fi
 
-    # Check for docker-compose.yml in the current directory
-    if [ ! -f "docker-compose.yml" ]; then
-        print_error "No 'docker-compose.yml' found in the current directory."
-        print_error "Please run this script from your application's root directory."
-        exit 1
-    fi
-
     # Gather user information
     print_prompt "We need some information to configure your server."
     read -p "Enter the username for the new non-root user: " NEW_USER
+    # MODIFICATION: Prompt for Docker Compose file path
+    read -p "Enter the full path to your Docker Compose file (e.g., /home/app/docker-compose.prod.yml): " COMPOSE_FILE_PATH
     read -p "Enter your domain name (e.g., myapp.com): " DOMAIN_NAME
     read -p "Enter your email for Let's Encrypt SSL certificates: " LETSENCRYPT_EMAIL
-    read -p "Enter the name of your main application service from docker-compose.yml (e.g., 'guestbook' or 'api'): " APP_SERVICE_NAME
+    read -p "Enter the name of your main application service from your Compose file (e.g., 'guestbook' or 'api'): " APP_SERVICE_NAME
 
     # Validate inputs
     if [ -z "$NEW_USER" ] || [ -z "$DOMAIN_NAME" ] || [ -z "$LETSENCRYPT_EMAIL" ] || [ -z "$APP_SERVICE_NAME" ]; then
         print_error "All inputs are required. Please run the script again."
+        exit 1
+    fi
+    
+    # MODIFICATION: Validate the Docker Compose file path
+    if [ -z "$COMPOSE_FILE_PATH" ]; then
+        print_error "The path to the Docker Compose file cannot be empty."
+        exit 1
+    fi
+    if [ ! -f "$COMPOSE_FILE_PATH" ]; then
+        print_error "File not found at '$COMPOSE_FILE_PATH'. Please provide a valid path."
         exit 1
     fi
 }
@@ -72,11 +77,9 @@ function create_non_root_user() {
         print_info "User '$NEW_USER' created."
     fi
 
-    # Add user to the sudo group
     usermod -aG sudo "$NEW_USER"
     print_info "User '$NEW_USER' added to the sudo group."
 
-    # Copy root's SSH authorized keys to the new user for seamless login
     mkdir -p "/home/$NEW_USER/.ssh"
     cp /root/.ssh/authorized_keys "/home/$NEW_USER/.ssh/authorized_keys"
     chown -R "$NEW_USER:$NEW_USER" "/home/$NEW_USER/.ssh"
@@ -87,33 +90,21 @@ function create_non_root_user() {
 
 function harden_ssh() {
     print_info "Hardening SSH configuration..."
-    # Disable Password Authentication
     sed -i 's/^#?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
-    # Disable Root Login
     sed -i 's/^#?PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
-    # Disable PAM (often used for password auth)
     sed -i 's/^#?UsePAM .*/UsePAM no/' /etc/ssh/sshd_config
-
-    # Remove cloud-init's potentially conflicting SSH config on some providers
     rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
-
-    # Reload SSH to apply changes
     systemctl reload sshd
     print_info "SSH has been hardened. Root login and password authentication are disabled."
 }
 
 function configure_firewall() {
     print_info "Configuring UFW (Uncomplicated Firewall)..."
-    # Set default policies
     ufw default deny incoming
     ufw default allow outgoing
-
-    # Allow essential ports
-    ufw allow ssh     # Port 22
-    ufw allow http    # Port 80
-    ufw allow https   # Port 443
-
-    # Enable the firewall non-interactively
+    ufw allow ssh
+    ufw allow http
+    ufw allow https
     ufw --force enable
     print_info "Firewall is now active and configured."
     ufw status verbose
@@ -121,36 +112,29 @@ function configure_firewall() {
 
 function install_docker() {
     print_info "Installing Docker and Docker Compose..."
-    # Install dependencies
     apt-get update
     apt-get install -y ca-certificates curl
-
-    # Add Docker's official GPG key
     install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     chmod a+r /etc/apt/keyrings/docker.asc
-
-    # Add the repository to Apt sources
     echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
       $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
       tee /etc/apt/sources.list.d/docker.list > /dev/null
     apt-get update
-
-    # Install Docker packages
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    
-    # Add new user to the docker group to run docker commands without sudo
     usermod -aG docker "$NEW_USER"
-    
     print_info "Docker and Docker Compose installed successfully."
 }
 
 function generate_compose_override() {
     print_info "Generating docker-compose.override.yml for Traefik and Watchtower..."
+    
+    # MODIFICATION: Create the override file in the same directory as the specified compose file.
+    OVERRIDE_FILE_PATH="$(dirname "$COMPOSE_FILE_PATH")/docker-compose.override.yml"
 
     # Create the docker-compose.override.yml file
-    cat << EOF > docker-compose.override.yml
+    cat << EOF > "$OVERRIDE_FILE_PATH"
 # This file is auto-generated by the setup_vps.sh script.
 # It adds Traefik (reverse proxy), Watchtower (auto-updates),
 # and connects your application to the web securely.
@@ -224,9 +208,9 @@ services:
 EOF
 
     # Make sure the new user owns this file as well
-    chown "$NEW_USER:$NEW_USER" docker-compose.override.yml
+    chown "$NEW_USER:$NEW_USER" "$OVERRIDE_FILE_PATH"
     
-    print_info "docker-compose.override.yml has been created."
+    print_info "docker-compose.override.yml has been created at: $OVERRIDE_FILE_PATH"
 }
 
 function final_instructions() {
@@ -236,27 +220,25 @@ function final_instructions() {
     echo ""
     print_info "What's been done:"
     echo "  - New user '$NEW_USER' created with sudo and SSH access."
-    echo "  - SSH security has been hardened (root login & password auth disabled)."
+    echo "  - SSH security has been hardened."
     echo "  - Firewall (UFW) is enabled and configured."
     echo "  - Docker and Docker Compose have been installed."
-    echo "  - A 'docker-compose.override.yml' file has been generated for your project."
+    echo "  - An override file has been generated for your project."
     echo ""
     print_prompt ">>> IMPORTANT NEXT STEPS <<<"
     echo "1. Log out of this root session."
     echo "2. Log back in using your new user:"
     echo -e "   ${YELLOW}ssh $NEW_USER@<your_server_ip>${NC}"
-    echo "3. Navigate to your project directory:"
-    echo -e "   ${YELLOW}cd $(pwd)${NC}"
-    echo "4. Create the shared docker network for Traefik:"
+    echo "3. Create the shared docker network for Traefik:"
     echo -e "   ${YELLOW}docker network create web${NC}"
-    echo "5. Launch your entire application stack:"
-    echo -e "   ${YELLOW}docker compose up -d${NC}"
+    echo "4. Launch your entire application stack with the correct file path:"
+    # MODIFICATION: Provide the correct command using the -f flag
+    echo -e "   ${YELLOW}docker compose -f \"${COMPOSE_FILE_PATH}\" up -d${NC}"
     echo ""
     print_info "Your site will then be live at https://$DOMAIN_NAME"
     print_info "Thanks to Watchtower, pushing a new image to your container registry will automatically update your deployment!"
     echo ""
 }
-
 
 # --- Script Execution ---
 main() {
