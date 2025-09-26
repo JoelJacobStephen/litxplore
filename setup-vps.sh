@@ -161,8 +161,23 @@ ClientAliveCountMax 2
 EOF
 
     # Restart SSH service to apply changes
-    systemctl restart sshd
-    print_info "SSH has been hardened and service restarted."
+    # Check which SSH service name is used on this system
+    if systemctl is-active --quiet sshd; then
+        systemctl restart sshd
+        print_info "SSH has been hardened and sshd service restarted."
+    elif systemctl is-active --quiet ssh; then
+        systemctl restart ssh
+        print_info "SSH has been hardened and ssh service restarted."
+    elif systemctl list-unit-files | grep -q "sshd.service"; then
+        systemctl restart sshd
+        print_info "SSH has been hardened and sshd service restarted."
+    elif systemctl list-unit-files | grep -q "ssh.service"; then
+        systemctl restart ssh
+        print_info "SSH has been hardened and ssh service restarted."
+    else
+        print_error "Could not find SSH service (tried both 'ssh' and 'sshd'). Please restart SSH manually."
+        print_info "SSH configuration has been updated but requires manual service restart."
+    fi
 }
 
 function configure_firewall() {
