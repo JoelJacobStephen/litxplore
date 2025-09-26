@@ -77,9 +77,17 @@ function create_non_root_user() {
         print_info "User '$NEW_USER' created."
     fi
 
+    # Add user to the sudo group
     usermod -aG sudo "$NEW_USER"
     print_info "User '$NEW_USER' added to the sudo group."
+    
+    # --- FIX IS HERE ---
+    # Create a sudoers file for the new user to allow passwordless sudo
+    echo "$NEW_USER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$NEW_USER
+    print_info "Enabled passwordless sudo for '$NEW_USER'."
+    # --- END FIX ---
 
+    # Copy root's SSH authorized keys to the new user for seamless login
     mkdir -p "/home/$NEW_USER/.ssh"
     cp /root/.ssh/authorized_keys "/home/$NEW_USER/.ssh/authorized_keys"
     chown -R "$NEW_USER:$NEW_USER" "/home/$NEW_USER/.ssh"
@@ -88,18 +96,6 @@ function create_non_root_user() {
     print_info "Copied SSH key to new user. You can now log in as '$NEW_USER'."
 }
 
-function harden_ssh() {
-    print_info "Hardening SSH configuration..."
-    sed -i 's/^#?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
-    sed -i 's/^#?PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
-    sed -i 's/^#?UsePAM .*/UsePAM no/' /etc/ssh/sshd_config
-    rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
-
-    # FIX: Changed 'sshd' to 'ssh' which is the correct service name on modern Ubuntu
-    systemctl reload ssh
-    
-    print_info "SSH has been hardened. Root login and password authentication are disabled."
-}
 
 function configure_firewall() {
     print_info "Configuring UFW (Uncomplicated Firewall)..."
