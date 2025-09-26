@@ -72,33 +72,109 @@ function create_non_root_user() {
     print_info "Creating and configuring new user: '$NEW_USER'..."
     if id "$NEW_USER" &>/dev/null; then
         print_info "User '$NEW_USER' already exists. Skipping creation."
+        # Check if user is already in sudo group
+        if groups "$NEW_USER" | grep -q "\bsudo\b"; then
+            print_info "User '$NEW_USER' is already in the sudo group."
+        else
+            usermod -aG sudo "$NEW_USER"
+            print_info "User '$NEW_USER' added to the sudo group."
+        fi
     else
-        adduser --disabled-password --gecos "" "$NEW_USER"
-        print_info "User '$NEW_USER' created."
+        # Prompt for password for the new user
+        print_prompt "Please set a password for the new user '$NEW_USER':"
+        adduser --gecos "" "$NEW_USER"
+        print_info "User '$NEW_USER' created with password."
+        
+        # Add user to the sudo group
+        usermod -aG sudo "$NEW_USER"
+        print_info "User '$NEW_USER' added to the sudo group."
+    fi
+    
+    # Create a sudoers file for the new user to allow passwordless sudo (only if not exists)
+    if [ ! -f "/etc/sudoers.d/$NEW_USER" ]; then
+        echo "$NEW_USER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$NEW_USER
+        print_info "Enabled passwordless sudo for '$NEW_USER'."
+    else
+        print_info "Sudoers file for '$NEW_USER' already exists."
     fi
 
-    # Add user to the sudo group
-    usermod -aG sudo "$NEW_USER"
-    print_info "User '$NEW_USER' added to the sudo group."
-    
-    # --- FIX IS HERE ---
-    # Create a sudoers file for the new user to allow passwordless sudo
-    echo "$NEW_USER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$NEW_USER
-    print_info "Enabled passwordless sudo for '$NEW_USER'."
-    # --- END FIX ---
-
-    # Copy root's SSH authorized keys to the new user for seamless login
-    mkdir -p "/home/$NEW_USER/.ssh"
-    cp /root/.ssh/authorized_keys "/home/$NEW_USER/.ssh/authorized_keys"
-    chown -R "$NEW_USER:$NEW_USER" "/home/$NEW_USER/.ssh"
-    chmod 700 "/home/$NEW_USER/.ssh"
-    chmod 600 "/home/$NEW_USER/.ssh/authorized_keys"
-    print_info "Copied SSH key to new user. You can now log in as '$NEW_USER'."
+    # Copy root's SSH authorized keys to the new user for seamless login (only if not exists)
+    if [ ! -d "/home/$NEW_USER/.ssh" ]; then
+        mkdir -p "/home/$NEW_USER/.ssh"
+        if [ -f "/root/.ssh/authorized_keys" ]; then
+            cp /root/.ssh/authorized_keys "/home/$NEW_USER/.ssh/authorized_keys"
+            chown -R "$NEW_USER:$NEW_USER" "/home/$NEW_USER/.ssh"
+            chmod 700 "/home/$NEW_USER/.ssh"
+            chmod 600 "/home/$NEW_USER/.ssh/authorized_keys"
+            print_info "Copied SSH key to new user. You can now log in as '$NEW_USER'."
+        else
+            print_info "No SSH authorized_keys found in /root/.ssh/. Skipping SSH key copy."
+        fi
+    else
+        print_info "SSH directory already exists for '$NEW_USER'. Skipping SSH key setup."
+    fi
 }
 
+function harden_ssh() {
+    print_info "Hardening SSH configuration..."
+    
+    # Backup original SSH config
+    if [ ! -f "/etc/ssh/sshd_config.backup" ]; then
+        cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
+        print_info "Backed up original SSH configuration."
+    else
+        print_info "SSH configuration backup already exists."
+    fi
+    
+    # Check if SSH hardening has already been applied
+    if grep -q "# SSH Hardening Applied" /etc/ssh/sshd_config; then
+        print_info "SSH hardening has already been applied. Skipping."
+        return
+    fi
+    
+    # Apply SSH hardening settings
+    cat >> /etc/ssh/sshd_config << 'EOF'
+
+# SSH Hardening Applied
+# Disable root login
+PermitRootLogin no
+
+# Disable password authentication (use keys only)
+PasswordAuthentication no
+PubkeyAuthentication yes
+
+# Disable empty passwords
+PermitEmptyPasswords no
+
+# Limit login attempts
+MaxAuthTries 3
+
+# Disable X11 forwarding
+X11Forwarding no
+
+# Use only SSH protocol 2
+Protocol 2
+
+# Disconnect idle sessions
+ClientAliveInterval 300
+ClientAliveCountMax 2
+EOF
+
+    # Restart SSH service to apply changes
+    systemctl restart sshd
+    print_info "SSH has been hardened and service restarted."
+}
 
 function configure_firewall() {
     print_info "Configuring UFW (Uncomplicated Firewall)..."
+    
+    # Check if UFW is already enabled and configured
+    if ufw status | grep -q "Status: active"; then
+        print_info "UFW is already active and configured. Skipping firewall setup."
+        ufw status verbose
+        return
+    fi
+    
     ufw default deny incoming
     ufw default allow outgoing
     ufw allow ssh
@@ -111,15 +187,43 @@ function configure_firewall() {
 
 function install_docker() {
     print_info "Installing Docker and Docker Compose..."
+    
+    # Check if Docker is already installed
+    if command -v docker &> /dev/null; then
+        print_info "Docker is already installed. Version: $(docker --version)"
+        
+        # Check if user is already in docker group
+        if groups "$NEW_USER" | grep -q "\bdocker\b"; then
+            print_info "User '$NEW_USER' is already in the docker group."
+        else
+            usermod -aG docker "$NEW_USER"
+            print_info "Added user '$NEW_USER' to the docker group."
+        fi
+        return
+    fi
+    
     apt-get update
     apt-get install -y ca-certificates curl
     install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-    chmod a+r /etc/apt/keyrings/docker.asc
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-      tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Check if Docker GPG key already exists
+    if [ ! -f "/etc/apt/keyrings/docker.asc" ]; then
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        chmod a+r /etc/apt/keyrings/docker.asc
+    else
+        print_info "Docker GPG key already exists."
+    fi
+    
+    # Check if Docker repository is already added
+    if [ ! -f "/etc/apt/sources.list.d/docker.list" ]; then
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+          tee /etc/apt/sources.list.d/docker.list > /dev/null
+    else
+        print_info "Docker repository already added."
+    fi
+    
     apt-get update
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     usermod -aG docker "$NEW_USER"
@@ -131,6 +235,17 @@ function generate_compose_override() {
     
     # MODIFICATION: Create the override file in the same directory as the specified compose file.
     OVERRIDE_FILE_PATH="$(dirname "$COMPOSE_FILE_PATH")/docker-compose.override.yml"
+    
+    # Check if override file already exists
+    if [ -f "$OVERRIDE_FILE_PATH" ]; then
+        print_info "docker-compose.override.yml already exists at: $OVERRIDE_FILE_PATH"
+        print_prompt "Do you want to overwrite it? (y/N): "
+        read -r overwrite
+        if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+            print_info "Skipping docker-compose.override.yml generation."
+            return
+        fi
+    fi
 
     # Create the docker-compose.override.yml file
     cat << EOF > "$OVERRIDE_FILE_PATH"
