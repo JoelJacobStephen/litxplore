@@ -94,7 +94,10 @@ function harden_ssh() {
     sed -i 's/^#?PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
     sed -i 's/^#?UsePAM .*/UsePAM no/' /etc/ssh/sshd_config
     rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
-    systemctl reload sshd
+
+    # FIX: Changed 'sshd' to 'ssh' which is the correct service name on modern Ubuntu
+    systemctl reload ssh
+    
     print_info "SSH has been hardened. Root login and password authentication are disabled."
 }
 
