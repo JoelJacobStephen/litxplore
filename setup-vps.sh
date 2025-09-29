@@ -446,10 +446,20 @@ services:
       - traefik.http.middlewares.security.headers.forcestsheader=true
       - traefik.http.middlewares.security.headers.stsincludesubdomains=true
       - traefik.http.middlewares.security.headers.stsseconds=31536000
+      - traefik.http.middlewares.api-ratelimit.ratelimit.average=100
+      - traefik.http.middlewares.api-ratelimit.ratelimit.period=1m
+      - traefik.http.middlewares.api-ratelimit.ratelimit.burst=50
+      - traefik.http.middlewares.api-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=1
+      - traefik.http.middlewares.strict-ratelimit.ratelimit.average=10
+      - traefik.http.middlewares.strict-ratelimit.ratelimit.period=1m
+      - traefik.http.middlewares.strict-ratelimit.ratelimit.burst=5
+      - traefik.http.middlewares.upload-ratelimit.ratelimit.average=5
+      - traefik.http.middlewares.upload-ratelimit.ratelimit.period=1m
+      - traefik.http.middlewares.upload-ratelimit.ratelimit.burst=2
       - traefik.http.routers.${APP_SERVICE_NAME}.rule=Host(\`${DOMAIN_NAME}\`)
       - traefik.http.routers.${APP_SERVICE_NAME}.entrypoints=websecure
       - traefik.http.routers.${APP_SERVICE_NAME}.tls.certresolver=myresolver
-      - traefik.http.routers.${APP_SERVICE_NAME}.middlewares=cors,security
+      - traefik.http.routers.${APP_SERVICE_NAME}.middlewares=cors,security,api-ratelimit
       - com.centurylinklabs.watchtower.enable=true
 EOF
 
@@ -492,6 +502,7 @@ function final_instructions() {
     echo "  • Firewall: Configured and active"
     echo "  • SSH: Hardened (root login disabled)"
     echo "  • Intrusion Prevention: fail2ban monitoring and blocking attacks"
+    echo "  • Rate Limiting: Traefik protecting against DDoS and abuse"
     echo ""
     print_info "🔧 Management Commands:"
     echo "  • View logs: cd '$PROJECT_DIR' && docker compose -f '$COMPOSE_FILE_RELATIVE' logs -f"
@@ -499,6 +510,8 @@ function final_instructions() {
     echo "  • Update: cd '$PROJECT_DIR' && git pull && docker compose -f '$COMPOSE_FILE_RELATIVE' up -d --build"
     echo "  • fail2ban status: fail2ban-client status"
     echo "  • Unban IP: fail2ban-client set sshd unbanip <IP_ADDRESS>"
+    echo "  • View Traefik logs: docker logs traefik"
+    echo "  • Monitor rate limits: docker logs traefik | grep ratelimit"
     echo ""
     print_info "🔒 Security Notes:"
     echo "  • Root SSH access is now disabled"
