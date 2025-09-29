@@ -2,10 +2,7 @@ version: "3.8"
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: litxplore-backend:latest
+    image: ghcr.io/joeljacobstephen/litxplore-backend:latest
     container_name: litxplore_backend
     ports:
       - "8000:8000" # Only accessible from localhost as nginx proxies this
