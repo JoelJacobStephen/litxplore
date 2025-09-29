@@ -20,6 +20,9 @@ paper_service = PaperService()
 langchain_service = LangChainService()
 task_service = TaskService()
 
+"""
+Generate a literature review
+"""
 @router.post("/generate-review", response_model=TaskResponse)
 async def generate_review(
     review_request: ReviewRequest,
@@ -60,6 +63,9 @@ async def generate_review(
             error_code=ErrorCode.INTERNAL_ERROR
         )
 
+"""
+Save a literature review
+"""
 @router.post("/save")
 async def save_review(
     request: Request,
