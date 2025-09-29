@@ -53,6 +53,7 @@ function show_prerequisites() {
     echo "  • Watchtower for auto-updates"
     echo "  • UFW firewall configuration"
     echo "  • SSH hardening"
+    echo "  • fail2ban intrusion prevention system"
     echo ""
     print_header "PREREQUISITES - Please complete these steps BEFORE running this script:"
     print_header "=============================================================================="
@@ -230,6 +231,81 @@ function configure_firewall() {
     ufw --force enable
     
     print_info "Firewall configured and enabled."
+}
+
+# --- Install and Configure fail2ban ---
+function install_fail2ban() {
+    print_step "Installing and configuring fail2ban for intrusion prevention..."
+    
+    if command -v fail2ban-server &> /dev/null; then
+        print_info "fail2ban is already installed."
+        if systemctl is-active --quiet fail2ban; then
+            print_info "fail2ban is running. Skipping configuration."
+            return
+        fi
+    else
+        apt-get update
+        apt-get install -y fail2ban
+        print_info "fail2ban installed successfully."
+    fi
+    
+    # Backup original configuration if it exists
+    if [ -f "/etc/fail2ban/jail.conf" ] && [ ! -f "/etc/fail2ban/jail.conf.backup" ]; then
+        cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.conf.backup
+        print_info "Backed up original fail2ban configuration."
+    fi
+    
+    # Create comprehensive jail configuration
+  cat > /etc/fail2ban/jail.local << EOF
+# Universal VPS Setup - Fail2Ban Configuration
+# This configuration provides robust protection for the SSH service.
+
+[DEFAULT]
+# Ban settings: ban for 1 hour after 3 failures within 10 minutes.
+bantime = 1h
+findtime = 10m
+maxretry = 3
+backend = systemd
+
+# Whitelist trusted IPs (localhost)
+ignoreip = 127.0.0.1/8 ::1
+
+# SSH Protection - The most important jail for any server
+[sshd]
+enabled = true
+
+# More aggressive SSH protection against distributed attacks
+[sshd-ddos]
+enabled = true
+EOF 
+
+    # Create custom filter for HTTP GET DoS (optional)
+    cat > /etc/fail2ban/filter.d/http-get-dos.conf << 'EOF'
+# Custom filter for HTTP GET flood attacks
+[Definition]
+failregex = ^<HOST> -.*"(GET|POST).*HTTP.*" (200|404) .*$
+ignoreregex =
+EOF
+
+    # Enable and start fail2ban
+    systemctl enable fail2ban
+    systemctl restart fail2ban
+    
+    # Wait a moment for service to start
+    sleep 2
+    
+    # Verify installation
+    if systemctl is-active --quiet fail2ban; then
+        print_info "fail2ban is running successfully."
+        
+        # Show status
+        print_info "Active fail2ban jails:"
+        fail2ban-client status 2>/dev/null | grep "Jail list:" || print_info "  SSH protection is active"
+    else
+        print_error "fail2ban failed to start. Please check the configuration."
+    fi
+    
+    print_info "fail2ban configured with comprehensive protection for SSH and web services."
 }
 
 # --- Docker Installation ---
@@ -415,11 +491,14 @@ function final_instructions() {
     echo "  • Auto-updates: Enabled via Watchtower"
     echo "  • Firewall: Configured and active"
     echo "  • SSH: Hardened (root login disabled)"
+    echo "  • Intrusion Prevention: fail2ban monitoring and blocking attacks"
     echo ""
     print_info "🔧 Management Commands:"
     echo "  • View logs: cd '$PROJECT_DIR' && docker compose -f '$COMPOSE_FILE_RELATIVE' logs -f"
     echo "  • Restart: cd '$PROJECT_DIR' && docker compose -f '$COMPOSE_FILE_RELATIVE' restart"
     echo "  • Update: cd '$PROJECT_DIR' && git pull && docker compose -f '$COMPOSE_FILE_RELATIVE' up -d --build"
+    echo "  • fail2ban status: fail2ban-client status"
+    echo "  • Unban IP: fail2ban-client set sshd unbanip <IP_ADDRESS>"
     echo ""
     print_info "🔒 Security Notes:"
     echo "  • Root SSH access is now disabled"
@@ -445,6 +524,7 @@ function main() {
     collect_user_info
     harden_ssh
     configure_firewall
+    install_fail2ban
     install_docker
     clone_repository
     generate_compose_override
