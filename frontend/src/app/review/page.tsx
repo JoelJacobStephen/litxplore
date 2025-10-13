@@ -6,8 +6,7 @@ import { PaperGrid } from "@/components/paper-grid";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paper } from "@/lib/types/paper";
-import { useGenerateReview, useSearchPapers } from "@/lib/hooks/api-hooks";
+import { Paper, useGenerateReview, useSearchPapers } from "@/lib/api/generated";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
 import { BookOpen, Loader2 } from "lucide-react";
@@ -22,7 +21,19 @@ export default function ReviewPage() {
   const [displayedPapers, setDisplayedPapers] = useState<Paper[]>([]);
 
   // React Query hooks
-  const generateReview = useGenerateReview();
+  const generateReview = useGenerateReview({
+    mutation: {
+      onSuccess: (taskResponse) => {
+        console.log("Review generation task started!", taskResponse);
+        // Navigate to the generated review page with task ID
+        router.push(`/generated-review?taskId=${taskResponse.id}`);
+      },
+      onError: (error) => {
+        console.error("Failed to start review generation:", error);
+        toast.error("Failed to start review generation. Please try again.");
+      },
+    },
+  });
 
   // Initialize selected papers from URL params
   useEffect(() => {
@@ -34,7 +45,15 @@ export default function ReviewPage() {
 
   // Fetch initial papers when topic is entered
   const { data: suggestedPapers, isLoading: isLoadingSuggested } =
-    useSearchPapers(topic, !!topic);
+    useSearchPapers(
+      { query: topic },
+      {
+        query: {
+          enabled: !!topic,
+          queryKey: undefined,
+        },
+      }
+    );
 
   // Merge search results with displayed papers
   useEffect(() => {
@@ -98,25 +117,13 @@ export default function ReviewPage() {
     // Clear any existing generated review to prevent caching issues
     useReviewStore.getState().clearGeneratedReview();
 
-    generateReview.mutate(
-      {
-        papers: Array.from(selectedPapers),
+    generateReview.mutate({
+      data: {
+        paper_ids: Array.from(selectedPapers),
         topic: topic || "Literature Review",
-        maxPapers: 10,
+        max_papers: 10,
       },
-      {
-        onSuccess: (taskResponse) => {
-          console.log("Review generation task started!", taskResponse);
-
-          // Navigate to the generated review page with task ID
-          router.push(`/generated-review?taskId=${taskResponse.id}`);
-        },
-        onError: (error) => {
-          console.error("Failed to start review generation:", error);
-          toast.error("Failed to start review generation. Please try again.");
-        },
-      }
-    );
+    });
   };
 
   return (

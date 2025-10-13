@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2, Plus } from "lucide-react";
-import { Paper } from "@/lib/types/paper";
-import { useSearchPapers } from "@/lib/hooks/api-hooks";
+import { Paper, useSearchPapers } from "@/lib/api/generated";
 import { motion } from "framer-motion";
 import {
   Command,
@@ -46,7 +45,10 @@ export function SearchInput({
     isLoading,
     error,
     isError,
-  } = useSearchPapers(debouncedSearch, debouncedSearch.length > 2);
+  } = useSearchPapers(
+    { query: debouncedSearch },
+    { query: { enabled: debouncedSearch.length > 2 } }
+  );
 
   // Log errors if they occur
   useEffect(() => {

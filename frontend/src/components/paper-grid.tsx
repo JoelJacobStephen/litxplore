@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ArxivPaper, Paper } from "@/lib/types/paper";
+import { Paper } from "@/lib/api/generated";
+
+// ArxivPaper is just Paper with required link field
+type ArxivPaper = Paper & { link: string };
 import {
   Card,
   CardContent,

@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -n \"WATCHER,ORVAL,NEXT\" -c \"bgMagenta.bold,bgGreen.bold,bgCyan.bold\" \"npm run watch:backend\" \"npm run generate:api:watch\" \"next dev\"",
+    "dev:next-only": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:api": "orval --config ./orval.config.js",
+    "generate:api:watch": "orval --config ./orval.config.js --watch",
+    "watch:backend": "node scripts/watch-backend.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.31.6",
@@ -46,12 +50,12 @@
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-query": "^5.28.4",
     "@tanstack/react-query-devtools": "^5.89.0",
-    "@types/node": "20.6.2",
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
     "@types/three": "^0.171.0",
     "ai": "^2.2.37",
     "autoprefixer": "10.4.15",
+    "axios": "^1.12.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -91,9 +95,14 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@types/node": "^24.7.2",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
+    "chokidar": "^3.6.0",
+    "concurrently": "^9.2.1",
     "eslint": "^8.57.0",
-    "eslint-config-next": "13.5.1"
+    "eslint-config-next": "13.5.1",
+    "orval": "^7.13.2",
+    "tsx": "^4.20.6"
   }
 }

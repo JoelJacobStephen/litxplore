@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useReviewHistory, useDeleteReview } from "@/lib/hooks/api-hooks";
+import {
+  useGetReviewHistory,
+  useDeleteReview,
+  Paper,
+} from "@/lib/api/generated";
 import {
   Card,
   CardContent,
@@ -15,7 +19,6 @@ import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ReviewDisplay } from "@/components/ReviewDisplay";
-import { Paper } from "@/lib/types/paper";
 import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
 import { Trash2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -89,8 +92,19 @@ export default function HistoryPage() {
     data: reviews = [],
     isLoading: loading,
     error,
-  } = useReviewHistory(isLoaded && isSignedIn);
-  const deleteReview = useDeleteReview();
+  } = useGetReviewHistory({
+    query: { enabled: isLoaded && isSignedIn, queryKey: undefined },
+  });
+  const deleteReview = useDeleteReview({
+    mutation: {
+      onSuccess: () => {
+        setDeletingReviewId(null);
+      },
+      onError: (err) => {
+        console.error("Failed to delete review:", err);
+      },
+    },
+  });
 
   // Animation variants
   const containerVariants = {
@@ -137,15 +151,7 @@ export default function HistoryPage() {
 
   const handleDeleteConfirm = () => {
     if (!deletingReviewId) return;
-
-    deleteReview.mutate(deletingReviewId, {
-      onSuccess: () => {
-        setDeletingReviewId(null);
-      },
-      onError: (err) => {
-        console.error("Failed to delete review:", err);
-      },
-    });
+    deleteReview.mutate({ reviewId: deletingReviewId });
   };
 
   if (!isLoaded || loading) {
@@ -185,8 +191,9 @@ export default function HistoryPage() {
     return (
       <div className="container mx-auto p-6 relative z-10">
         <div className="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded backdrop-blur-sm">
-          {error.message ||
-            "Unable to find or load generated literature reviews"}
+          {error instanceof Error
+            ? error.message
+            : "Unable to find or load generated literature reviews"}
         </div>
       </div>
     );

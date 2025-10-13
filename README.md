@@ -126,6 +126,23 @@ cp .env.example .env.local
 npm run dev
 ```
 
+## Documentation
+
+### Quick Start
+
+- **[QUICKSTART.md](./QUICKSTART.md)** - Get up and running in 60 seconds
+- **[DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)** - Overview of all documentation
+
+### Development Guides
+
+- **[API_TYPE_SYNC_GUIDE.md](./API_TYPE_SYNC_GUIDE.md)** - Complete guide to API type synchronization
+- **[backend/README.md](./backend/README.md)** - Backend development guide
+- **[frontend/README.md](./frontend/README.md)** - Frontend development guide
+
+### Deployment
+
+- **[SIMPLE_DEPLOY.md](./SIMPLE_DEPLOY.md)** - Deployment instructions
+
 ## Contributing
 
 1. Fork the repository

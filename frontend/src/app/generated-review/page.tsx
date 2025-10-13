@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  useTaskPolling,
+  useGetTaskStatus,
   useCancelTask,
   useSaveReview,
-} from "@/lib/hooks/api-hooks";
+  TaskStatus,
+  Paper,
+} from "@/lib/api/generated";
 import { Loader2, AlertCircle, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,21 +23,57 @@ export default function GeneratedReviewPage() {
   const taskId = searchParams.get("taskId");
   const [hasNavigated, setHasNavigated] = useState(false);
 
-  const cancelTask = useCancelTask();
-  const saveReview = useSaveReview();
+  const cancelTask = useCancelTask({
+    mutation: {
+      onSuccess: () => {
+        toast.success("Task cancelled successfully");
+        router.push("/review");
+      },
+      onError: (error) => {
+        console.error("Failed to cancel task:", error);
+        toast.error("Failed to cancel task");
+      },
+    },
+  });
+
+  const saveReview = useSaveReview({
+    mutation: {
+      onSuccess: () => {
+        toast.success("Review generated and saved successfully!");
+      },
+      onError: (error) => {
+        console.error("Failed to save review:", error);
+        toast.error(
+          "Review generated but failed to save. You can save it manually."
+        );
+      },
+    },
+  });
 
   // Poll the task status
   const {
+    data: taskData,
     isLoading,
     isError,
     error,
-    isCompleted,
-    isFailed,
-    isRunning,
-    isPending,
-    errorMessage,
-    result,
-  } = useTaskPolling(taskId, !!taskId);
+  } = useGetTaskStatus(taskId || "", {
+    query: {
+      enabled: !!taskId,
+      refetchInterval: (query) => {
+        const status = query.state.data?.status;
+        return status === "running" || status === "pending" ? 2000 : false;
+      },
+      queryKey: undefined,
+    },
+  });
+
+  // Derived state from task data
+  const isCompleted = taskData?.status === "completed";
+  const isFailed = taskData?.status === "failed";
+  const isRunning = taskData?.status === "running";
+  const isPending = taskData?.status === "pending";
+  const errorMessage = taskData?.error_message;
+  const result = taskData?.result_data;
 
   // Handle successful completion
   useEffect(() => {
@@ -44,33 +82,22 @@ export default function GeneratedReviewPage() {
 
       // Store the generated review
       const generatedReview = {
-        review: result.review,
-        citations: result.citations || [],
-        topic: result.topic,
+        review: result.review as string,
+        citations: (result.citations || []) as Paper[],
+        topic: result.topic as string,
       };
 
       useReviewStore.getState().setGeneratedReview(generatedReview);
 
       // Auto-save the review
-      saveReview.mutate(
-        {
+      saveReview.mutate({
+        data: {
           title: result.topic || "Literature Review",
           topic: result.topic || "Literature Review",
           content: result.review,
           citations: JSON.stringify(result.citations || []),
         },
-        {
-          onSuccess: () => {
-            toast.success("Review generated and saved successfully!");
-          },
-          onError: (error) => {
-            console.error("Failed to save review:", error);
-            toast.error(
-              "Review generated but failed to save. You can save it manually."
-            );
-          },
-        }
-      );
+      });
 
       setHasNavigated(true);
     }
@@ -94,16 +121,7 @@ export default function GeneratedReviewPage() {
 
   const handleCancel = () => {
     if (taskId && (isPending || isRunning)) {
-      cancelTask.mutate(taskId, {
-        onSuccess: () => {
-          toast.success("Task cancelled successfully");
-          router.push("/review");
-        },
-        onError: (error) => {
-          console.error("Failed to cancel task:", error);
-          toast.error("Failed to cancel task");
-        },
-      });
+      cancelTask.mutate({ taskId });
     }
   };
 
@@ -124,7 +142,7 @@ export default function GeneratedReviewPage() {
           <CardContent className="space-y-4">
             <Alert variant="destructive">
               <AlertDescription>
-                {error?.message || "Failed to load task status"}
+                {(error as Error)?.message || "Failed to load task status"}
               </AlertDescription>
             </Alert>
             <Button onClick={handleRetry} className="w-full">
@@ -181,9 +199,9 @@ export default function GeneratedReviewPage() {
   if (isCompleted && result) {
     return (
       <ReviewDisplay
-        review={result.review}
-        topic={result.topic}
-        citations={result.citations || []}
+        review={result.review as string}
+        topic={result.topic as string}
+        citations={(result.citations || []) as Paper[]}
         showDownload={true}
       />
     );

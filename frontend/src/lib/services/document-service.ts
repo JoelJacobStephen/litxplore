@@ -1,4 +1,11 @@
-import { ReviewContent } from "@/lib/types/paper";
+import { Paper } from "@/lib/api/generated";
+
+// ReviewContent type for legacy compatibility
+export interface ReviewContent {
+  review: string;
+  citations: Paper[];
+  topic: string;
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -28,10 +35,12 @@ export async function generateDocument(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error("Document generation failed:", errorData);
-      
+
       // Handle the new error format
       if (errorData.status === "error" && errorData.error) {
-        throw new Error(errorData.error.message || "Failed to generate document");
+        throw new Error(
+          errorData.error.message || "Failed to generate document"
+        );
       } else {
         // Handle old format or other error formats
         const errorMessage =

@@ -1,12 +1,11 @@
 "use client";
 
-import { useReview } from "@/lib/hooks/api-hooks";
+import { useGetReview, Paper } from "@/lib/api/generated";
 import { ReviewDisplay } from "@/components/ReviewDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Paper } from "@/lib/types/paper";
 
 export default function ReviewPage({ params }: { params: { id: string } }) {
-  const { data: review, isLoading } = useReview(params.id);
+  const { data: review, isLoading } = useGetReview(parseInt(params.id));
 
   if (isLoading) {
     return (

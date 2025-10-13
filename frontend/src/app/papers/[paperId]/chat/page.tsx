@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Paper } from "@/lib/types/paper";
+import { Paper } from "@/lib/api/generated";
 import { PDFViewer } from "@/components/pdf-viewer";
 import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";

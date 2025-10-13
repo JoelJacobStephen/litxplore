@@ -3,7 +3,7 @@ import {
   ReviewResponse,
   ChatResponse,
   ReviewRequest,
-} from "@/lib/types/paper";
+} from "@/lib/api/generated";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -15,18 +15,20 @@ export async function searchPapers(query: string): Promise<Paper[]> {
   }
 
   try {
-    console.log(`Searching for papers with query: "${query}"`); 
-    
+    console.log(`Searching for papers with query: "${query}"`);
+
     // Add cache-busting parameter to avoid stale results
     const cacheBuster = Date.now();
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/papers/search?query=${encodeURIComponent(query)}&_=${cacheBuster}`,
+      `${API_BASE_URL}/api/v1/papers/search?query=${encodeURIComponent(
+        query
+      )}&_=${cacheBuster}`,
       {
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       }
     );
 
@@ -42,15 +44,15 @@ export async function searchPapers(query: string): Promise<Paper[]> {
     }
 
     const data = await response.json();
-    
+
     // Log whether we got any results
     if (!data || data.length === 0) {
-      console.log(`No papers found for query: "${query}"`); 
+      console.log(`No papers found for query: "${query}"`);
       return [];
     }
-    
-    console.log(`Found ${data.length} papers for query: "${query}"`); 
-    
+
+    console.log(`Found ${data.length} papers for query: "${query}"`);
+
     return data.map((paper: any) => ({
       ...paper,
       url: paper.url || paper.pdf_url || null, // Ensure URL is always defined

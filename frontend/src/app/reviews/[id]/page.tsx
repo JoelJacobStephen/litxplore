@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { PaperGrid } from "@/components/paper-grid";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Paper } from "@/lib/types/paper";
+import { Paper } from "@/lib/api/generated";
 
 export default function ReviewPage() {
   const searchParams = useSearchParams();

@@ -1,9 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Paper } from "@/lib/types/paper";
+import { Paper, useUploadPaper } from "@/lib/api/generated";
 import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
-import { useUploadPaper } from "@/lib/hooks/api-hooks";
 
 interface PDFUploadProps {
   onPaperAdd: (paper: Paper) => void;
@@ -13,7 +12,18 @@ interface PDFUploadProps {
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB in bytes
 
 export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
-  const uploadPaper = useUploadPaper();
+  const uploadPaper = useUploadPaper({
+    mutation: {
+      onSuccess: (paper) => {
+        onPaperAdd(paper);
+        toast.success("PDF uploaded successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to upload PDF");
+        console.error("Upload error:", error);
+      },
+    },
+  });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,20 +46,15 @@ export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
       return;
     }
 
-    uploadPaper.mutate(file, {
-      onSuccess: (paper) => {
-        onPaperAdd(paper);
-        toast.success("PDF uploaded successfully");
-        // Clear the file input
-        if (e.target.value) e.target.value = "";
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to upload PDF");
-        console.error("Upload error:", error);
-        // Clear the file input even on error
-        if (e.target.value) e.target.value = "";
-      },
-    });
+    uploadPaper.mutate(
+      { data: file },
+      {
+        onSettled: () => {
+          // Clear the file input on success or error
+          if (e.target.value) e.target.value = "";
+        },
+      }
+    );
   };
 
   return (

@@ -3,7 +3,7 @@
 import { SearchInput } from "@/components/search-input";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Paper } from "@/lib/types/paper";
+import { Paper } from "@/lib/api/generated";
 
 export function SearchHero() {
   const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());

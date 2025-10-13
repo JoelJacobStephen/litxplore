@@ -4,7 +4,7 @@ import { useChat } from "ai/react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Bot, User, Loader2 } from "lucide-react";
-import { Paper } from "@/lib/types/paper";
+import { Paper } from "@/lib/api/generated";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";

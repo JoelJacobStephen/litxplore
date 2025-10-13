@@ -2,8 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { setTokenGetter } from "./api/axios-instance";
 
 // Create a custom fetch function with auth
 const createAuthenticatedFetch = (getToken: () => Promise<string | null>) => {
@@ -64,6 +65,13 @@ const createAuthenticatedFetch = (getToken: () => Promise<string | null>) => {
 };
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
+  const { getToken } = useAuth();
+
+  // Set up the token getter for the Axios instance used by generated hooks
+  useEffect(() => {
+    setTokenGetter(getToken);
+  }, [getToken]);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -105,7 +113,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Custom hook to get authenticated fetch function
+// Custom hook to get authenticated fetch function (for backward compatibility)
 export function useAuthenticatedFetch() {
   const { getToken } = useAuth();
   return createAuthenticatedFetch(getToken);

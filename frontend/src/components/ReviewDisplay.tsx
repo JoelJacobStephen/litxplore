@@ -7,14 +7,13 @@ import { motion } from "framer-motion";
 import { Download, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Paper } from "@/lib/types/paper";
+import { Paper, useGenerateDocument } from "@/lib/api/generated";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useGenerateDocument } from "@/lib/hooks/api-hooks";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -34,7 +33,34 @@ export const ReviewDisplay = ({
   showDownload = true,
   isDialog = false, // Add this prop
 }: ReviewDisplayProps) => {
-  const generateDocument = useGenerateDocument();
+  const generateDocument = useGenerateDocument({
+    mutation: {
+      onSuccess: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `literature-review.${
+          generateDocument.variables?.data.format || "pdf"
+        }`;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }, 0);
+
+        const format = generateDocument.variables?.data.format || "pdf";
+        toast.success(`${format.toUpperCase()} downloaded successfully`);
+      },
+      onError: (error) => {
+        console.error("Download error:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to download review"
+        );
+      },
+    },
+  });
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     show: {
@@ -69,39 +95,14 @@ export const ReviewDisplay = ({
 
     toast.info(`Preparing ${format.toUpperCase()} document...`);
 
-    generateDocument.mutate(
-      {
-        review: {
-          review: review,
-          citations: citations,
-          topic: topic,
-        },
+    generateDocument.mutate({
+      data: {
+        content: review,
+        citations: citations,
+        topic: topic,
         format,
       },
-      {
-        onSuccess: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `literature-review.${format}`;
-          document.body.appendChild(a);
-          a.click();
-
-          setTimeout(() => {
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-          }, 0);
-
-          toast.success(`${format.toUpperCase()} downloaded successfully`);
-        },
-        onError: (error) => {
-          console.error("Download error:", error);
-          toast.error(
-            error instanceof Error ? error.message : "Failed to download review"
-          );
-        },
-      }
-    );
+    });
   };
 
   return (

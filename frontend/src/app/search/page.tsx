@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useSearchPapers } from "@/lib/hooks/api-hooks";
+import { useSearchPapers, Paper } from "@/lib/api/generated";
 import { PaperGrid } from "@/components/paper-grid";
 import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
-import { Paper } from "@/lib/types/paper";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -21,7 +20,10 @@ export default function SearchPage() {
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [searchInput, setSearchInput] = useState(query);
 
-  const { data: papers, isLoading } = useSearchPapers(query, !!query);
+  const { data: papers, isLoading } = useSearchPapers(
+    { query },
+    { query: { enabled: !!query } }
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
