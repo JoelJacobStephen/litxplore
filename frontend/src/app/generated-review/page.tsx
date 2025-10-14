@@ -11,7 +11,6 @@ import {
   useGetTaskStatus,
   useCancelTask,
   useSaveReview,
-  TaskStatus,
   Paper,
 } from "@/lib/api/generated";
 import { Loader2, AlertCircle, X } from "lucide-react";
@@ -92,11 +91,11 @@ export default function GeneratedReviewPage() {
       // Auto-save the review
       saveReview.mutate({
         data: {
-          title: result.topic || "Literature Review",
-          topic: result.topic || "Literature Review",
-          content: result.review,
+          title: (result.topic as string) || "Literature Review",
+          topic: (result.topic as string) || "Literature Review",
+          content: result.review as string,
           citations: JSON.stringify(result.citations || []),
-        },
+        } as any,
       });
 
       setHasNavigated(true);

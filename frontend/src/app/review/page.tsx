@@ -6,7 +6,12 @@ import { PaperGrid } from "@/components/paper-grid";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paper, useGenerateReview, useSearchPapers } from "@/lib/api/generated";
+import {
+  getSearchPapersQueryKey,
+  Paper,
+  useGenerateReview,
+  useSearchPapers,
+} from "@/lib/api/generated";
 import { useReviewStore } from "@/lib/stores/review-store";
 import { PDFUpload } from "@/components/pdf-upload";
 import { BookOpen, Loader2 } from "lucide-react";
@@ -49,8 +54,8 @@ export default function ReviewPage() {
       { query: topic },
       {
         query: {
+          queryKey: getSearchPapersQueryKey({ query: topic }),
           enabled: !!topic,
-          queryKey: undefined,
         },
       }
     );

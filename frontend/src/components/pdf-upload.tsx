@@ -19,7 +19,9 @@ export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
         toast.success("PDF uploaded successfully");
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to upload PDF");
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to upload PDF";
+        toast.error(errorMessage);
         console.error("Upload error:", error);
       },
     },

@@ -1,9 +1,4 @@
-import {
-  Paper,
-  ReviewResponse,
-  ChatResponse,
-  ReviewRequest,
-} from "@/lib/api/generated";
+import { Paper, ReviewRequest } from "@/lib/api/generated";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -70,7 +65,7 @@ export interface ChatRequest {
 export async function chatWithPaper(
   paperId: string,
   message: string
-): Promise<ChatResponse> {
+): Promise<any> {
   const response = await fetch(
     `${API_BASE_URL}/api/v1/papers/${paperId}/chat`,
     {
@@ -182,7 +177,7 @@ export async function generateReview({
 }: {
   papers: string[];
   topic: string;
-}): Promise<ReviewResponse> {
+}): Promise<any> {
   try {
     // Add a cache-busting query parameter with a timestamp
     const cacheBuster = new Date().getTime();
@@ -222,7 +217,7 @@ export async function generateReview({
   }
 }
 
-export async function getReview(id: string): Promise<ReviewResponse> {
+export async function getReview(id: string): Promise<any> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/review/${id}`
   );

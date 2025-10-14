@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useSearchPapers, Paper } from "@/lib/api/generated";
+import {
+  useSearchPapers,
+  Paper,
+  getSearchPapersQueryKey,
+} from "@/lib/api/generated";
 import { PaperGrid } from "@/components/paper-grid";
 import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";
@@ -22,7 +26,12 @@ export default function SearchPage() {
 
   const { data: papers, isLoading } = useSearchPapers(
     { query },
-    { query: { enabled: !!query } }
+    {
+      query: {
+        queryKey: getSearchPapersQueryKey({ query }),
+        enabled: !!query,
+      },
+    }
   );
 
   const handleSearch = (e: React.FormEvent) => {

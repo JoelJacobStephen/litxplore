@@ -178,9 +178,11 @@ export function PaperGrid({
                       asChild
                       className="hover:bg-zinc-800 transition-colors"
                     >
-                      {(paper.link || paper.url) && (
+                      {(("link" in paper && paper.link) || paper.url) && (
                         <Link
-                          href={paper.link || paper.url}
+                          href={
+                            ("link" in paper && paper.link) || paper.url || "#"
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                         >
