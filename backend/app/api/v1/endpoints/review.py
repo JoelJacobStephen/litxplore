@@ -126,34 +126,6 @@ async def get_review_history(
             error_code=ErrorCode.DATABASE_ERROR
         )
 
-@router.get("/{review_id}")
-async def get_review(
-    review_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-) -> Dict[str, Any]:
-    """Get a specific review by ID"""
-    review = db.query(Review).filter(
-        Review.id == review_id,
-        Review.user_id == current_user.id
-    ).first()
-    
-    if not review:
-        raise_not_found(
-            message="Review not found",
-            details={"review_id": review_id}
-        )
-    
-    return {
-        "id": review.id,
-        "title": review.title,
-        "topic": review.topic,
-        "content": review.content,
-        "citations": review.citations,
-        "created_at": review.created_at.isoformat() if review.created_at else None,
-        "updated_at": review.updated_at.isoformat() if review.updated_at else None
-    }
-
 @router.delete("/{review_id}")
 async def delete_review(
     review_id: int,

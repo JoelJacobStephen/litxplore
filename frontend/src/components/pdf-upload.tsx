@@ -49,7 +49,7 @@ export function PDFUpload({ onPaperAdd, currentPaperCount }: PDFUploadProps) {
     }
 
     uploadPaper.mutate(
-      { data: { file: file } },
+      { data: { file } },
       {
         onSettled: () => {
           // Clear the file input on success or error

@@ -5,11 +5,11 @@ module.exports = {
         },
         output: {
             mode: "tags-split",
-            target: "./src/lib/api/generated/api.ts",
+            target: "./src/lib/api/generated",
             schemas: "./src/lib/api/generated/models",
             client: "react-query",
+            mock: false,
             tsconfig: "./tsconfig.json",
-            clean: false,
             override: {
                 mutator: {
                     path: "./src/lib/api/axios-instance.ts",

@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "concurrently -n \"WATCHER,ORVAL,NEXT\" -c \"bgMagenta.bold,bgGreen.bold,bgCyan.bold\" \"npm run watch:backend\" \"npm run generate:api:watch\" \"next dev\"",
     "dev:next-only": "next dev",
-    "sync:openapi": "cp ../backend/openapi.json ./openapi.json",
+    "sync:openapi": "test -f ../backend/openapi.json && cp ../backend/openapi.json ./openapi.json || true",
+    "create:api-index": "node scripts/create-api-index.js",
     "prebuild": "npm run sync:openapi && npm run generate:api",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:api": "npm run sync:openapi && orval --config ./orval.config.js && node scripts/add-export-aliases.js",
-    "generate:api:watch": "npm run sync:openapi && orval --config ./orval.config.js --watch && node scripts/add-export-aliases.js",
+    "generate:api": "npm run sync:openapi && orval --config ./orval.config.js && npm run create:api-index",
+    "generate:api:watch": "npm run sync:openapi && orval --config ./orval.config.js --watch",
     "watch:backend": "node scripts/watch-backend.js"
   },
   "dependencies": {

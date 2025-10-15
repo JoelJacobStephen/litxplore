@@ -90,7 +90,7 @@ export default function HistoryPage() {
 
   // React Query hooks
   const {
-    data: reviews = [],
+    data: reviewsData = [],
     isLoading: loading,
     error,
   } = useGetReviewHistory({
@@ -99,6 +99,8 @@ export default function HistoryPage() {
       queryKey: getGetReviewHistoryQueryKey(),
     },
   });
+  
+  const reviews = reviewsData as unknown as Review[];
   const deleteReview = useDeleteReview({
     mutation: {
       onSuccess: () => {
@@ -238,41 +240,41 @@ export default function HistoryPage() {
         >
           {reviews.map((review) => (
             <motion.div
-              key={review.id as string | number}
+              key={review.id}
               variants={itemVariants}
               whileHover={{ y: -5 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Card
                 className="flex flex-col cursor-pointer group hover:border-blue-600 transition-colors h-[350px] relative"
-                onClick={() => handleReviewClick(review as any)}
+                onClick={() => handleReviewClick(review)}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 <DeleteButton
-                  reviewId={review.id as number}
+                  reviewId={review.id}
                   setDeletingReviewId={setDeletingReviewId}
                 />
 
                 <CardHeader className="relative z-10">
                   <CardTitle className="line-clamp-2 group-hover:text-blue-400 transition-colors">
-                    {review.title as string}
+                    {review.title}
                   </CardTitle>
                   <CardDescription>
-                    {isToday(new Date(review.created_at as string))
+                    {isToday(new Date(review.created_at))
                       ? "Today"
-                      : format(new Date(review.created_at as string), "d MMM yyyy")}
+                      : format(new Date(review.created_at), "d MMM yyyy")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow relative z-10 overflow-hidden">
                   <div className="space-y-3">
                     <h4 className="font-semibold text-blue-400">Topic</h4>
                     <p className="text-sm text-gray-400 mb-2 line-clamp-2">
-                      {review.topic as string}
+                      {review.topic}
                     </p>
                     <h4 className="font-semibold text-blue-400">Review</h4>
                     <div className="text-sm text-gray-300 prose-sm prose-invert line-clamp-6">
-                      <ReactMarkdown>{review.content as string}</ReactMarkdown>
+                      <ReactMarkdown>{review.content}</ReactMarkdown>
                     </div>
                   </div>
                 </CardContent>
