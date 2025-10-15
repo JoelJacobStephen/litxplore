@@ -11,7 +11,8 @@ const fs = require('fs');
 const path = require('path');
 
 const BACKEND_PATH = path.resolve(__dirname, '../../backend/app');
-const SCHEMA_PATH = path.resolve(__dirname, '../../backend/openapi.json');
+const BACKEND_SCHEMA_PATH = path.resolve(__dirname, '../../backend/openapi.json');
+const FRONTEND_SCHEMA_PATH = path.resolve(__dirname, '../openapi.json');
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 const DEBOUNCE_MS = 2000; // Wait 2 seconds after last change
 
@@ -36,9 +37,12 @@ function fetchAndSaveSchema() {
             if (res.statusCode === 200) {
                 try {
                     const schema = JSON.parse(data);
-                    fs.writeFileSync(SCHEMA_PATH, JSON.stringify(schema, null, 2) + '\n');
+                    const serialized = JSON.stringify(schema, null, 2) + '\n';
+                    fs.writeFileSync(BACKEND_SCHEMA_PATH, serialized);
+                    fs.writeFileSync(FRONTEND_SCHEMA_PATH, serialized);
                     console.log('✅ OpenAPI schema updated successfully!');
-                    console.log(`📁 Saved to: ${SCHEMA_PATH}`);
+                    console.log(`📁 Backend schema: ${BACKEND_SCHEMA_PATH}`);
+                    console.log(`📁 Frontend schema: ${FRONTEND_SCHEMA_PATH}`);
                     console.log('👀 Continuing to watch for backend changes...\n');
                 } catch (error) {
                     console.error('❌ Error parsing schema JSON:', error.message);

@@ -1,7 +1,7 @@
 module.exports = {
     litxplore: {
         input: {
-            target: "../backend/openapi.json",
+            target: "./openapi.json",
         },
         output: {
             mode: "tags-split",

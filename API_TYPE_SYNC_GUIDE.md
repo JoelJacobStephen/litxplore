@@ -92,9 +92,19 @@ const { data } = useGetPaper(paperId);
 1. **FastAPI Backend** - Auto-generates OpenAPI schema from Python Pydantic models
 2. **Backend Watcher** - Watches Python files, exports schema to `backend/openapi.json`
 3. **OpenAPI Schema File** - `backend/openapi.json` - The "bridge" between backend and frontend
-4. **Orval** - Code generator that reads OpenAPI and creates TypeScript types
-5. **Frontend Watcher** - Watches `backend/openapi.json`, triggers Orval regeneration
-6. **Generated Code** - `frontend/src/lib/api/generated/` - TypeScript types and hooks
+4. **Sync Script** - `npm run sync:openapi` copies the backend spec to `frontend/openapi.json`
+5. **Orval** - Code generator that reads the synced schema and creates TypeScript types
+6. **Frontend Watcher** - Watches `frontend/openapi.json`, triggers Orval regeneration
+7. **Generated Code** - `frontend/src/lib/api/generated/` - TypeScript types and hooks
+
+---
+
+### Frontend Schema Copy Explained
+
+- `frontend/openapi.json` is a **generated copy** of the backend spec. It lives in the frontend because Vercel (and other CI environments) only have access to the frontend folder during the build step.
+- The `sync:openapi` npm script (and the backend watcher) copy `backend/openapi.json` into the frontend folder. You rarely run it directly; it is invoked automatically by `generate:api`, `generate:api:watch`, and the `prebuild` hook (`npm run build`).
+- Never edit `frontend/openapi.json` by hand—treat it as an artifact that should always match the backend version.
+- When committing backend changes that affect the API, commit both `backend` Python updates **and** `backend/openapi.json`. The frontend copy can be regenerated at any time via the scripts above.
 
 ---
 
@@ -134,6 +144,13 @@ const { data } = useGetPaper(paperId);
                     │  (Committed to Git)           │
                     └───────────────┬───────────────┘
                                     │
+                                    │ Copied by npm run sync:openapi
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │  frontend/openapi.json        │
+                    │  (Copied spec for builds)     │
+                    └───────────────┬───────────────┘
+                                    │
                                     │ Watched by Orval
                                     ▼
 ┌───────────────────────────────────────────────────────────────────────┐
@@ -141,7 +158,7 @@ const { data } = useGetPaper(paperId);
 │                                                                        │
 │  ┌─────────────────────────────────────────────────────────┐         │
 │  │  Orval (Code Generator)                                  │         │
-│  │  Reads backend/openapi.json                              │         │
+│  │  Reads frontend/openapi.json                             │         │
 │  │  Generates TypeScript code                               │         │
 │  └──────────────────────────┬──────────────────────────────┘         │
 │                              │                                         │
@@ -186,7 +203,7 @@ Backend Watcher Detects Change (watches app/**/*.py)
        ↓
 Fetches & Saves openapi.json (backend/openapi.json)
        ↓
-Frontend Watcher Detects Change (watches backend/openapi.json)
+Sync Script / Watcher Copies Spec (frontend/openapi.json)
        ↓
 Orval Regenerates Code (frontend/src/lib/api/generated/)
        ↓
@@ -208,6 +225,8 @@ Done! ✅
 ### Option 1: Full Stack Development (Recommended)
 
 Run both backend and frontend together for the full automatic experience.
+
+> **New in 2025:** both the watcher and npm build scripts keep `frontend/openapi.json` in sync automatically. No manual copying required.
 
 #### Terminal 1: Backend
 
@@ -231,8 +250,8 @@ npm run dev
 
 **What it does:**
 
-- ✅ Watches `backend/openapi.json` for changes
-- ✅ Auto-regenerates TypeScript types when schema changes
+- ✅ Runs `npm run sync:openapi` automatically to copy the schema
+- ✅ Regenerates TypeScript types when the spec changes
 - ✅ Starts Next.js dev server (port 3000)
 
 **You'll see 3 processes:**
@@ -326,8 +345,8 @@ Backend Team                    Frontend Team
 │ Test endpoints   │           │ Use mock data    │
 │ Run backend      │           │ Run frontend     │
 │                  │           │                  │
-│ Commit:          │           │ Pull:            │
-│ • Python code    │  ──────>  │ • openapi.json   │
+│ Commit:          │  ──────>  │ Pull:            │
+│ • Python code    │           │ • backend/openapi.json
 │ • openapi.json   │           │                  │
 └──────────────────┘           │ npm run dev      │
                                │ → Types update!  │
@@ -370,6 +389,9 @@ npm run generate:api
 
 # Manual: Watch and regenerate types
 npm run generate:api:watch
+
+# Sync schema without regeneration
+npm run sync:openapi
 
 # Just Next.js (no auto-generation)
 npm run dev:next-only

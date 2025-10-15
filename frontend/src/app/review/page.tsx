@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PaperGrid } from "@/components/paper-grid";
 import { SearchInput } from "@/components/search-input";
@@ -18,7 +18,8 @@ import { BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { MAX_PAPERS_FOR_REVIEW } from "@/lib/constants";
-export default function ReviewPage() {
+
+function ReviewPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [topic, setTopic] = useState("");
@@ -225,5 +226,19 @@ export default function ReviewPage() {
         </div>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function ReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
+      <ReviewPageContent />
+    </Suspense>
   );
 }
