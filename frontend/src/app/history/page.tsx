@@ -5,6 +5,7 @@ import {
   useGetReviewHistory,
   useDeleteReview,
   Paper,
+  getGetReviewHistoryQueryKey,
 } from "@/lib/api/generated";
 import {
   Card,
@@ -93,7 +94,10 @@ export default function HistoryPage() {
     isLoading: loading,
     error,
   } = useGetReviewHistory({
-    query: { enabled: isLoaded && isSignedIn, queryKey: undefined },
+    query: {
+      enabled: isLoaded && isSignedIn,
+      queryKey: getGetReviewHistoryQueryKey(),
+    },
   });
   const deleteReview = useDeleteReview({
     mutation: {

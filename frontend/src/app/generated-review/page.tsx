@@ -12,6 +12,7 @@ import {
   useCancelTask,
   useSaveReview,
   Paper,
+  getGetTaskStatusQueryKey,
 } from "@/lib/api/generated";
 import { Loader2, AlertCircle, X } from "lucide-react";
 import { toast } from "sonner";
@@ -62,7 +63,7 @@ export default function GeneratedReviewPage() {
         const status = query.state.data?.status;
         return status === "running" || status === "pending" ? 2000 : false;
       },
-      queryKey: undefined,
+      queryKey: getGetTaskStatusQueryKey(taskId || ""),
     },
   });
 
