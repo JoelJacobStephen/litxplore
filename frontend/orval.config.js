@@ -8,8 +8,8 @@ module.exports = {
             target: "./src/lib/api/generated/api.ts",
             schemas: "./src/lib/api/generated/models",
             client: "react-query",
-            mock: false,
             tsconfig: "./tsconfig.json",
+            clean: false,
             override: {
                 mutator: {
                     path: "./src/lib/api/axios-instance.ts",

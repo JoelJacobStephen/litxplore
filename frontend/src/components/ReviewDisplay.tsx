@@ -36,7 +36,7 @@ export const ReviewDisplay = ({
   const generateDocument = useGenerateDocument({
     mutation: {
       onSuccess: (blob) => {
-        const url = window.URL.createObjectURL(blob);
+        const url = window.URL.createObjectURL(blob as unknown as Blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `literature-review.${

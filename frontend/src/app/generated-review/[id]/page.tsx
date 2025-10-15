@@ -30,7 +30,7 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
   let parsedCitations: Paper[] = [];
   if (review.citations) {
     try {
-      parsedCitations = JSON.parse(review.citations);
+      parsedCitations = JSON.parse(review.citations as string);
     } catch (err) {
       console.error("Failed to parse citations:", err);
     }
@@ -38,8 +38,8 @@ export default function ReviewPage({ params }: { params: { id: string } }) {
 
   return (
     <ReviewDisplay
-      review={review.content}
-      topic={review.topic}
+      review={review.content as string}
+      topic={review.topic as string}
       citations={parsedCitations}
       showDownload={true}
     />

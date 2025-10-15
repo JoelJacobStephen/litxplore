@@ -10,8 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:api": "npm run sync:openapi && orval --config ./orval.config.js",
-    "generate:api:watch": "npm run sync:openapi && orval --config ./orval.config.js --watch",
+    "generate:api": "npm run sync:openapi && orval --config ./orval.config.js && node scripts/add-export-aliases.js",
+    "generate:api:watch": "npm run sync:openapi && orval --config ./orval.config.js --watch && node scripts/add-export-aliases.js",
     "watch:backend": "node scripts/watch-backend.js"
   },
   "dependencies": {

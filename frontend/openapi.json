@@ -134,6 +134,54 @@
       }
     },
     "/api/v1/review/{review_id}": {
+      "get": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Get Review",
+        "description": "Get a specific review by ID",
+        "operationId": "get_review_api_v1_review__review_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Review Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Review Api V1 Review  Review Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "review"
@@ -846,7 +894,7 @@
                 "Author 2"
               ],
               "id": "paper_id",
-              "published": "2025-10-15T11:48:02.182752",
+              "published": "2025-10-15T13:10:43.729949",
               "summary": "Paper summary",
               "title": "Paper Title",
               "url": "http://example.com/paper.pdf"
