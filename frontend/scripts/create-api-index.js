@@ -58,10 +58,10 @@ export {
 `;
 
 try {
-  fs.writeFileSync(indexPath, indexContent, 'utf8');
-  console.log('✅ Created index.ts for generated API modules');
+    fs.writeFileSync(indexPath, indexContent, 'utf8');
+    console.log('✅ Created index.ts for generated API modules');
 } catch (error) {
-  console.error('❌ Failed to create index.ts:', error.message);
-  process.exit(1);
+    console.error('❌ Failed to create index.ts:', error.message);
+    process.exit(1);
 }
 

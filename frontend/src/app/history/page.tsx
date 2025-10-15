@@ -99,7 +99,7 @@ export default function HistoryPage() {
       queryKey: getGetReviewHistoryQueryKey(),
     },
   });
-  
+
   const reviews = reviewsData as unknown as Review[];
   const deleteReview = useDeleteReview({
     mutation: {
