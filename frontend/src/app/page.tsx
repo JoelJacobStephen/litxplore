@@ -17,93 +17,61 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 overflow-hidden">
-      {/* Main background gradient elements - consistent across the page */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        {/* Base gradient layers */}
-        {/* <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,hsl(210,70%,40%)_0%,transparent_50%)]"></div> */}
-        {/* <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_70%_60%,hsl(220,80%,50%)_0%,transparent_50%)]"></div> */}
-        {/* <motion.div
-          className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_40%,hsl(200,100%,60%)_0%,transparent_40%)]"
-          animate={{
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-        /> */}
-      </div>
-
+    <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative">
         {/* Hero content */}
-        <div className="container mx-auto px-4 pt-24 pb-16 relative z-10">
+        <div className="container mx-auto px-4 pt-24 pb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <h1 className="text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+            <h1 className="text-6xl font-bold mb-6 text-foreground tracking-tight">
               LitXplore
             </h1>
-            <p className="text-xl text-gray-300 mb-10 leading-relaxed">
+            <p className="text-xl text-muted-foreground mb-10 leading-relaxed">
               Transform your research process with AI-powered literature reviews
               and interactive paper exploration
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white rounded-xl px-6"
-                >
-                  <Link href="/review" className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    <span>Generate Review</span>
-                  </Link>
-                </Button>
-              </motion.div>
+              <Button asChild size="lg" className="rounded-xl px-6">
+                <Link href="/review" className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  <span>Generate Review</span>
+                </Link>
+              </Button>
 
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="rounded-xl px-6"
               >
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="border-white/20 text-white rounded-xl px-6"
-                >
-                  <Link href="/search" className="flex items-center gap-2">
-                    <Search className="h-5 w-5" />
-                    <span>Search & Chat</span>
-                  </Link>
-                </Button>
-              </motion.div>
+                <Link href="/search" className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  <span>Search & Chat</span>
+                </Link>
+              </Button>
             </div>
           </motion.div>
         </div>
       </div>
 
       {/* Bento Grid Layout Section */}
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4 text-white">
+          <h2 className="text-3xl font-bold mb-4 text-foreground tracking-tight">
             Explore Our Features
           </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Powerful tools for researchers to explore scientific literature and
             generate comprehensive reviews
           </p>
@@ -114,32 +82,27 @@ export default function Home() {
           {/* Feature 1 - Literature Review Generation */}
           <div className="col-span-1 md:col-span-2 relative">
             <motion.div
-              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-              whileHover={{ y: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              className="h-full rounded-2xl bg-card border border-border p-8 overflow-hidden relative group hover:border-primary/50"
+              whileHover={{ y: -2 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <BookOpenCheck className="h-10 w-10 text-blue-400 mb-4" />
-              <h3 className="text-2xl font-semibold mb-3 text-white">
+              <BookOpenCheck className="h-10 w-10 text-primary mb-4" />
+              <h3 className="text-2xl font-semibold mb-3 text-foreground tracking-tight">
                 Literature Review Generation
               </h3>
-              <p className="text-gray-300 mb-6">
+              <p className="text-muted-foreground mb-6 leading-relaxed">
                 Generate comprehensive literature reviews based on your research
                 topic. It analyzes papers and creates well-structured academic
                 reviews with citations.
               </p>
 
-              <Link href="/review" className="inline-block z-10 relative">
-                <motion.div
-                  className="flex items-center text-blue-400 font-medium"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
+              <Link href="/review" className="inline-block relative">
+                <span className="flex items-center text-primary font-medium hover:text-primary/80 transition-colors duration-200">
                   Generate Now <ArrowRight className="h-4 w-4 ml-1" />
-                </motion.div>
+                </span>
               </Link>
 
-              <div className="absolute bottom-4 right-4 opacity-10 pointer-events-none">
+              <div className="absolute bottom-4 right-4 opacity-5 pointer-events-none">
                 <FileText className="h-24 w-24" />
               </div>
             </motion.div>
@@ -148,31 +111,26 @@ export default function Home() {
           {/* Feature 2 - Chat with Papers */}
           <div className="col-span-1 relative">
             <motion.div
-              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-              whileHover={{ y: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              className="h-full rounded-2xl bg-card border border-border p-8 overflow-hidden relative group hover:border-primary/50"
+              whileHover={{ y: -2 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <MessageSquareText className="h-10 w-10 text-blue-400 mb-4" />
-              <h3 className="text-2xl font-semibold mb-3 text-white">
+              <MessageSquareText className="h-10 w-10 text-primary mb-4" />
+              <h3 className="text-2xl font-semibold mb-3 text-foreground tracking-tight">
                 Chat with Papers
               </h3>
-              <p className="text-gray-300 mb-6">
+              <p className="text-muted-foreground mb-6 leading-relaxed">
                 Interact with research papers through natural conversation. Ask
                 questions and get insights from any paper.
               </p>
 
-              <Link href="/search" className="inline-block z-10 relative">
-                <motion.div
-                  className="flex items-center text-blue-400 font-medium"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
+              <Link href="/search" className="inline-block relative">
+                <span className="flex items-center text-primary font-medium hover:text-primary/80 transition-colors duration-200">
                   Start Chatting <ArrowRight className="h-4 w-4 ml-1" />
-                </motion.div>
+                </span>
               </Link>
 
-              <div className="absolute bottom-4 right-4 opacity-10 pointer-events-none">
+              <div className="absolute bottom-4 right-4 opacity-5 pointer-events-none">
                 <BookMarked className="h-20 w-20" />
               </div>
             </motion.div>
@@ -181,27 +139,22 @@ export default function Home() {
           {/* Feature 3 - Paper Search */}
           <div className="col-span-1 relative">
             <motion.div
-              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-              whileHover={{ y: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              className="h-full rounded-2xl bg-card border border-border p-8 overflow-hidden relative group hover:border-primary/50"
+              whileHover={{ y: -2 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <Search className="h-10 w-10 text-blue-400 mb-4" />
-              <h3 className="text-2xl font-semibold mb-3 text-white">
+              <Search className="h-10 w-10 text-primary mb-4" />
+              <h3 className="text-2xl font-semibold mb-3 text-foreground tracking-tight">
                 Paper Search
               </h3>
-              <p className="text-gray-300 mb-6">
+              <p className="text-muted-foreground mb-6 leading-relaxed">
                 Search through millions of academic papers on arXiv.
               </p>
 
-              <Link href="/search" className="inline-block z-10 relative">
-                <motion.div
-                  className="flex items-center text-blue-400 font-medium"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
+              <Link href="/search" className="inline-block relative">
+                <span className="flex items-center text-primary font-medium hover:text-primary/80 transition-colors duration-200">
                   Search Papers <ArrowRight className="h-4 w-4 ml-1" />
-                </motion.div>
+                </span>
               </Link>
             </motion.div>
           </div>
@@ -209,18 +162,17 @@ export default function Home() {
           {/* Feature 4 - AI Analysis */}
           <div className="col-span-1 md:col-span-2 relative">
             <motion.div
-              className="h-full rounded-3xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 p-8 overflow-hidden relative group"
-              whileHover={{ y: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              className="h-full rounded-2xl bg-card border border-border p-8 overflow-hidden relative group hover:border-primary/50"
+              whileHover={{ y: -2 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="flex flex-col md:flex-row md:items-center gap-8">
                 <div className="md:w-1/2">
-                  <Sparkles className="h-10 w-10 text-blue-400 mb-4" />
-                  <h3 className="text-2xl font-semibold mb-3 text-white">
+                  <Sparkles className="h-10 w-10 text-primary mb-4" />
+                  <h3 className="text-2xl font-semibold mb-3 text-foreground tracking-tight">
                     Powered by AI
                   </h3>
-                  <p className="text-gray-300 mb-6">
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
                     The platform fetches relevant papers from arXiv and uses
                     state-of-the-art AI models to analyze research papers,
                     understand complex academic concepts, and generate detailed
@@ -228,61 +180,16 @@ export default function Home() {
                     process.
                   </p>
 
-                  <Link href="/review" className="inline-block z-10 relative">
-                    <motion.div
-                      className="flex items-center text-blue-400 font-medium"
-                      whileHover={{ x: 5 }}
-                      transition={{ type: "spring", stiffness: 400 }}
-                    >
+                  <Link href="/review" className="inline-block relative">
+                    <span className="flex items-center text-primary font-medium hover:text-primary/80 transition-colors duration-200">
                       See How It Works <ArrowRight className="h-4 w-4 ml-1" />
-                    </motion.div>
+                    </span>
                   </Link>
                 </div>
 
-                <div className="md:w-1/2 flex justify-center items-center pointer-events-none">
-                  <div className="relative">
-                    {/* Animated particles */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      {[...Array(5)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className="absolute h-2 w-2 rounded-full bg-blue-400"
-                          initial={{
-                            x: 0,
-                            y: 0,
-                            opacity: 0.7,
-                          }}
-                          animate={{
-                            x: Math.sin(i) * 80,
-                            y: Math.cos(i) * 80,
-                            opacity: [0.2, 0.8, 0.2],
-                          }}
-                          transition={{
-                            duration: 3 + i,
-                            repeat: Infinity,
-                            repeatType: "reverse",
-                          }}
-                        />
-                      ))}
-                    </div>
-
-                    <motion.div
-                      className="h-32 w-32 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center"
-                      animate={{
-                        boxShadow: [
-                          "0 0 20px rgba(59, 130, 246, 0.3)",
-                          "0 0 40px rgba(59, 130, 246, 0.5)",
-                          "0 0 20px rgba(59, 130, 246, 0.3)",
-                        ],
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                      }}
-                    >
-                      <Zap className="h-16 w-16 text-white" />
-                    </motion.div>
+                <div className="md:w-1/2 flex justify-center items-center">
+                  <div className="h-32 w-32 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Zap className="h-16 w-16 text-primary" />
                   </div>
                 </div>
               </div>
@@ -292,16 +199,18 @@ export default function Home() {
       </div>
 
       {/* How It Works Section */}
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-20">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4 text-white">How It Works</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold mb-4 text-foreground tracking-tight">
+            How It Works
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Transform your research process in three simple steps
           </p>
         </motion.div>
@@ -313,7 +222,6 @@ export default function Home() {
               title: "Enter Your Topic",
               description:
                 "Specify your research topic and the number of papers to analyze",
-              color: "from-blue-500 to-blue-700",
               delay: 0,
             },
             {
@@ -321,16 +229,14 @@ export default function Home() {
               title: "AI Analysis",
               description:
                 "The platform analyzes relevant papers using advanced language models",
-              color: "from-blue-600 to-blue-800",
-              delay: 0.2,
+              delay: 0.1,
             },
             {
               step: "3",
               title: "Get Your Results",
               description:
                 "Receive a well-structured review with proper citations and insights",
-              color: "from-blue-700 to-blue-900",
-              delay: 0.4,
+              delay: 0.2,
             },
           ].map((item, index) => (
             <motion.div
@@ -338,38 +244,21 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: item.delay }}
+              transition={{ duration: 0.4, delay: item.delay }}
               className="flex flex-col items-center text-center"
             >
-              <motion.div
-                whileHover={{ y: -5, scale: 1.05 }}
-                className={`w-16 h-16 rounded-full mb-4 bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl font-bold text-white`}
-              >
+              <div className="w-16 h-16 rounded-full mb-4 bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary border border-primary/20">
                 {item.step}
-              </motion.div>
-              <h3 className="text-xl font-semibold mb-2 text-white">
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-foreground tracking-tight">
                 {item.title}
               </h3>
-              <p className="text-gray-400">{item.description}</p>
+              <p className="text-muted-foreground leading-relaxed">
+                {item.description}
+              </p>
             </motion.div>
           ))}
         </div>
-
-        {/* <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="text-center mt-12"
-        >
-          <Button
-            asChild
-            size="lg"
-            className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white rounded-xl px-8"
-          >
-            <Link href="/review">Get Started</Link>
-          </Button>
-        </motion.div> */}
       </div>
     </div>
   );

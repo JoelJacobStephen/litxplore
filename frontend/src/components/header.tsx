@@ -32,12 +32,12 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-800/50 bg-gray-300/30 backdrop-blur supports-[backdrop-filter]:bg-gray-900/5">
+    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4 py-2">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold text-foreground hover:text-primary transition-colors duration-200">
                 LitXplore
               </span>
             </Link>
@@ -51,8 +51,8 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-md text-gray-300 transition-colors hover:text-blue-400 hover:bg-blue-900/20",
-                    pathname === item.href && "text-blue-400 bg-blue-900/20"
+                    "flex items-center justify-center h-10 w-10 rounded-lg text-foreground/70 transition-all duration-200 hover:text-primary hover:bg-accent",
+                    pathname === item.href && "text-primary bg-accent"
                   )}
                   title={item.label}
                 >
@@ -87,7 +87,7 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="flex md:hidden items-center justify-center h-10 w-10 rounded-md text-gray-300 hover:text-blue-400 hover:bg-blue-900/20 transition-colors"
+            className="flex md:hidden items-center justify-center h-10 w-10 rounded-lg text-foreground/70 hover:text-primary hover:bg-accent transition-all duration-200"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle mobile menu"
           >
@@ -116,7 +116,7 @@ export function Header() {
       {/* Mobile Navigation */}
       <div
         className={cn(
-          "md:hidden fixed inset-x-0 top-[3.5rem] border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm transition-all duration-200 ease-in-out",
+          "md:hidden fixed inset-x-0 top-[3.5rem] bg-background/95 backdrop-blur-md transition-all duration-200 ease-in-out",
           mobileMenuOpen
             ? "translate-y-0 opacity-100"
             : "-translate-y-2 opacity-0 pointer-events-none"
@@ -126,7 +126,7 @@ export function Header() {
           {isSignedIn ? (
             <div className="flex flex-col space-y-4">
               {/* User Profile Section */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-900/20 to-purple-900/20 backdrop-blur-sm border border-gray-800/30">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-accent border border-border">
                 <div className="flex items-center space-x-3">
                   <UserButton
                     afterSignOutUrl="/"
@@ -139,10 +139,10 @@ export function Header() {
                     }}
                   />
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-200">
+                    <span className="text-sm font-medium text-foreground">
                       Your Account
                     </span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-muted-foreground">
                       Manage your profile
                     </span>
                   </div>
@@ -150,14 +150,14 @@ export function Header() {
               </div>
 
               {/* Navigation Menu */}
-              <div className="bg-gray-900/20 backdrop-blur-sm rounded-lg border border-gray-800/30 overflow-hidden">
+              <div className="bg-card rounded-lg border border-border overflow-hidden">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-blue-400 transition-colors border-b border-gray-800/20 last:border-none",
-                      pathname === item.href && "text-blue-400 bg-blue-900/30"
+                      "flex items-center space-x-3 px-4 py-3 text-muted-foreground hover:text-primary transition-all duration-200 border-b border-border last:border-none",
+                      pathname === item.href && "text-primary bg-accent"
                     )}
                     onClick={() => setMobileMenuOpen(false)}
                   >

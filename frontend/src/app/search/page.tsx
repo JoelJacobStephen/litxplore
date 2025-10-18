@@ -69,10 +69,10 @@ function SearchPageContent() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto py-8 space-y-6 relative z-10">
+      <div className="container mx-auto py-8 space-y-6">
         <div className="flex items-center gap-3 mb-10">
-          <Search className="h-8 w-8 text-blue-400" />
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+          <Search className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
             Search
           </h1>
         </div>
@@ -82,12 +82,9 @@ function SearchPageContent() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search papers..."
-            className="flex-1 border-gray-800 bg-gray-900/50 backdrop-blur-sm focus-visible:ring-blue-500"
+            className="flex-1"
           />
-          <Button
-            type="submit"
-            className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white"
-          >
+          <Button type="submit">
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -101,7 +98,7 @@ function SearchPageContent() {
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600"
+            className="text-2xl font-bold text-foreground tracking-tight"
           >
             Results for: {query}
           </motion.h1>
@@ -116,11 +113,11 @@ function SearchPageContent() {
           >
             {[1, 2, 3].map((i) => (
               <motion.div key={i} variants={cardVariants}>
-                <Card className="relative hover:shadow-lg transition-shadow duration-300 border-gray-800 bg-gray-900/50 backdrop-blur-sm">
+                <Card className="relative transition-all duration-200">
                   <div className="p-4 space-y-3">
-                    <Skeleton className="h-6 w-3/4 bg-gray-800" />
-                    <Skeleton className="h-4 w-1/2 bg-gray-800" />
-                    <Skeleton className="h-20 w-full bg-gray-800" />
+                    <Skeleton className="h-6 w-3/4 bg-muted" />
+                    <Skeleton className="h-4 w-1/2 bg-muted" />
+                    <Skeleton className="h-20 w-full bg-muted" />
                   </div>
                 </Card>
               </motion.div>

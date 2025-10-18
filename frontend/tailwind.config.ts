@@ -27,19 +27,6 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
-        "persian-blue": {
-          "50": "#e9f5ff",
-          "100": "#d7edff",
-          "200": "#b8dcff",
-          "300": "#8dc3ff",
-          "400": "#609dff",
-          "500": "#3b76ff",
-          "600": "#1a4bff",
-          "700": "#0c38e9",
-          "800": "#1036c3",
-          "900": "#173598",
-          "950": "#0e1e58",
-        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -69,6 +56,10 @@ const config: Config = {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -102,6 +93,10 @@ const config: Config = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      transitionDuration: {
+        "150": "150ms",
+        "200": "200ms",
       },
     },
   },

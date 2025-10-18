@@ -128,30 +128,25 @@ export function PaperGrid({
               className="h-full"
             >
               <Card
-                className={`flex flex-col h-full relative hover:shadow-lg transition-all overflow-hidden group ${
-                  effectiveSelectedPapers.has(paper.id)
-                    ? "border-blue-500"
-                    : "border-gray-800"
+                className={`flex flex-col h-full relative hover:border-primary/50 transition-all duration-200 overflow-hidden ${
+                  effectiveSelectedPapers.has(paper.id) ? "border-primary" : ""
                 }`}
               >
-                {/* Blue gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                <CardHeader className="relative z-10">
-                  <CardTitle className="line-clamp-2 text-xl font-serif">
+                <CardHeader>
+                  <CardTitle className="line-clamp-2 text-xl">
                     {paper.title}
                   </CardTitle>
-                  <CardDescription className="text-zinc-400">
+                  <CardDescription>
                     {paper.authors.slice(0, 3).join(", ")}
                     {paper.authors.length > 3 && " et al."}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 relative z-10">
-                  <p className="text-sm text-zinc-300 line-clamp-4 leading-relaxed">
+                <CardContent className="flex-1">
+                  <p className="text-sm text-muted-foreground line-clamp-4 leading-relaxed">
                     {paper.summary}
                   </p>
                 </CardContent>
-                <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-zinc-800 relative z-10">
+                <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-border">
                   {enableSelection && (
                     <motion.div whileTap={{ scale: 0.95 }}>
                       <Button
@@ -172,12 +167,7 @@ export function PaperGrid({
                     </motion.div>
                   )}
                   <motion.div whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                      className="hover:bg-zinc-800 transition-colors"
-                    >
+                    <Button variant="ghost" size="sm" asChild>
                       {(("link" in paper && paper.link) || paper.url) && (
                         <Link
                           href={
@@ -201,7 +191,6 @@ export function PaperGrid({
                           onClick={() =>
                             router.push(`/papers/${paper.id}/chat`)
                           }
-                          className="bg-blue-800 hover:bg-zinc-700 transition-colors"
                         >
                           Chat with Paper
                         </Button>

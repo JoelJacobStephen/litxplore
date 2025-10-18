@@ -27,24 +27,18 @@ export function SearchHero() {
   };
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Background gradient elements */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,hsl(210,70%,40%)_0%,transparent_50%)]"></div>
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_70%_60%,hsl(220,80%,50%)_0%,transparent_50%)]"></div>
-      </div>
-
-      <div className="container mx-auto px-4 py-16 relative z-10">
+    <div className="relative">
+      <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+            <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-foreground tracking-tight">
               Search Research Papers
             </h1>
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="text-xl text-muted-foreground mb-8">
               Explore millions of papers from arXiv and interact with them using
               AI
             </p>

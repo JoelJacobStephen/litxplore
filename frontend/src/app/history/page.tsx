@@ -71,10 +71,10 @@ const DeleteButton = ({
       <Button
         variant="ghost"
         size="icon"
-        className="hover:bg-red-900/20 hover:text-red-400"
+        className="hover:bg-destructive/20 hover:text-destructive"
         onClick={handleClick}
       >
-        <Trash2 className="h-4 w-4 text-red-400" />
+        <Trash2 className="h-4 w-4 text-destructive" />
       </Button>
     </div>
   );
@@ -162,10 +162,10 @@ export default function HistoryPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="container mx-auto p-6 space-y-4 relative z-10">
+      <div className="container mx-auto p-6 space-y-4">
         <div className="flex items-center gap-3 mb-6">
-          <History className="h-8 w-8 text-blue-400" />
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+          <History className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
             Review History
           </h1>
         </div>
@@ -179,11 +179,11 @@ export default function HistoryPage() {
             <motion.div key={i} variants={itemVariants}>
               <Card className="h-[350px]">
                 <CardHeader>
-                  <Skeleton className="h-6 w-3/4 bg-gray-800" />
-                  <Skeleton className="h-4 w-1/3 bg-gray-800" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/3" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-24 w-full bg-gray-800" />
+                  <Skeleton className="h-24 w-full" />
                 </CardContent>
               </Card>
             </motion.div>
@@ -195,8 +195,8 @@ export default function HistoryPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6 relative z-10">
-        <div className="bg-red-900/20 border border-red-800 text-red-300 px-4 py-3 rounded backdrop-blur-sm">
+      <div className="container mx-auto p-6">
+        <div className="bg-destructive/20 border border-destructive text-destructive-foreground px-4 py-3 rounded">
           {error instanceof Error
             ? error.message
             : "Unable to find or load generated literature reviews"}
@@ -206,20 +206,20 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 relative z-10">
+    <div className="container mx-auto p-6">
       <div className="flex items-center gap-3 mb-6">
-        <History className="h-8 w-8 text-blue-400" />
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+        <History className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">
           Review History
         </h1>
       </div>
 
       {reviews.length === 0 ? (
-        <div className="text-center py-20 border border-gray-800 rounded-lg bg-gray-900/50 backdrop-blur-sm">
-          <div className="mx-auto rounded-full bg-gradient-to-br from-blue-500 to-blue-700 p-4 inline-block mb-4">
-            <History className="h-8 w-8 text-white" />
+        <div className="text-center py-20 border border-border rounded-lg bg-card">
+          <div className="mx-auto rounded-full bg-primary/10 p-4 inline-block mb-4">
+            <History className="h-8 w-8 text-primary" />
           </div>
-          <p className="text-gray-400 text-lg">
+          <p className="text-muted-foreground text-lg">
             No reviews found. Generate your first literature review to see it
             here!
           </p>
@@ -246,34 +246,30 @@ export default function HistoryPage() {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Card
-                className="flex flex-col cursor-pointer group hover:border-blue-600 transition-colors h-[350px] relative"
+                className="flex flex-col cursor-pointer group hover:border-primary/50 transition-all duration-200 h-[350px] relative"
                 onClick={() => handleReviewClick(review)}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
                 <DeleteButton
                   reviewId={review.id}
                   setDeletingReviewId={setDeletingReviewId}
                 />
 
-                <CardHeader className="relative z-10">
-                  <CardTitle className="line-clamp-2 group-hover:text-blue-400 transition-colors">
-                    {review.title}
-                  </CardTitle>
+                <CardHeader>
+                  <CardTitle className="line-clamp-2">{review.title}</CardTitle>
                   <CardDescription>
                     {isToday(new Date(review.created_at))
                       ? "Today"
                       : format(new Date(review.created_at), "d MMM yyyy")}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow relative z-10 overflow-hidden">
+                <CardContent className="flex-grow overflow-hidden">
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-blue-400">Topic</h4>
-                    <p className="text-sm text-gray-400 mb-2 line-clamp-2">
+                    <h4 className="font-semibold text-primary">Topic</h4>
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                       {review.topic}
                     </p>
-                    <h4 className="font-semibold text-blue-400">Review</h4>
-                    <div className="text-sm text-gray-300 prose-sm prose-invert line-clamp-6">
+                    <h4 className="font-semibold text-primary">Review</h4>
+                    <div className="text-sm text-foreground prose-sm line-clamp-6">
                       <ReactMarkdown>{review.content}</ReactMarkdown>
                     </div>
                   </div>
@@ -285,13 +281,13 @@ export default function HistoryPage() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-6xl w-full h-[90vh] overflow-auto p-8 border-blue-600/30 bg-gray-900/95">
+        <DialogContent className="max-w-6xl w-full h-[90vh] overflow-auto p-8">
           {selectedReview && (
             <>
-              <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+              <DialogTitle className="text-2xl font-bold text-foreground">
                 {selectedReview.title}
               </DialogTitle>
-              <DialogDescription className="text-gray-400">
+              <DialogDescription className="text-muted-foreground">
                 Created{" "}
                 {isToday(new Date(selectedReview.created_at))
                   ? "Today"
@@ -311,7 +307,7 @@ export default function HistoryPage() {
         open={deletingReviewId !== null}
         onOpenChange={() => setDeletingReviewId(null)}
       >
-        <AlertDialogContent className="border-red-600/30 bg-gray-900/95">
+        <AlertDialogContent className="border-destructive/50">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -320,12 +316,10 @@ export default function HistoryPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-700 hover:bg-gray-800">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-red-700 text-white hover:bg-red-800"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

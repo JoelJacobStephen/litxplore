@@ -1,17 +1,18 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import { QueryProvider } from "@/lib/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/header";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
-import { GradientBackground } from "@/components/ui/gradient-background";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
+  variable: "--font-dm-sans",
 });
 
 export const metadata: Metadata = {
@@ -47,7 +48,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(inter.className, "min-h-screen bg-gray-950")}>
+      <body className={cn(dmSans.className, "min-h-screen antialiased")}>
         <ClerkProvider>
           <ThemeProvider
             attribute="class"
@@ -55,21 +56,11 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <GradientBackground>
-              <Header />
-              <QueryProvider>
-                <main className="flex-1">
-                  {/* <SignedOut>
-                    <SignInButton />
-                  </SignedOut>
-                  <SignedIn>
-                    <UserButton />
-                  </SignedIn> */}
-                  {children}
-                </main>
-                <Toaster />
-              </QueryProvider>
-            </GradientBackground>
+            <Header />
+            <QueryProvider>
+              <main className="flex-1">{children}</main>
+              <Toaster />
+            </QueryProvider>
           </ThemeProvider>
         </ClerkProvider>
       </body>
