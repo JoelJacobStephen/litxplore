@@ -41,7 +41,6 @@ export {
   useSaveReviewApiV1ReviewSavePost as useSaveReview,
   useGetReviewHistoryApiV1ReviewHistoryGet as useGetReviewHistory,
   getGetReviewHistoryApiV1ReviewHistoryGetQueryKey as getGetReviewHistoryQueryKey,
-  useGetReviewApiV1ReviewReviewIdGet as useGetReview,
   useDeleteReviewApiV1ReviewReviewIdDelete as useDeleteReview,
 } from "./review/review";
 
