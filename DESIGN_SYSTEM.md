@@ -377,6 +377,32 @@ className="hover:bg-accent hover:text-accent-foreground rounded-lg px-4 py-2 tra
 className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg px-4 py-2 transition-all duration-200"
 ```
 
+### Tabs
+
+#### Tab List Container
+
+```css
+className="inline-flex h-10 items-center justify-center rounded-lg bg-muted/50 p-1 text-muted-foreground border border-border/50"
+```
+
+#### Tab Trigger
+
+```css
+/* Inactive state */
+className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-secondary/50 transition-all duration-200"
+
+/* Active state */
+className="... data-[state=active]:bg-secondary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+```
+
+**Tab Styling Features:**
+
+- **Inactive tabs**: Subtle gray background with muted text
+- **Hover state**: Text turns amber with golden yellow background
+- **Active tabs**: Golden yellow background with dark amber text for perfect contrast
+- **Smooth transitions**: 200ms transition for interactive states
+- **Focus states**: Accessible ring focus for keyboard navigation
+
 ### Cards
 
 ```css
