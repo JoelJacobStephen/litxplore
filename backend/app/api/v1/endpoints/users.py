@@ -53,7 +53,7 @@ async def clerk_webhook(
             error_code=ErrorCode.INTERNAL_ERROR
         )
 
-@router.get("/me")
+@router.get("/me", operation_id="getCurrentUser")
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """
     Get the current user's information

@@ -12,7 +12,7 @@
         ],
         "summary": "Generate Review",
         "description": "Start a background task to generate a literature review",
-        "operationId": "generate_review_api_v1_review_generate_review_post",
+        "operationId": "generateReview",
         "requestBody": {
           "content": {
             "application/json": {
@@ -58,7 +58,7 @@
           "review"
         ],
         "summary": "Save Review",
-        "operationId": "save_review_api_v1_review_save_post",
+        "operationId": "saveReview",
         "requestBody": {
           "content": {
             "application/json": {
@@ -79,7 +79,7 @@
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "title": "Response Save Review Api V1 Review Save Post"
+                  "title": "Response Savereview"
                 }
               }
             }
@@ -108,7 +108,7 @@
           "review"
         ],
         "summary": "Get Review History",
-        "operationId": "get_review_history_api_v1_review_history_get",
+        "operationId": "getReviewHistory",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -120,7 +120,7 @@
                     "type": "object"
                   },
                   "type": "array",
-                  "title": "Response Get Review History Api V1 Review History Get"
+                  "title": "Response Getreviewhistory"
                 }
               }
             }
@@ -140,7 +140,7 @@
         ],
         "summary": "Delete Review",
         "description": "Delete a specific review",
-        "operationId": "delete_review_api_v1_review__review_id__delete",
+        "operationId": "deleteReview",
         "security": [
           {
             "HTTPBearer": []
@@ -185,7 +185,7 @@
           "papers"
         ],
         "summary": "Search Papers",
-        "operationId": "search_papers_api_v1_papers_search_get",
+        "operationId": "searchPapers",
         "parameters": [
           {
             "name": "query",
@@ -230,7 +230,7 @@
                   "items": {
                     "$ref": "#/components/schemas/Paper"
                   },
-                  "title": "Response Search Papers Api V1 Papers Search Get"
+                  "title": "Response Searchpapers"
                 }
               }
             }
@@ -254,7 +254,7 @@
           "papers"
         ],
         "summary": "Get Paper",
-        "operationId": "get_paper_api_v1_papers__paper_id__get",
+        "operationId": "getPaper",
         "parameters": [
           {
             "name": "paper_id",
@@ -297,7 +297,7 @@
         ],
         "summary": "Chat With Paper",
         "description": "Chat endpoint with streaming support",
-        "operationId": "chat_with_paper_api_v1_papers__paper_id__chat_post",
+        "operationId": "chatWithPaper",
         "parameters": [
           {
             "name": "paper_id",
@@ -347,12 +347,12 @@
           "papers"
         ],
         "summary": "Upload Pdf",
-        "operationId": "upload_pdf_api_v1_papers_upload_post",
+        "operationId": "uploadPaper",
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_pdf_api_v1_papers_upload_post"
+                "$ref": "#/components/schemas/Body_uploadPaper"
               }
             }
           },
@@ -394,7 +394,7 @@
         ],
         "summary": "Generate Document",
         "description": "Generate a document in PDF or LaTeX format",
-        "operationId": "generate_document_api_v1_documents_generate_post",
+        "operationId": "generateDocument",
         "requestBody": {
           "content": {
             "application/json": {
@@ -500,7 +500,7 @@
         ],
         "summary": "Get Current User Info",
         "description": "Get the current user's information",
-        "operationId": "get_current_user_info_api_v1_users_me_get",
+        "operationId": "getCurrentUser",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -525,7 +525,7 @@
         ],
         "summary": "Get Task Status",
         "description": "Get the status of a specific task",
-        "operationId": "get_task_status_api_v1_tasks__task_id__get",
+        "operationId": "getTaskStatus",
         "security": [
           {
             "HTTPBearer": []
@@ -573,7 +573,7 @@
         ],
         "summary": "Get User Tasks",
         "description": "Get tasks for the current user",
-        "operationId": "get_user_tasks_api_v1_tasks__get",
+        "operationId": "getUserTasks",
         "security": [
           {
             "HTTPBearer": []
@@ -617,7 +617,7 @@
                   "items": {
                     "$ref": "#/components/schemas/TaskResponse"
                   },
-                  "title": "Response Get User Tasks Api V1 Tasks  Get"
+                  "title": "Response Getusertasks"
                 }
               }
             }
@@ -642,7 +642,7 @@
         ],
         "summary": "Cancel Task",
         "description": "Cancel a running task",
-        "operationId": "cancel_task_api_v1_tasks__task_id__cancel_post",
+        "operationId": "cancelTask",
         "security": [
           {
             "HTTPBearer": []
@@ -688,7 +688,7 @@
         ],
         "summary": "Clear User History",
         "description": "Clear the user's literature review history",
-        "operationId": "clear_user_history_api_v1_history_clear_post",
+        "operationId": "clearHistory",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -773,7 +773,7 @@
   },
   "components": {
     "schemas": {
-      "Body_upload_pdf_api_v1_papers_upload_post": {
+      "Body_uploadPaper": {
         "properties": {
           "file": {
             "type": "string",
@@ -785,7 +785,7 @@
         "required": [
           "file"
         ],
-        "title": "Body_upload_pdf_api_v1_papers_upload_post"
+        "title": "Body_uploadPaper"
       },
       "ChatRequest": {
         "properties": {
@@ -846,7 +846,7 @@
                 "Author 2"
               ],
               "id": "paper_id",
-              "published": "2025-10-18T11:38:22.261555",
+              "published": "2025-10-18T15:16:35.099620",
               "summary": "Paper summary",
               "title": "Paper Title",
               "url": "http://example.com/paper.pdf"

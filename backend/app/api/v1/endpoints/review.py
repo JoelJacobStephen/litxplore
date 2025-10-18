@@ -23,7 +23,7 @@ task_service = TaskService()
 """
 Generate a literature review
 """
-@router.post("/generate-review", response_model=TaskResponse)
+@router.post("/generate-review", response_model=TaskResponse, operation_id="generateReview")
 async def generate_review(
     review_request: ReviewRequest,
     current_user: User = Depends(get_current_user),
@@ -66,7 +66,7 @@ async def generate_review(
 """
 Save a literature review
 """
-@router.post("/save")
+@router.post("/save", operation_id="saveReview")
 async def save_review(
     request: Request,
     review_data: Dict[str, Any],
@@ -96,7 +96,7 @@ async def save_review(
             error_code=ErrorCode.DATABASE_ERROR
         )
 
-@router.get("/history")
+@router.get("/history", operation_id="getReviewHistory")
 async def get_review_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -126,7 +126,7 @@ async def get_review_history(
             error_code=ErrorCode.DATABASE_ERROR
         )
 
-@router.delete("/{review_id}")
+@router.delete("/{review_id}", operation_id="deleteReview")
 async def delete_review(
     review_id: int,
     current_user: User = Depends(get_current_user),

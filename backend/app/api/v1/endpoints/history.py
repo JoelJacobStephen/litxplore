@@ -8,7 +8,7 @@ from app.utils.error_utils import raise_internal_error, ErrorCode
 
 router = APIRouter()
 
-@router.post("/history/clear")
+@router.post("/history/clear", operation_id="clearHistory")
 async def clear_user_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

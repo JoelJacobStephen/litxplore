@@ -9,11 +9,12 @@
 1. [What Is This System?](#what-is-this-system)
 2. [How It Works (Simple Explanation)](#how-it-works-simple-explanation)
 3. [Architecture Overview](#architecture-overview)
-4. [Development Workflows](#development-workflows)
-5. [Commands Reference](#commands-reference)
-6. [Using Generated API Hooks](#using-generated-api-hooks)
-7. [Best Practices](#best-practices)
-8. [Troubleshooting](#troubleshooting)
+4. [Hook Naming with Operation IDs](#hook-naming-with-operation-ids)
+5. [Development Workflows](#development-workflows)
+6. [Commands Reference](#commands-reference)
+7. [Using Generated API Hooks](#using-generated-api-hooks)
+8. [Best Practices](#best-practices)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -217,6 +218,264 @@ Done! ✅
 ```
 
 **Total Time: 3-5 seconds from backend edit to frontend updated**
+
+---
+
+## Hook Naming with Operation IDs
+
+### How It Works
+
+LitXplore uses FastAPI's `operation_id` parameter to generate **clean, predictable hook names** automatically. No custom scripts needed!
+
+**Backend (FastAPI):**
+
+```python
+@router.get("/search", response_model=List[Paper], operation_id="searchPapers")
+async def search_papers(query: Optional[str] = None):
+    # ...
+```
+
+**Frontend (Auto-generated):**
+
+```typescript
+import { useSearchPapers } from "@/lib/api/generated";
+
+const { data } = useSearchPapers({ query: "AI" });
+// Hook name comes directly from operation_id!
+```
+
+### Why This Approach?
+
+**Before (problematic):**
+
+- Orval generated verbose names: `useSearchPapersApiV1PapersSearchGet`
+- Needed custom script to create aliases
+- Easy to forget updating aliases when endpoints changed
+- Build errors when aliases became outdated
+
+**After (simplified):**
+
+- Backend controls hook names via `operation_id`
+- Orval uses those names directly
+- Single source of truth (backend)
+- Automatic consistency
+- No manual maintenance needed
+
+### The Flow
+
+```
+Backend Developer
+       ↓
+Adds operation_id="searchPapers" to @router.get()
+       ↓
+FastAPI generates OpenAPI schema with operationId
+       ↓
+Orval reads operationId from schema
+       ↓
+Generates useSearchPapers() hook automatically
+       ↓
+Frontend Developer imports and uses clean hook name ✅
+```
+
+### Adding a New Endpoint
+
+**Step 1:** Add `operation_id` to your FastAPI route:
+
+```python
+@router.post("/analyze", response_model=AnalysisResult, operation_id="analyzeDocument")
+async def analyze_document(doc: Document):
+    # ...
+```
+
+**Step 2:** That's it! The hook is automatically available:
+
+```typescript
+import { useAnalyzeDocument } from "@/lib/api/generated";
+
+const { mutate } = useAnalyzeDocument();
+```
+
+### Naming Convention
+
+Use **camelCase** for operation_ids to match JavaScript conventions:
+
+```python
+# ✅ Good
+operation_id="searchPapers"
+operation_id="getPaper"
+operation_id="chatWithPaper"
+operation_id="generateReview"
+
+# ❌ Avoid
+operation_id="search_papers"  # snake_case
+operation_id="SearchPapers"   # PascalCase
+```
+
+Orval automatically adds the `use` prefix for React hooks:
+
+- `operation_id="searchPapers"` → `useSearchPapers()`
+- `operation_id="getPaper"` → `useGetPaper()`
+
+### Current Endpoints
+
+Here are all the operation_ids currently defined:
+
+**Papers:**
+
+- `searchPapers` → `useSearchPapers()`
+- `getPaper` → `useGetPaper()`
+- `chatWithPaper` → `useChatWithPaper()`
+- `uploadPaper` → `useUploadPaper()`
+
+**Review:**
+
+- `generateReview` → `useGenerateReview()`
+- `saveReview` → `useSaveReview()`
+- `getReviewHistory` → `useGetReviewHistory()`
+- `deleteReview` → `useDeleteReview()`
+
+**Tasks:**
+
+- `getTaskStatus` → `useGetTaskStatus()`
+- `getUserTasks` → `useGetUserTasks()`
+- `cancelTask` → `useCancelTask()`
+
+**Documents:**
+
+- `generateDocument` → `useGenerateDocument()`
+
+**Users:**
+
+- `getCurrentUser` → `useGetCurrentUser()`
+
+**History:**
+
+- `clearHistory` → `useClearHistory()`
+
+### The Generated Index File
+
+A simple barrel file re-exports all modules:
+
+```typescript
+// frontend/src/lib/api/generated/index.ts
+export * from "./models";
+export * from "./papers/papers";
+export * from "./review/review";
+export * from "./tasks/tasks";
+export * from "./documents/documents";
+export * from "./users/users";
+export * from "./history/history";
+export * from "./default/default";
+```
+
+**Automation: Keeping `index.ts` Present with tags-split**
+
+When Orval runs in `tags-split` mode, it cleans the output directory on each generation. Because `frontend/src/lib/api/generated/` is gitignored, any manually-added `index.ts` will be removed during generation. To ensure imports like `@/lib/api/generated` always work, we auto-generate the barrel file after Orval completes.
+
+- **Why**
+  - Orval `clean: true` deletes the output folder on each run.
+  - The generated folder is gitignored, so the index file isn’t tracked.
+
+- **Solution**
+  - Add a post-generation script that writes `frontend/src/lib/api/generated/index.ts`.
+  - Wire it into `package.json` so it runs automatically after Orval.
+
+- **package.json** (relevant scripts)
+
+```json
+{
+  "scripts": {
+    "generate:api": "npm run sync:openapi && orval --config ./orval.config.js && npm run postgenerate:api",
+    "postgenerate:api": "node scripts/generate-api-index.js"
+  }
+}
+```
+
+- **Script** `frontend/scripts/generate-api-index.js`
+
+```javascript
+const fs = require('fs');
+const path = require('path');
+
+const generatedDir = path.join(__dirname, '../src/lib/api/generated');
+const indexPath = path.join(generatedDir, 'index.ts');
+
+// List of subdirectories that orval generates
+const subdirs = ['default', 'documents', 'history', 'papers', 'review', 'tasks', 'users'];
+
+// Create the index file content
+const indexContent = `// Auto-generated index file for orval generated API
+// This file re-exports all generated API hooks and types
+// Generated by scripts/generate-api-index.js
+
+${subdirs.map(dir => `export * from './${dir}/${dir}';`).join('\n')}
+export * from './models';
+`;
+
+// Write the index file
+try {
+  fs.writeFileSync(indexPath, indexContent, 'utf8');
+  console.log('✅ Generated API index file at:', indexPath);
+} catch (error) {
+  console.error('❌ Failed to generate API index file:', error.message);
+  process.exit(1);
+}
+```
+
+- **When it runs**
+  - `npm run generate:api` (manual or via `prebuild`) runs Orval and then the index generator.
+  - `npm run build` triggers `prebuild` → `generate:api` → index generation.
+  - Note: During `generate:api:watch`, Orval may clean outputs repeatedly; if needed, run `npm run postgenerate:api` to recreate the index or extend the watcher to invoke it automatically.
+
+- **Imports remain stable**
+  - Continue to import from `@/lib/api/generated` across the app.
+
+### Orval Configuration
+
+The magic happens in `orval.config.js`:
+
+```javascript
+module.exports = {
+  litxplore: {
+    output: {
+      mode: "tags-split",
+      client: "react-query",
+      clean: true,
+      override: {
+        operationName: (operation, route, verb) => {
+          // Use operation_id from FastAPI
+          return operation.operationId || operation.operationName;
+        },
+        // ... other config
+      },
+    },
+  },
+};
+```
+
+The `operationName` override tells Orval to use the `operationId` from the OpenAPI schema instead of generating names from the URL path.
+
+### Integration with Type Sync System
+
+```
+Backend Change (add/modify operation_id)
+       ↓
+Uvicorn Reloads
+       ↓
+OpenAPI Schema Updates
+       ↓
+Backend Watcher Saves openapi.json
+       ↓
+Frontend Sync Copies Spec
+       ↓
+Orval Regenerates API Code with Clean Hook Names  ← AUTOMATIC
+       ↓
+TypeScript Types & Hooks Available
+       ↓
+Your Code Uses Clean Imports ✅
+```
+
+No custom scripts, no manual alias management, no sync issues!
 
 ---
 
@@ -690,6 +949,7 @@ const { data } = useSearchPapers({ query: "AI" });
 ✅ **DO:**
 
 - Always use Pydantic models for request/response types
+- Add `operation_id` to all endpoints using camelCase naming
 - Add descriptions to models and endpoints (shows in autocomplete!)
 - Commit `backend/openapi.json` with your changes
 - Run backend with `--reload` during development
@@ -699,7 +959,8 @@ const { data } = useSearchPapers({ query: "AI" });
 
 - Don't manually edit `backend/openapi.json`
 - Don't skip Pydantic validation
-- Don't forget to export schema after major changes
+- Don't forget to add `operation_id` when creating new endpoints
+- Don't use snake_case or PascalCase for operation_ids (use camelCase)
 
 ### For Frontend Developers
 
@@ -713,7 +974,7 @@ const { data } = useSearchPapers({ query: "AI" });
 
 ❌ **DON'T:**
 
-- Don't edit files in `src/lib/api/generated/`
+- Don't edit files in `src/lib/api/generated/` (they get overwritten)
 - Don't create manual type definitions for API data
 - Don't ignore TypeScript errors (they show real API mismatches!)
 - Don't commit `frontend/src/lib/api/generated/` to Git (it's in .gitignore)

@@ -30,7 +30,7 @@ def is_valid_pdf(content: bytes) -> bool:
     header = content[:8]
     return header.startswith(b'%PDF-')
 
-@router.get("/search", response_model=List[Paper])
+@router.get("/search", response_model=List[Paper], operation_id="searchPapers")
 async def search_papers(
     query: Optional[str] = None,
     ids: Optional[str] = None
@@ -56,7 +56,7 @@ async def search_papers(
             error_code=ErrorCode.INTERNAL_ERROR
         )
 
-@router.get("/{paper_id}", response_model=Paper)
+@router.get("/{paper_id}", response_model=Paper, operation_id="getPaper")
 async def get_paper(paper_id: str):
     try:
         client = arxiv.Client()
@@ -84,7 +84,7 @@ async def get_paper(paper_id: str):
             error_code=ErrorCode.EXTERNAL_SERVICE_ERROR
         )
 
-@router.post("/{paper_id}/chat")
+@router.post("/{paper_id}/chat", operation_id="chatWithPaper")
 async def chat_with_paper(paper_id: str, request: ChatRequest):
     """Chat endpoint with streaming support"""
     try:
@@ -108,7 +108,7 @@ async def chat_with_paper(paper_id: str, request: ChatRequest):
         )
 
 # Enhanced PDF upload endpoint with security checks
-@router.post("/upload", response_model=Paper)
+@router.post("/upload", response_model=Paper, operation_id="uploadPaper")
 async def upload_pdf(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)

@@ -40,7 +40,7 @@ class DocumentGenerateRequest(BaseModel):
 router = APIRouter()
 document_service = DocumentService()
 
-@router.post("/generate", response_class=Response, status_code=status.HTTP_200_OK)
+@router.post("/generate", response_class=Response, status_code=status.HTTP_200_OK, operation_id="generateDocument")
 async def generate_document(request: DocumentGenerateRequest):
     """Generate a document in PDF or LaTeX format"""
     try:

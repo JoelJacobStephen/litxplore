@@ -12,7 +12,7 @@ router = APIRouter()
 task_service = TaskService()
 
 
-@router.get("/{task_id}", response_model=TaskResponse)
+@router.get("/{task_id}", response_model=TaskResponse, operation_id="getTaskStatus")
 async def get_task_status(
     task_id: str,
     current_user: User = Depends(get_current_user),
@@ -30,7 +30,7 @@ async def get_task_status(
     return task_service.to_response(task)
 
 
-@router.get("/", response_model=List[TaskResponse])
+@router.get("/", response_model=List[TaskResponse], operation_id="getUserTasks")
 async def get_user_tasks(
     status: Optional[TaskStatus] = None,
     limit: int = 50,
@@ -45,7 +45,7 @@ async def get_user_tasks(
     return [task_service.to_response(task) for task in tasks]
 
 
-@router.post("/{task_id}/cancel")
+@router.post("/{task_id}/cancel", operation_id="cancelTask")
 async def cancel_task(
     task_id: str,
     current_user: User = Depends(get_current_user),
