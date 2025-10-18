@@ -88,9 +88,15 @@ export const customInstance = <T>(
   options?: AxiosRequestConfig
 ): Promise<T> => {
   const source = Axios.CancelToken.source();
+
+  // Check if this is a request that should return a blob
+  // (e.g., document generation endpoints)
+  const shouldReturnBlob = config.url?.includes("/documents/generate");
+
   const promise = axiosInstance({
     ...config,
     ...options,
+    responseType: shouldReturnBlob ? "blob" : options?.responseType,
     cancelToken: source.token,
   }).then(({ data }) => data);
 

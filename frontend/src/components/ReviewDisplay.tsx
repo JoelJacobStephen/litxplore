@@ -35,8 +35,34 @@ export const ReviewDisplay = ({
 }: ReviewDisplayProps) => {
   const generateDocument = useGenerateDocument({
     mutation: {
-      onSuccess: (blob) => {
-        const url = window.URL.createObjectURL(blob as unknown as Blob);
+      onSuccess: (data: unknown) => {
+        // The API returns a Blob even though TypeScript thinks it's void
+        const receivedData = data as any;
+
+        let blob: Blob;
+
+        // Check if data is a Blob by checking for Blob properties
+        if (
+          receivedData &&
+          typeof receivedData === "object" &&
+          "size" in receivedData &&
+          "type" in receivedData
+        ) {
+          blob = receivedData as Blob;
+        } else if (receivedData) {
+          // If it's not a Blob, create one from the data
+          blob = new Blob([receivedData], {
+            type:
+              generateDocument.variables?.data.format === "pdf"
+                ? "application/pdf"
+                : "application/x-latex",
+          });
+        } else {
+          toast.error("No data received from server");
+          return;
+        }
+
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `literature-review.${
