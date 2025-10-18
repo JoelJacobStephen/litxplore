@@ -1,11 +1,17 @@
 "use client";
 
-import { useGetReview, Paper } from "@/lib/api/generated";
+import { useGetReviewHistory, Paper } from "@/lib/api/generated";
 import { ReviewDisplay } from "@/components/ReviewDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMemo } from "react";
 
 export default function ReviewPage({ params }: { params: { id: string } }) {
-  const { data: review, isLoading } = useGetReview(parseInt(params.id));
+  const { data: reviews, isLoading } = useGetReviewHistory();
+
+  const review = useMemo(() => {
+    if (!reviews) return null;
+    return reviews.find((r) => r.id === parseInt(params.id));
+  }, [reviews, params.id]);
 
   if (isLoading) {
     return (
