@@ -11,7 +11,11 @@ module.exports = {
             mock: false,
             clean: true,
             tsconfig: "./tsconfig.json",
-            indexFiles: true,
+            indexFiles: {
+                // Generate index files in each tag directory AND a root index
+                // See: https://orval.dev/reference/configuration/output#indexfiles
+                includeSchemasIndex: true,
+            },
             override: {
                 operationName: (operation, route, verb) => {
                     // Use operation_id if available, fallback to default
@@ -26,6 +30,12 @@ module.exports = {
                     useMutation: true,
                     signal: true,
                 },
+            },
+        },
+        hooks: {
+            afterAllFilesWrite: {
+                command: 'node scripts/generate-api-index.js',
+                injectGeneratedDirsAndFiles: false,
             },
         },
     },

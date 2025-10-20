@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "generate:api": "npm run sync:openapi && orval --config ./orval.config.js && npm run postgenerate:api",
-    "generate:api:watch": "npm run sync:openapi && orval --config ./orval.config.js --watch",
+    "generate:api:watch": "orval --config ./orval.config.js --watch",
     "postgenerate:api": "node scripts/generate-api-index.js",
     "watch:backend": "node scripts/watch-backend.js"
   },

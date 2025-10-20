@@ -18,6 +18,27 @@
 
 ---
 
+## Recent Improvements (2025)
+
+**✨ Automatic Index Generation in Watch Mode**
+
+The type sync system now uses Orval's built-in `afterAllFilesWrite` hook to automatically generate the root `index.ts` barrel file after every code generation, including in watch mode during `npm run dev`. This eliminates the need for manual workarounds or custom wrapper scripts.
+
+**Key benefits:**
+- ✅ Works seamlessly in watch mode
+- ✅ No manual intervention needed
+- ✅ Stable imports: `import { useSearchPapers } from '@/lib/api/generated'`
+- ✅ Runs in CI/CD builds automatically
+- ✅ Simplified development workflow
+
+**What changed:**
+- Added `hooks.afterAllFilesWrite` to `orval.config.js`
+- Simplified `package.json` scripts
+- Removed need for wrapper scripts
+- More reliable type synchronization
+
+---
+
 ## What Is This System?
 
 LitXplore uses **automatic type synchronization** between the backend (FastAPI/Python) and frontend (Next.js/TypeScript). This means:
@@ -208,6 +229,8 @@ Sync Script / Watcher Copies Spec (frontend/openapi.json)
        ↓
 Orval Regenerates Code (frontend/src/lib/api/generated/)
        ↓
+Orval Hook Runs (generates index.ts with all exports)
+       ↓
 TypeScript Compiler Shows Errors (if API changed)
        ↓
 Developer Fixes Code
@@ -370,28 +393,44 @@ export * from "./default/default";
 
 **Automation: Keeping `index.ts` Present with tags-split**
 
-When Orval runs in `tags-split` mode, it cleans the output directory on each generation. Because `frontend/src/lib/api/generated/` is gitignored, any manually-added `index.ts` will be removed during generation. To ensure imports like `@/lib/api/generated` always work, we auto-generate the barrel file after Orval completes.
+When Orval runs in `tags-split` mode, it cleans the output directory on each generation. Because `frontend/src/lib/api/generated/` is gitignored, the `index.ts` barrel file needs to be regenerated after every Orval run to ensure imports like `@/lib/api/generated` always work.
 
-- **Why**
-  - Orval `clean: true` deletes the output folder on each run.
-  - The generated folder is gitignored, so the index file isn’t tracked.
+**Solution: Orval Hooks**
 
-- **Solution**
-  - Add a post-generation script that writes `frontend/src/lib/api/generated/index.ts`.
-  - Wire it into `package.json` so it runs automatically after Orval.
+We use Orval's built-in `afterAllFilesWrite` hook to automatically run the index generator after every generation, including in watch mode:
 
-- **package.json** (relevant scripts)
+**orval.config.js:**
 
-```json
-{
-  "scripts": {
-    "generate:api": "npm run sync:openapi && orval --config ./orval.config.js && npm run postgenerate:api",
-    "postgenerate:api": "node scripts/generate-api-index.js"
-  }
-}
+```javascript
+module.exports = {
+  litxplore: {
+    input: {
+      target: "./openapi.json",
+    },
+    output: {
+      mode: "tags-split",
+      target: "./src/lib/api/generated",
+      schemas: "./src/lib/api/generated/models",
+      client: "react-query",
+      clean: true,
+      // ... other options
+    },
+    hooks: {
+      afterAllFilesWrite: {
+        command: 'node scripts/generate-api-index.js',
+        injectGeneratedDirsAndFiles: false, // Don't pass file paths as args
+      },
+    },
+  },
+};
 ```
 
-- **Script** `frontend/scripts/generate-api-index.js`
+**Key Points:**
+- `afterAllFilesWrite` runs after Orval generates files
+- `injectGeneratedDirsAndFiles: false` prevents Orval from injecting file paths as command arguments
+- Works in both one-off generation (`npm run generate:api`) and watch mode (`npm run dev`)
+
+**Index Generator Script** (`frontend/scripts/generate-api-index.js`):
 
 ```javascript
 const fs = require('fs');
@@ -422,38 +461,88 @@ try {
 }
 ```
 
-- **When it runs**
-  - `npm run generate:api` (manual or via `prebuild`) runs Orval and then the index generator.
-  - `npm run build` triggers `prebuild` → `generate:api` → index generation.
-  - Note: During `generate:api:watch`, Orval may clean outputs repeatedly; if needed, run `npm run postgenerate:api` to recreate the index or extend the watcher to invoke it automatically.
+**package.json scripts:**
 
-- **Imports remain stable**
-  - Continue to import from `@/lib/api/generated` across the app.
+```json
+{
+  "scripts": {
+    "dev": "concurrently \"npm run watch:backend\" \"npm run generate:api:watch\" \"next dev\"",
+    "generate:api": "npm run sync:openapi && orval --config ./orval.config.js && npm run postgenerate:api",
+    "generate:api:watch": "orval --config ./orval.config.js --watch",
+    "postgenerate:api": "node scripts/generate-api-index.js",
+    "watch:backend": "node scripts/watch-backend.js"
+  }
+}
+```
+
+**How it works:**
+1. Orval generates files
+2. Hook runs `generate-api-index.js` automatically
+3. `index.ts` is created with all exports
+4. Imports work seamlessly: `import { useSearchPapers } from '@/lib/api/generated'`
+
+**Benefits:**
+- ✅ Works in watch mode (during `npm run dev`)
+- ✅ Works in one-off generation
+- ✅ Works in CI/CD builds
+- ✅ No manual intervention needed
+- ✅ Stable imports across the entire application
 
 ### Orval Configuration
 
-The magic happens in `orval.config.js`:
+The complete `orval.config.js` configuration:
 
 ```javascript
 module.exports = {
   litxplore: {
+    input: {
+      target: "./openapi.json", // Local file, watched for changes
+    },
     output: {
       mode: "tags-split",
+      target: "./src/lib/api/generated",
+      schemas: "./src/lib/api/generated/models",
       client: "react-query",
-      clean: true,
+      mock: false,
+      clean: true, // Clean output folder on each run
+      tsconfig: "./tsconfig.json",
+      indexFiles: {
+        includeSchemasIndex: true, // Generate index files per tag directory
+      },
       override: {
         operationName: (operation, route, verb) => {
-          // Use operation_id from FastAPI
+          // Use operation_id from FastAPI for clean hook names
           return operation.operationId || operation.operationName;
         },
-        // ... other config
+        mutator: {
+          path: "./src/lib/api/axios-instance.ts",
+          name: "customInstance", // Custom Axios instance with auth
+        },
+        query: {
+          useQuery: true,
+          useMutation: true,
+          signal: true, // AbortSignal support
+        },
+      },
+    },
+    hooks: {
+      afterAllFilesWrite: {
+        command: 'node scripts/generate-api-index.js',
+        injectGeneratedDirsAndFiles: false, // Don't pass file paths as args
       },
     },
   },
 };
 ```
 
-The `operationName` override tells Orval to use the `operationId` from the OpenAPI schema instead of generating names from the URL path.
+**Key Configuration Points:**
+
+- **`input.target`**: Points to local `openapi.json` file (copied from backend)
+- **`mode: "tags-split"`**: Organizes generated files by OpenAPI tags (papers, review, tasks, etc.)
+- **`clean: true`**: Ensures clean slate on each generation
+- **`operationName` override**: Uses FastAPI's `operation_id` for clean hook names
+- **`mutator`**: Uses custom Axios instance for authentication
+- **`hooks.afterAllFilesWrite`**: Auto-generates root index.ts after every generation
 
 ### Integration with Type Sync System
 
@@ -513,12 +602,18 @@ npm run dev
 - ✅ Regenerates TypeScript types when the spec changes
 - ✅ Starts Next.js dev server (port 3000)
 
-**You'll see 3 processes:**
+**You'll see 3 concurrent processes:**
 
 ```
 [WATCHER] 👀 Backend Schema Watcher
-[ORVAL]   🎉 orval watching...
+          Watches backend Python files, auto-fetches OpenAPI schema
+          
+[ORVAL]   🎉 Orval watching...
+          Watches openapi.json, regenerates types on changes
+          Runs index generator hook automatically
+          
 [NEXT]    ▲ Next.js ready on http://localhost:3000
+          Hot reloads on frontend changes
 ```
 
 #### When You Make Changes
@@ -530,8 +625,9 @@ npm run dev
 2. [Backend] Uvicorn reloads (instant)
 3. [WATCHER] Detects change, fetches schema (2-3 sec)
 4. [ORVAL] Regenerates types (1-2 sec)
-5. [TypeScript] Shows errors if API changed
-6. Fix frontend code → Done! ✅
+5. [ORVAL HOOK] Generates index.ts automatically
+6. [TypeScript] Shows errors if API changed
+7. Fix frontend code → Done! ✅
 ```
 
 **Frontend change:**
@@ -1182,15 +1278,55 @@ cd frontend && npm run generate:api
 Module not found: Can't resolve '@/lib/api/generated'
 ```
 
-**Solution:**
+**Causes:**
+
+1. API types haven't been generated yet
+2. Orval's hook didn't run (index.ts file missing)
+
+**Solutions:**
+
+**Option 1: Generate types (first-time setup)**
 
 ```bash
-# Generate the API client first!
 cd frontend
 npm run generate:api
 ```
 
-The `generated/` folder doesn't exist until you run generation.
+The `generated/` folder and `index.ts` don't exist until you run generation.
+
+**Option 2: Hook not executing in watch mode**
+
+If the hook isn't running during `npm run dev`:
+
+1. Check `orval.config.js` has the hook configured:
+   ```javascript
+   hooks: {
+     afterAllFilesWrite: {
+       command: 'node scripts/generate-api-index.js',
+       injectGeneratedDirsAndFiles: false,
+     },
+   }
+   ```
+
+2. Manually run the index generator:
+   ```bash
+   node scripts/generate-api-index.js
+   ```
+
+3. Restart dev server:
+   ```bash
+   # Stop current server (Ctrl+C)
+   npm run dev
+   ```
+
+**Verify the fix:**
+
+```bash
+# Check if index.ts exists
+ls -la src/lib/api/generated/index.ts
+
+# Should show the file with recent timestamp
+```
 
 ---
 

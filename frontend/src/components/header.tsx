@@ -51,8 +51,9 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-lg text-foreground/70 transition-all duration-200 hover:text-primary hover:bg-accent",
-                    pathname === item.href && "text-primary bg-accent"
+                    "flex items-center justify-center h-10 w-10 rounded-lg text-foreground/70 transition-all duration-200 hover:text-primary-foreground hover:bg-accent",
+                    pathname === item.href &&
+                      "text-primary-foreground bg-accent"
                   )}
                   title={item.label}
                 >
