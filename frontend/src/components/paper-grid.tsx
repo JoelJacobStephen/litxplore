@@ -16,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { CircleCheckBig, ExternalLink, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,7 +34,6 @@ export function PaperGrid({
   isLoading,
   enableSelection = false,
 }: PaperGridProps) {
-  const router = useRouter();
   const [localSelectedPapers, setLocalSelectedPapers] = useState<Set<string>>(
     new Set()
   );
@@ -178,7 +176,9 @@ export function PaperGrid({
                         {(("link" in paper && paper.link) || paper.url) && (
                           <Link
                             href={
-                              ("link" in paper && paper.link) || paper.url || "#"
+                              ("link" in paper && paper.link) ||
+                              paper.url ||
+                              "#"
                             }
                             target="_blank"
                             rel="noopener noreferrer"

@@ -199,7 +199,6 @@ function ReviewPageContent() {
                 onPaperSelect={handlePaperSelect}
                 isLoading={isLoadingSuggested}
                 enableSelection={true}
-                enableChat={false}
               />
             </div>
           </div>
