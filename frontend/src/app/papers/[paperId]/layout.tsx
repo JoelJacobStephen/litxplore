@@ -3,5 +3,5 @@ export default function PapersLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="min-h-screen bg-background">{children}</div>;
+  return <div className="h-full bg-background">{children}</div>;
 }

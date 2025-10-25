@@ -108,7 +108,7 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Feature 2 - Chat with Papers */}
+          {/* Feature 2 - Paper Analyzer */}
           <div className="col-span-1 relative">
             <motion.div
               className="h-full rounded-2xl bg-card border border-border p-8 overflow-hidden relative group hover:border-primary/50"
@@ -117,16 +117,16 @@ export default function Home() {
             >
               <MessageSquareText className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-2xl font-semibold mb-3 text-foreground tracking-tight">
-                Chat with Papers
+                Paper Analyzer
               </h3>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                Interact with research papers through natural conversation. Ask
-                questions and get insights from any paper.
+                Get instant insights from research papers with AI-powered analysis.
+                Explore key findings, methodology, and ask follow-up questions.
               </p>
 
               <Link href="/search" className="inline-block relative">
                 <span className="flex items-center text-primary font-medium hover:text-primary/80 transition-colors duration-200">
-                  Start Chatting <ArrowRight className="h-4 w-4 ml-1" />
+                  Analyze Papers <ArrowRight className="h-4 w-4 ml-1" />
                 </span>
               </Link>
 

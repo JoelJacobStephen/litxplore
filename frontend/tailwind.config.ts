@@ -102,6 +102,7 @@ const config: Config = {
   },
   plugins: [
     require("tailwindcss-animate"),
+    require("@tailwindcss/container-queries"),
     function ({ matchUtilities, theme }: any) {
       matchUtilities(
         {

@@ -48,7 +48,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(dmSans.className, "min-h-screen antialiased")}>
+      <body className={cn(dmSans.className, "h-screen flex flex-col antialiased")}>
         <ClerkProvider>
           <ThemeProvider
             attribute="class"
@@ -58,7 +58,7 @@ export default function RootLayout({
           >
             <Header />
             <QueryProvider>
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 overflow-hidden">{children}</main>
               <Toaster />
             </QueryProvider>
           </ThemeProvider>

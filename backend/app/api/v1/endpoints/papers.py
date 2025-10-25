@@ -5,7 +5,7 @@ import arxiv
 import json
 import logging
 import os
-from ....models.paper import Paper, ChatRequest, ChatResponse
+from ....models.paper import Paper
 from ....services.paper_service import PaperService
 from ....core.config import get_settings
 from ....core.auth import get_current_user
@@ -82,29 +82,6 @@ async def get_paper(paper_id: str):
         raise_internal_error(
             message=f"Failed to fetch paper: {str(e)}",
             error_code=ErrorCode.EXTERNAL_SERVICE_ERROR
-        )
-
-@router.post("/{paper_id}/chat", operation_id="chatWithPaper")
-async def chat_with_paper(paper_id: str, request: ChatRequest):
-    """Chat endpoint with streaming support"""
-    try:
-        async def generate() -> AsyncGenerator[str, None]:
-            async for chunk in paper_service.chat_with_paper_stream(
-                paper_id, 
-                request.message
-            ):
-                yield f"data: {json.dumps(chunk)}\n\n"
-
-        return StreamingResponse(
-            generate(),
-            media_type="text/event-stream"
-        )
-        
-    except Exception as e:
-        logging.exception(f"Failed to process chat for paper {paper_id}")
-        raise_internal_error(
-            message=f"Failed to process chat: {str(e)}",
-            error_code=ErrorCode.INTERNAL_ERROR
         )
 
 # Enhanced PDF upload endpoint with security checks

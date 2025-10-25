@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int
     SIMILARITY_THRESHOLD: float
     MAX_PAPERS: int
+    
+    # Analyzer Settings
+    ANALYZER_MODEL_TAG: str = "gemini-2.0-flash"
+    ANALYZER_FAST_MODEL_TAG: str = "gemini-2.0-flash-lite"  # Fast model for At-a-Glance
+    PROMPT_VERSION: str = "1.0.0"
+    ENV: str = "dev"
 
     # Clerk Settings
     CLERK_ISSUER: str

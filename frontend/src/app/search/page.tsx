@@ -8,7 +8,6 @@ import {
   getSearchPapersQueryKey,
 } from "@/lib/api/generated";
 import { PaperGrid } from "@/components/paper-grid";
-import { ChatInterface } from "@/components/chat-interface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
@@ -21,7 +20,6 @@ function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
-  const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [searchInput, setSearchInput] = useState(query);
 
   const { data: papers, isLoading } = useSearchPapers(
@@ -128,22 +126,11 @@ function SearchPageContent() {
             <PaperGrid
               papers={papers}
               onPaperSelect={(paperId, selected) => {
-                const paper = papers.find((p) => p.id === paperId);
-                if (paper && selected) {
-                  setSelectedPaper(paper);
-                }
               }}
-              enableChat={true}
             />
           )
         )}
 
-        {selectedPaper && (
-          <ChatInterface
-            paper={selectedPaper}
-            onClose={() => setSelectedPaper(null)}
-          />
-        )}
       </div>
     </ProtectedRoute>
   );

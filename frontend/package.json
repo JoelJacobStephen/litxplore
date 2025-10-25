@@ -16,6 +16,7 @@
     "watch:backend": "node scripts/watch-backend.js"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.23",
     "@clerk/nextjs": "^6.33.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -50,13 +51,14 @@
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
     "@react-three/fiber": "^8.17.10",
+    "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-query": "^5.28.4",
     "@tanstack/react-query-devtools": "^5.89.0",
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
     "@types/three": "^0.171.0",
-    "ai": "^3.4.19",
+    "ai": "^3.4.33",
     "autoprefixer": "10.4.15",
     "axios": "^1.12.2",
     "class-variance-authority": "^0.7.0",
@@ -73,6 +75,7 @@
     "next": "14.2.33",
     "next-themes": "^0.3.0",
     "openai": "^4.85.1",
+    "orval": "^7.13.2",
     "postcss": "8.4.31",
     "react": "18.2.0",
     "react-day-picker": "^8.10.1",
@@ -95,8 +98,7 @@
     "vaul": "^0.9.9",
     "xml2js": "^0.6.2",
     "zod": "^3.23.8",
-    "zustand": "^5.0.3",
-    "orval": "^7.13.2"
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

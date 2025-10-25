@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CircleCheckBig, ExternalLink } from "lucide-react";
+import { CircleCheckBig, ExternalLink, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,7 +26,6 @@ interface PaperGridProps {
   selectedPapers?: Set<string>;
   isLoading?: boolean;
   enableSelection?: boolean;
-  enableChat?: boolean;
 }
 
 export function PaperGrid({
@@ -35,7 +34,6 @@ export function PaperGrid({
   selectedPapers = new Set(),
   isLoading,
   enableSelection = false,
-  enableChat = false,
 }: PaperGridProps) {
   const router = useRouter();
   const [localSelectedPapers, setLocalSelectedPapers] = useState<Set<string>>(
@@ -166,36 +164,31 @@ export function PaperGrid({
                       </Button>
                     </motion.div>
                   )}
-                  <motion.div whileTap={{ scale: 0.95 }}>
-                    <Button variant="ghost" size="sm" asChild>
-                      {(("link" in paper && paper.link) || paper.url) && (
-                        <Link
-                          href={
-                            ("link" in paper && paper.link) || paper.url || "#"
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View PDF
+                  <div className="flex gap-2 ml-auto">
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                      <Button variant="default" size="sm" asChild>
+                        <Link href={`/papers/${paper.id}/analyze`}>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Analyze
                         </Link>
-                      )}
-                    </Button>
-                  </motion.div>
-                  <div className="flex gap-2">
-                    {enableChat && (
-                      <motion.div whileTap={{ scale: 0.95 }}>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() =>
-                            router.push(`/papers/${paper.id}/chat`)
-                          }
-                        >
-                          Chat with Paper
-                        </Button>
-                      </motion.div>
-                    )}
+                      </Button>
+                    </motion.div>
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                      <Button variant="ghost" size="sm" asChild>
+                        {(("link" in paper && paper.link) || paper.url) && (
+                          <Link
+                            href={
+                              ("link" in paper && paper.link) || paper.url || "#"
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            View PDF
+                          </Link>
+                        )}
+                      </Button>
+                    </motion.div>
                   </div>
                 </CardFooter>
               </Card>

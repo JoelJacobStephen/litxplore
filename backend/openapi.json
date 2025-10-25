@@ -290,57 +290,6 @@
         }
       }
     },
-    "/api/v1/papers/{paper_id}/chat": {
-      "post": {
-        "tags": [
-          "papers"
-        ],
-        "summary": "Chat With Paper",
-        "description": "Chat endpoint with streaming support",
-        "operationId": "chatWithPaper",
-        "parameters": [
-          {
-            "name": "paper_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Paper Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/papers/upload": {
       "post": {
         "tags": [
@@ -706,6 +655,265 @@
         ]
       }
     },
+    "/api/v1/analysis/{paper_id}/analyze": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyze Paper",
+        "description": "Analyze a paper and generate At-a-Glance summary + Suggested Questions.\n\n- Generates or refreshes the At-a-Glance + Suggested Questions immediately.\n- Does NOT compute Key Insights unless asked (lazy).\n- Returns PaperAnalysis (key_insights may be null).\n\nArgs:\n    paper_id: The ID of the paper to analyze\n    force_refresh: If True, bypass cache and regenerate analysis\n    current_user: Authenticated user\n\nReturns:\n    PaperAnalysis with at_a_glance and suggested_questions populated",
+        "operationId": "analyzePaper",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paper_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Paper Id"
+            }
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Force Refresh"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperAnalysis"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/{paper_id}": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Get Paper Analysis",
+        "description": "Retrieve the latest PaperAnalysis (including cached Key Insights if computed).\n\nArgs:\n    paper_id: The ID of the paper\n    current_user: Authenticated user\n\nReturns:\n    PaperAnalysis with all available data",
+        "operationId": "getPaperAnalysis",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paper_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Paper Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperAnalysis"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/{paper_id}/key-insights": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Compute Key Insights",
+        "description": "Trigger Key Insights computation (figures/limitations/future work).\n\n- Detects figures and tables with captions\n- Extracts limitations and future work from paper\n- Returns PaperAnalysis with key_insights populated\n\nArgs:\n    paper_id: The ID of the paper\n    current_user: Authenticated user\n\nReturns:\n    PaperAnalysis with key_insights populated",
+        "operationId": "computeKeyInsights",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paper_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Paper Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperAnalysis"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/{paper_id}/in-depth": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Compute In Depth",
+        "description": "Trigger In-Depth Analysis computation for comprehensive understanding of paper sections.\n\n- Generates detailed explanations for all major paper sections\n- Returns PaperAnalysis with in_depth populated\n\nArgs:\n    paper_id: The ID of the paper\n    current_user: Authenticated user\n\nReturns:\n    PaperAnalysis with in_depth populated",
+        "operationId": "computeInDepth",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paper_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Paper Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperAnalysis"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/papers/{paper_id}/chat": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Chat With Paper",
+        "description": "Chat endpoint for paper-specific questions.\n\nStreams responses using Server-Sent Events (SSE) format.\n\nArgs:\n    paper_id: The ID of the paper to chat about\n    message: The user's question or message\n    current_user: Authenticated user\n\nReturns:\n    StreamingResponse with SSE-formatted chunks",
+        "operationId": "chatWithPaper",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paper_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Paper Id"
+            }
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The user's question or message",
+              "title": "Message"
+            },
+            "description": "The user's question or message"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/healthcheck": {
       "get": {
         "summary": "Health Check",
@@ -773,6 +981,99 @@
   },
   "components": {
     "schemas": {
+      "AtAGlanceAnalysis": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "authors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Authors"
+          },
+          "affiliations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Affiliations"
+          },
+          "abstract": {
+            "type": "string",
+            "title": "Abstract"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords"
+          },
+          "introduction": {
+            "type": "string",
+            "title": "Introduction"
+          },
+          "related_work": {
+            "type": "string",
+            "title": "Related Work"
+          },
+          "problem_statement": {
+            "type": "string",
+            "title": "Problem Statement"
+          },
+          "methodology": {
+            "type": "string",
+            "title": "Methodology"
+          },
+          "results": {
+            "type": "string",
+            "title": "Results"
+          },
+          "discussion": {
+            "type": "string",
+            "title": "Discussion"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "future_work": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Future Work"
+          },
+          "conclusion": {
+            "type": "string",
+            "title": "Conclusion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "authors",
+          "affiliations",
+          "abstract",
+          "keywords",
+          "introduction",
+          "related_work",
+          "problem_statement",
+          "methodology",
+          "results",
+          "discussion",
+          "limitations",
+          "future_work",
+          "conclusion"
+        ],
+        "title": "AtAGlanceAnalysis"
+      },
       "Body_uploadPaper": {
         "properties": {
           "file": {
@@ -786,19 +1087,6 @@
           "file"
         ],
         "title": "Body_uploadPaper"
-      },
-      "ChatRequest": {
-        "properties": {
-          "message": {
-            "type": "string",
-            "title": "Message"
-          }
-        },
-        "type": "object",
-        "required": [
-          "message"
-        ],
-        "title": "ChatRequest"
       },
       "DocumentGenerateRequest": {
         "properties": {
@@ -846,7 +1134,7 @@
                 "Author 2"
               ],
               "id": "paper_id",
-              "published": "2025-10-20T13:39:15.047944",
+              "published": "2025-10-25T07:53:37.888970",
               "summary": "Paper summary",
               "title": "Paper Title",
               "url": "http://example.com/paper.pdf"
@@ -856,6 +1144,34 @@
           "format": "pdf",
           "topic": "Research Topic"
         }
+      },
+      "FigureExplanation": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "caption": {
+            "type": "string",
+            "title": "Caption"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "caption",
+          "explanation",
+          "page"
+        ],
+        "title": "FigureExplanation"
       },
       "HTTPValidationError": {
         "properties": {
@@ -869,6 +1185,87 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "InDepthAnalysis": {
+        "properties": {
+          "introduction": {
+            "type": "string",
+            "title": "Introduction"
+          },
+          "related_work": {
+            "type": "string",
+            "title": "Related Work"
+          },
+          "problem_statement": {
+            "type": "string",
+            "title": "Problem Statement"
+          },
+          "methodology": {
+            "type": "string",
+            "title": "Methodology"
+          },
+          "results": {
+            "type": "string",
+            "title": "Results"
+          },
+          "discussion": {
+            "type": "string",
+            "title": "Discussion"
+          },
+          "limitations": {
+            "type": "string",
+            "title": "Limitations"
+          },
+          "conclusion_future_work": {
+            "type": "string",
+            "title": "Conclusion Future Work"
+          }
+        },
+        "type": "object",
+        "required": [
+          "introduction",
+          "related_work",
+          "problem_statement",
+          "methodology",
+          "results",
+          "discussion",
+          "limitations",
+          "conclusion_future_work"
+        ],
+        "title": "InDepthAnalysis",
+        "description": "Comprehensive, detailed analysis of each paper section."
+      },
+      "KeyInsightsAnalysis": {
+        "properties": {
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/FigureExplanation"
+            },
+            "type": "array",
+            "title": "Figures"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "future_work": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Future Work"
+          }
+        },
+        "type": "object",
+        "required": [
+          "figures",
+          "limitations",
+          "future_work"
+        ],
+        "title": "KeyInsightsAnalysis"
       },
       "Paper": {
         "properties": {
@@ -918,6 +1315,124 @@
         ],
         "title": "Paper"
       },
+      "PaperAnalysis": {
+        "properties": {
+          "paper": {
+            "$ref": "#/components/schemas/PaperMetadata"
+          },
+          "at_a_glance": {
+            "$ref": "#/components/schemas/AtAGlanceAnalysis"
+          },
+          "key_insights": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KeyInsightsAnalysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "in_depth": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InDepthAnalysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "suggested_questions": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedQuestion"
+            },
+            "type": "array",
+            "title": "Suggested Questions"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "1.0.0"
+          },
+          "model_tag": {
+            "type": "string",
+            "title": "Model Tag",
+            "default": "gemini-2.0-flash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "paper",
+          "at_a_glance",
+          "suggested_questions",
+          "generated_at"
+        ],
+        "title": "PaperAnalysis"
+      },
+      "PaperMetadata": {
+        "properties": {
+          "paper_id": {
+            "type": "string",
+            "title": "Paper Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "authors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Authors"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "upload",
+              "arxiv",
+              "url"
+            ],
+            "title": "Source",
+            "default": "upload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "paper_id",
+          "title",
+          "authors"
+        ],
+        "title": "PaperMetadata"
+      },
       "ReviewRequest": {
         "properties": {
           "paper_ids": {
@@ -953,6 +1468,32 @@
           "max_papers": 10,
           "topic": "Recent advances in transformer architectures for natural language processing"
         }
+      },
+      "SuggestedQuestion": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "methodology",
+              "results",
+              "limitations",
+              "applications",
+              "datasets",
+              "reproducibility"
+            ],
+            "title": "Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "category"
+        ],
+        "title": "SuggestedQuestion"
       },
       "TaskResponse": {
         "properties": {

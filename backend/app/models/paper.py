@@ -2,9 +2,6 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 
-class Source(BaseModel):
-    page: int
-
 class Paper(BaseModel):
     id: str
     title: str
@@ -17,13 +14,6 @@ class Paper(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
-
-class ChatRequest(BaseModel):
-    message: str
-
-class ChatResponse(BaseModel):
-    response: str
-    sources: List[Source]
 
 class ReviewContent(BaseModel):
     content: str
