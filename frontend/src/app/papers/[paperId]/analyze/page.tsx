@@ -417,7 +417,7 @@ export default function PaperAnalyzerPage() {
   );
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full w-full flex flex-col bg-background">
       {isMobile ? (
         // Mobile layout - stacked with toggle
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
